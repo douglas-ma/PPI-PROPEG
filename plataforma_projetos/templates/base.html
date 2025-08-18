@@ -9,11 +9,51 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <div class="container">
+    <div class="container-fluid">
         <header>
-            Cabeçalho
+            <nav class="navbar navbar-expand-lg bg-white shadow-sm">
+                <div class="container-fluid">
+                    <a class="navbar-brand d-flex align-items-center" href="#">
+                        <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC" width="60" class="me-2">
+                        <span><span class="fw-bold fs-4">PROPEG</span><br>Plataforma de Projetos Institucionalizados</span>
+                    </a>
+                    <div class="collapse navbar-collapse justify-content-end">
+                        <ul class="navbar-nav">
+                            <li class="nav-item"><a class="nav-link" href="#">Plataforma PROPEG</a></li>
+                            <li class="nav-item"><a class="nav-link" href="mailto:dpesq.propeg@ufac.br">Contate-nos</a></li>
+                            <li class="nav-item"><a class="nav-link" href="#">Registre-se</a></li>
+                            <li class="nav-item"><a class="nav-link" href="https://www.ufac.br/site/ufac/propeg">Sobre nós</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
         </header>
-        <nav class="navbar navbar-expand-lg bg-body-tertiary">
+        
+
+        <!-- Botão Sanduíche -->
+        <!-- <button class="menu-btn" id="menu-btn">&#9776;</button> -->
+        <!-- Menu Lateral -->
+        <!-- <nav class="sidebar" id="sidebar">
+            <h2>Universidade Federal do Acre - UFAC</h2>
+            <p>Plataforma de Gerenciamento de Projetos</p>
+            <ul>
+            <li><a href="#">Cadastro</a></li>
+            <li><a href="#">Alterar Cadastro (orientador)</a></li>
+            <li><a href="#">Editais</a></li>
+            <li><a href="#">Submeter proposta</a></li>
+            <li><a href="#">Avaliar propostas</a></li>
+            <li><a href="#">Recursos</a></li>
+            <li><a href="#">ACEX</a></li>
+            <li><a href="#">Submissão de Acex</a></li>
+            <li><a href="#">Relatório final</a></li>
+            <li><a href="#">Projetos</a></li>
+            <li><a href="#">Projetos Submetidos</a></li>
+            <li><a href="#">Enviar Relatórios mensais</a></li>
+            <li><a href="#">Relatório final/parcial</a></li>
+            <li><a href="#">Solicitação de antecipação de certificados</a></li>
+            </ul>
+        </nav> -->
+        <!-- <nav class="navbar navbar-expand-lg bg-body-tertiary">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">PROPEG</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
@@ -30,7 +70,7 @@
                 </ul>
                 </div>
             </div>
-        </nav>
+        </nav> -->
         {% block content %}
         {% endblock %}
         <footer>

@@ -2,4 +2,4 @@ from django.shortcuts import render
 from django.http import HttpResponse
 
 def login(request):
-    return render(request, 'login/login.html')
+    return render(request, 'home/home.html')
