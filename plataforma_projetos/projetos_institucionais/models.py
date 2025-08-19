@@ -1,11 +1,5 @@
-# É uma boa prática importar o get_user_model para referenciar o usuário
 from django.contrib.auth import get_user_model
 from django.db import models
-
-# Vamos usar o modelo de Usuário padrão do Django, que já tem nome, email, senha, etc.
-# Podemos estendê-lo se precisarmos de campos adicionais como 'perfil', 'cpf', 'regime_trabalho'.
-# Para isso, o ideal seria criar um "Custom User Model" no início do projeto.
-# Por simplicidade aqui, vamos conectar os dados extras a ele.
 
 class Endereco(models.Model):
     rua = models.CharField(max_length=255)
@@ -27,8 +21,6 @@ class CentroLotacao(models.Model):
     def __str__(self):
         return self.nome
 
-# O ideal seria um Custom User Model, mas para um projeto já iniciado,
-# podemos usar um "Profile Model" ligado por OneToOneField.
 class UsuarioProfile(models.Model):
     PERFIL_CHOICES = [('professor', 'Professor'), ('aluno', 'Aluno'), ('gestor', 'Gestor')]
     
