@@ -39,7 +39,28 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'login',
     'projetos_institucionais',
+    'cadastro',
+
+    # Apps de autenticação com o google
+    'django.contrib.sites',
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
 ]
+
+# necessário para o django-allauth
+SITE_ID = 1  
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # backend padrão
+    'allauth.account.auth_backends.AuthenticationBackend',  # backend do allauth
+)
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+LOGIN_REDIRECT_URL = "/"  # para onde o usuário vai após login
+LOGOUT_REDIRECT_URL = "/" # para onde vai após logout
+ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +70,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'plataforma_projetos.urls'

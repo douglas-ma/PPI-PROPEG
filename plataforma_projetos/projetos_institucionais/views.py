@@ -1,7 +1,10 @@
 from rest_framework import viewsets
 from .models import Projeto, Relatorio, CentroLotacao, ODS, UsuarioProfile
 from .serializers import ProjetoSerializer, RelatorioSerializer, CentroLotacaoSerializer, OdsSerializer, AlunoSerializer, AlunoDetailSerializer
+from django.shortcuts import render
 
+def request_home(request):
+    return render(request, 'home/home.html')
 
 class ProjetoViewSet(viewsets.ModelViewSet):
     """

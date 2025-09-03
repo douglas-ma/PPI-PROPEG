@@ -1,8 +1,71 @@
-{% extends 'base.html' %}
-    <!-- {% block mascaras %}
-        $("#id_cpf").mask("999.999.999-99");
-    {% endblock %} -->
-{% block title %}Plataforma de Projetos{% endblock %}
+{% extends "base.html" %}
+
+{% load socialaccount %}
+{% block title %}Login - {{ tipo_usuario }}{% endblock %}
+
 {% block content %}
-    <p>FAÇA SEU LOGIN</p>
+<main class="d-flex align-items-center justify-content-center" style="min-height: 100vh; background-color: #f5f7fb;">
+    <div class="card shadow-sm p-4" style="width: 100%; max-width: 450px;">
+        
+        <!-- Título dinâmico -->
+        <h2 class="fw-bold mb-4 text-center">Log In - {{ tipo_usuario }}</h2>
+
+        <!-- Formulário -->
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- CPF -->
+            <div class="mb-3">
+                <label for="cpf" class="form-label">CPF</label>
+                <input type="text" id="cpf" name="cpf" class="form-control" placeholder="000.000.000-00" required>
+            </div>
+
+            <!-- Senha -->
+            <div class="mb-1">
+                <label for="senha" class="form-label">Senha</label>
+                <input type="password" id="senha" name="senha" class="form-control" placeholder="Digite sua senha" required>
+            </div>
+            <small class="text-muted">(Deve ser uma combinação de letras, símbolos e números.)</small>
+
+            <!-- Opções -->
+            <div class="d-flex justify-content-between align-items-center my-3">
+                <div>
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Lembre de Mim</label>
+                </div>
+                <a href="{% url 'esqueceu_senha' %}" class="text-decoration-none">Esqueceu sua Senha?</a>
+            </div>
+
+            <!-- Botão principal -->
+            <button type="submit" class="btn btn-primary w-100">Log In</button>
+
+            <!-- Botão Google -->
+            <a href="{% provider_login_url 'google' %}" class="btn btn-outline-primary w-100 mt-3">
+                Fazer Log In com o Google
+            </a>
+        </form>
+
+        <!-- Linha divisória -->
+        <hr class="my-4">
+
+        <!-- Link de registro -->
+        <p class="text-center">
+            Não tem uma conta? <a href="{% url 'registrar' %}" class="text-decoration-none">Registre-se</a>
+        </p>
+    </div>
+</main>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const cpfInput = document.getElementById("cpf");
+
+        cpfInput.addEventListener("input", function () {
+            let value = cpfInput.value.replace(/\D/g, ""); // só números
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            cpfInput.value = value;
+        });
+    });
+</script>
+
 {% endblock %}
