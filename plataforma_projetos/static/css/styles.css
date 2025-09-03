@@ -5,7 +5,7 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
+    height: 100%; /*Oversight? Tinha 'vh' ao invés de porcentagem. Isso quebrou a navbar para outras páginas. */
     margin: 0;
 }
 

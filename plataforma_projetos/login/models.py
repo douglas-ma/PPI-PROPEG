@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate, login, get_user_model
 
 User = get_user_model()
 
-def login_view(request, tipo_usuario):
+def login_view(self, request, tipo_usuario):
     if request.method == "POST":
         cpf = request.POST.get("cpf", "").replace(".", "").replace("-", "")  # remove máscara
         senha = request.POST.get("senha")
@@ -12,8 +12,8 @@ def login_view(request, tipo_usuario):
         try:
             user = User.objects.get(cpf=cpf)
         except User.DoesNotExist:
-            messages.error(request, "CPF não encontrado.")
-            return render(request, "login.html", {"tipo_usuario": tipo_usuario.capitalize()})
+            messages.error(self.request, "CPF não encontrado.")
+            return render(self.request, "login.html", {"tipo_usuario": tipo_usuario.capitalize()})
 
         # autenticação normal pelo Django
         user = authenticate(request, username=user.username, password=senha)
