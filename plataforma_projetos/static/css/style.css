@@ -1,0 +1,108 @@
+html, body {
+    height: 100%;
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.d-flex {
+    height: 100%;
+}
+
+#sidebar {
+    width: 280px;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-right: 1px solid #dee2e6;
+    transition: width 0.3s;
+    transition: width 0.3s ease-in-out;
+}
+
+/* Quando a sidebar estiver recolhida */
+#sidebar.collapsed {
+    width: 88px;
+    span {
+        display: none;
+    }
+    .nav-item .input-group {
+        display: none;
+    }
+    .nav-link {
+        justify-content: center;
+    }
+    .sidebar-header {
+        justify-content: center;
+    }
+    .sidebar-footer {
+        justify-content: center;
+        gap: 1rem;
+        a:first-child {
+            display: none;
+        }
+    }
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#sidebar .input-group-text,
+#sidebar .form-control {
+    background-color: #f8f9fa;
+    border-color: #f8f9fa;
+    box-shadow: none;
+}
+
+#sidebar .form-control:focus {
+    border-color: #ced4da;
+}
+
+/* Estilo dos links de navegação */
+#sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    font-size: 1rem;
+    color: #495057;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.25rem;
+    &:hover {
+        background-color: #e9ecef;
+        color: #000;
+    }
+    &.active {
+        background-color: #e9ecef;
+        color: #000;
+        font-weight: 500;
+    }
+    i {
+        font-size: 1.2rem;
+    }
+}
+
+/* Rodapé da Sidebar */
+.sidebar-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid #dee2e6;
+}
+
+/* Notificação de ponto vermelho */
+.sidebar-footer .position-relative .rounded-circle {
+    width: 10px;
+    height: 10px;
+}
+
+/* Área de Conteúdo Principal */
+#main-content {
+    flex-grow: 1;
+    background-color: #f4f7fc;
+    padding: 2rem;
+    overflow-y: auto;
+}
