@@ -1,0 +1,18 @@
+<div class="card-projeto" data-bs-toggle="modal" data-bs-target="#detalheProjetoModal-{{ projeto.pk }}">
+    <p class="categoria">{{ projeto.curso.nome|default:"Sem Categoria" }}</p>
+    <p class="descricao">{{ projeto.titulo }}</p>
+    
+    <div class="text-center my-3">
+        <img src="https://lh3.googleusercontent.com/proxy/YtFyw7PzIb5-Ub2Qz6xlgvRCmQNVhtaHxEHrYpyxcC-_CnVr1E0L2HnDFqBrdI1kKpqdoSyWlfyWrEhlXpOGatfIRFjpsauVOD4bLB-GQ2_C3L8aX-w9hgT1ZNGP33b9ZjNez-_zdOPtHIwU02VXzbIA6Pgb5ZQ-Msvn1b7JGP2P60Doa5pQQffgrhMPG40DGHx9f3dJt5owp859ZKC-z3YpPMvf_hdPGBS4YoXYb0ebdSnfzJk7AzZZVqm7dOogQHPQN9fQNkQHcAcqgSNDrSJ1nwR5sO4" alt="Imagem do Projeto" style="width:100%; max-width:150px; border-radius: 8px;">
+    </div>
+
+    <div class="card-footer">
+        <div>
+            <i class="fas fa-users"></i>
+            <i class="fas fa-paperclip"></i>
+        </div>
+        <div>
+            <i class="fas fa-ellipsis-h"></i>
+        </div>
+    </div>
+</div>

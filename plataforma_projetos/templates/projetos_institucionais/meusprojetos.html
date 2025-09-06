@@ -1,0 +1,84 @@
+{% extends 'base2.html' %}
+{% load static %}
+{% block title %}Meus Projetos{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/meusprojetos.css' %}">
+<div class="container-fluid mt-4">
+    <div class="dashboard-header">
+        <h2>Meus Projetos</h2>
+        <div class="input-group" style="max-width: 300px;">
+            <input type="text" class="form-control" placeholder="Procurar">
+            <button class="btn btn-outline-secondary" type="button">Procurar</button>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs dashboard-tabs mb-4">
+        <li class="nav-item"><a class="nav-link active" href="#">Visão Geral <span class="badge bg-secondary">{{ projetos_em_andamento.count|add:projetos_em_revisao.count|add:projetos_arquivados.count }}</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Projetos em Andamento <span class="badge bg-primary">{{ projetos_em_andamento.count }}</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Projetos em Revisão <span class="badge bg-warning text-dark">{{ projetos_em_revisao.count }}</span></a></li>
+        <li class="nav-item"><a class="nav-link" href="#">Relatórios</a></li>
+    </ul>
+
+    <div class="dashboard-container">
+        
+        <div class="coluna-projetos">
+            <h5>Em Andamento</h5>
+            {% for projeto in projetos_em_andamento %}
+                {% include 'projetos_institucionais/partials/projeto_card.html' %}
+            {% empty %}
+                <p>Nenhum projeto em andamento.</p>
+            {% endfor %}
+        </div>
+
+        <div class="coluna-projetos">
+            <h5>Projetos em Revisão</h5>
+            {% for projeto in projetos_em_revisao %}
+                {% include 'projetos_institucionais/partials/projeto_card.html' %}
+            {% empty %}
+                <p>Nenhum projeto em revisão.</p>
+            {% endfor %}
+        </div>
+        
+        <div class="coluna-projetos">
+            <h5>Projetos Arquivados</h5>
+            {% for projeto in projetos_arquivados %}
+                {% include 'projetos_institucionais/partials/projeto_card.html' %}
+            {% empty %}
+                <p>Nenhum projeto arquivado.</p>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+
+{% for projeto in projetos_em_andamento|add:projetos_em_revisao|add:projetos_arquivados %}
+<div class="modal fade" id="detalheProjetoModal-{{ projeto.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ projeto.titulo }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Status:</strong> <span class="badge bg-info">{{ projeto.get_status_display }}</span></p>
+                <p><strong>Coordenador:</strong> {{ projeto.coordenador.get_full_name }}</p>
+                <p><strong>Período:</strong> {{ projeto.data_inicio|date:"d/m/Y" }} até {{ projeto.data_fim|date:"d/m/Y" }}</p>
+                <hr>
+                <h6>Resumo</h6>
+                <p>{{ projeto.resumo }}</p>
+                <hr>
+                <h6>Objetivos</h6>
+                <p>{{ projeto.objetivos }}</p>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <a href="{% url 'projeto_editar' pk=projeto.pk %}" class="btn btn-primary">Editar Projeto</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

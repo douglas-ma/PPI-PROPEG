@@ -36,7 +36,7 @@ class Usuario(AbstractUser):
     )
 
     def __str__(self):
-        return self.get_full_name or self.username
+        return self.get_full_name() or self.username
 
 # Entidades mais simples
 class Endereco(models.Model):
@@ -189,7 +189,7 @@ class Projeto(models.Model):
         on_delete=models.PROTECT,
         verbose_name="Centro de Lotação"
     )
-    AgenciaFinanciadora = models.ForeignKey(
+    agencia_financiadora = models.ForeignKey(
         AgenciaFinanciadora,
         on_delete=models.SET_NULL,
         null=True,
