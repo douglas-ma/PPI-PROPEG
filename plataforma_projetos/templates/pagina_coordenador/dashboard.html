@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Cadastro - PROPEG{% endblock %}
+
+{% block content %}
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Propeg Dashboard</title>
+	<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+	<!-- Sidebar-->
+	<div class="sidebar">
+		<h2>UFAC - PROPEG</h2>
+		<input type="text" placeholder="Precisa de algo?" id="searchBar">
+		<ul class="nav">
+			<!-- Navegador, precisa das páginas dos projetos, editais e criar o projeto. -->
+			<li><a href="{% url 'home' %}">Tela Principal</a></li>
+			<!-- <li>Meus Projetos</li> -->
+			<!-- <li>Editais Abertos</li> -->
+			<!-- <li>Criar Novo Projeto</li> -->
+		</ul>
+		<div class="sidebar-footer">
+			<!-- <span>{{ user.username }}</span> -->
+			<!-- <span>🔔Bell({{ notifications.count }})</span> -->
+			<span>⚙️Config</span>
+		</div>
+	</div>
+	<!-- Saudações ao Usuário, precisa de uma varíavel com o nome do usuário. -->
+	<div class="main">
+		<div class="header">
+			<div class="avatar"></div>
+			<div>
+				<!-- <h1>Olá, {{ user.get_full_name|default:user.username }}!</h1> -->
+				<p>Bem-vindo de volta à plataforma PROPEG.</p>
+			</div>
+		</div>
+	
+		<!-- Opções do menu -->
+		<div class="kpi-cards">
+			<div class="card">
+				<h3>Editais Em Andamento</h3>
+				<!-- <p>{{ editais_andamento }}</p> -->
+			</div>
+			<div class="card">
+				<h3>Editais em Revisão</h3>
+				<!-- <p>{{ editais_revisao }}</p> -->
+			</div>
+			<div class="card">
+				<h3>Usuários Inscritos em Seus Programas</h3>
+				<!-- <p>{{ inscritos }}</p> -->
+			</div>
+		</div>
+
+		<div class="chart">
+			<h3>Relatório de Inscrições em Editais</h3>
+			<svg width="300" height="300">
+				<circle cx="150" cy="150" r="100" fill="#e0e0e0" />
+				<!-- Exemplo estático; pode ser substituído por gráfico dinâmico -->
+				<path d="M150 150 L150 50 A100 100 0 0 1 250 150 Z" fill="#4caf50" />
+				<path d="M150 150 L250 150 A100 100 0 0 1 150 250 Z" fill="#2196f3" />
+			</svg>
+		</div>
+	</div>
+</body>
+</html>
+
+
+{% endblock %}
