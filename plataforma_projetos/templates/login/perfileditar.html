@@ -1,0 +1,47 @@
+{% extends "base2.html" %}
+
+{% block title %}Editar Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4 class="mb-0">Editar Perfil</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    {{ form.first_name.label_tag }}
+                    {{ form.first_name }}
+                </div>
+                <div class="mb-3">
+                    {{ form.last_name.label_tag }}
+                    {{ form.last_name }}
+                </div>
+                <div class="mb-3">
+                    {{ form.email.label_tag }}
+                    {{ form.email }}
+                </div>
+                <div class="mb-3">
+                    {{ form.telefone.label_tag }}
+                    {{ form.telefone }}
+                </div>
+                <div class="mb-3">
+                    {{ form.titulacao.label_tag }}
+                    {{ form.titulacao }}
+                </div>
+                <div class="mb-3">
+                    {{ form.centro_lotacao.label_tag }}
+                    {{ form.centro_lotacao }}
+                </div>
+                <hr>
+                
+                <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                <a href="{% url 'perfil' %}" class="btn btn-danger">Cancelar</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

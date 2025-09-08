@@ -1,0 +1,57 @@
+{% extends "base2.html" %}
+
+{% block title %}Meu Perfil{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-success alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Meu Perfil</h4>
+            <a href="{% url 'perfil_editar' %}" class="btn btn-secondary">
+                <i class="bi bi-pencil-square me-2"></i>Editar Perfil
+            </a>
+        </div>
+        <div class="card-body">
+            <p><strong>Nome Completo:</strong> {{ user.get_full_name }}</p>
+            <p><strong>CPF:</strong> {{ user.cpf }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Telefone:</strong> {{ user.telefone|default:"Não informado" }}</p>
+            <p><strong>Titulação:</strong> {{ user.titulacao|default:"Não informada" }}</p>
+            <p><strong>Centro de Lotação:</strong> {{ user.centro_lotacao|default:"Não informado" }}</p>
+            <p><strong>Perfil de Acesso:</strong> {{ user.get_perfil_display }}</p>
+        </div>
+    </div>
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">Meu Endereço</h4>
+            <a href="{% url 'perfil_endereco' %}" class="btn {% if user.endereco %}btn-secondary{% else %}btn-success{% endif %}">
+                <i class="bi bi-geo-alt-fill me-2"></i>
+                {% if user.endereco %}Editar Endereço{% else %}Adicionar Endereço{% endif %}
+            </a>
+        </div>
+        <div class="card-body">
+            {% if user.endereco %}
+                <p><strong>Rua:</strong> {{ user.endereco.rua }}, {{ user.endereco.numero }}</p>
+                {% if user.endereco.complemento %}
+                    <p><strong>Complemento:</strong> {{ user.endereco.complemento }}</p>
+                {% endif %}
+                <p><strong>Bairro:</strong> {{ user.endereco.bairro }}</p>
+                <p><strong>Cidade/Estado:</strong> {{ user.endereco.cidade }} - {{ user.endereco.estado }}</p>
+                <p><strong>CEP:</strong> {{ user.endereco.cep }}</p>
+            {% else %}
+                <p class="text-muted">Nenhum endereço cadastrado.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
