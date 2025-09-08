@@ -1,6 +1,37 @@
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
+
+class UsuarioManager(BaseUserManager):
+    """
+    Manager customizado para o modelo Usuario, onde o email ou cpf é o identificador único
+    para autenticação em vez do username.
+    """
+    def create_user(self, cpf, username, email, password, **extra_fields):
+        if not cpf:
+            raise ValueError('O CPF deve ser fornecido')
+        if not username:
+            raise ValueError('O nome de usuário (username) é obrigatório')
+        if not email:
+            raise ValueError('O Email deve ser fornecido')
+            
+        email = self.normalize_email(email)
+        user = self.model(cpf=cpf, username=username, email=email, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, cpf, username, email, password, **extra_fields):
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+            
+        return self.create_user(cpf, username, email, password, **extra_fields)
 
 # Classe de usuário
 class Usuario(AbstractUser):
@@ -9,7 +40,12 @@ class Usuario(AbstractUser):
         ('aluno', 'Aluno'),
         ('gestor', 'Gestor'),
     )
+
+    USERNAME_FIELD = 'cpf'
+    REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'email']
+
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
+    email = models.EmailField(unique=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
     perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     regime_trabalho = models.CharField(max_length=3, blank=True, null=True, verbose_name="Regime de Trabalho")
@@ -35,8 +71,10 @@ class Usuario(AbstractUser):
         verbose_name="Centro de Lotação"
     )
 
+    objects = UsuarioManager()
+
     def __str__(self):
-        return self.get_full_name() or self.username
+        return self.get_full_name() or self.username or self.cpf
 
 # Entidades mais simples
 class Endereco(models.Model):
