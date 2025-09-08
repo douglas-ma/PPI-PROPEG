@@ -1,153 +1,119 @@
 body {
-    background-color: #f4f6fa;
     font-family: 'Arial', sans-serif;
-    min-height: 100vh;
+}
+
+/* ESTILOS PARA A PÁGINA PRINCIPAL (HOME) */
+.home-main-section {
+    background-color: #f5f7fb;
+    min-height: calc(100vh - 95px);
     display: flex;
-    justify-content: center;
     align-items: center;
-    height: 100vh;
-    margin: 0;
+    justify-content: center;
 }
 
-.main-section {
-    min-height: calc(100vh - 70px); /* altura total menos navbar */
-    padding: 40px;
-}
-
-/* Futura Moldura */
-.shape {
-    width: 350px;
-    height: 350px;
-    background: #d9dde2;
+.home-main-section .shape {
+    width: 450px;
+    height: 450px;
+    background: #e9ecef;
     border-radius: 60% 40% 55% 45% / 50% 65% 35% 50%;
 }
 
-/* Ajuste do conteúdo */
-.content h2 {
-    font-size: 2.5rem;
-    color: #1c1e21;
+.home-main-section .content h2 {
+    font-size: 3rem;
+    font-weight: bold;
+    color: #212529;
 }
 
-.content h3 {
+.home-main-section .content h3 {
     font-size: 1.75rem;
-    color: #333;
+    color: #495057;
 }
 
-.content p {
-    font-size: 1rem;
+/* --- ESTILOS COMPARTILHADOS PELAS TELAS DE LOGIN E REGISTRO --- */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 0;
+    background-color: #f5f7fb;
 }
 
-.btn {
-    border-radius: 6px;
-    padding: 10px 18px;
-    font-size: 0.95rem;
-}
-
-
-.login-container {
+.auth-card {
     width: 100%;
     max-width: 450px;
-}
-
-.login-card {
-    background: #fff;
+    background-color: #ffffff;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-radius: 12px;
     padding: 2rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-h2 {
+.auth-card .auth-back-arrow {
     font-size: 1.5rem;
-    margin-bottom: 1.5rem;
+    color: #212529;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.auth-card .auth-title {
+    font-size: 1.75rem;
     font-weight: bold;
+    color: #212529;
     text-align: center;
+    margin-bottom: 2rem;
 }
 
-label {
-    display: block;
-    margin-top: 1rem;
-    font-weight: bold;
-}
-
-input[type="cpf"],
-input[type="password"] {
-    width: 100%;
-    padding: 0.75rem;
-    margin-top: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-}
-
-small {
-    color: #666;
-    font-size: 0.8rem;
-}
-
-.options {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 1rem 0;
+.auth-card .form-label {
+    font-weight: normal;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
     font-size: 0.9rem;
 }
 
-.btn-primary {
-    width: 100%;
-    padding: 0.75rem;
-    background: #0055ff;
+.auth-card .form-control,
+.auth-card .form-select {
+    background-color: #f0f0f0;
     border: none;
-    color: white;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    height: 50px;
 }
 
-.btn-primary:hover {
-    background: #003bb3;
+.auth-card .form-control:focus,
+.auth-card .form-select:focus {
+    background-color: #f0f0f0;
+    box-shadow: none;
+    border: 1px solid #0d6efd;
 }
 
-.btn-google {
-    width: 100%;
-    padding: 0.75rem;
-    margin-top: 1rem;
-    border: 1px solid #0055ff;
-    color: #0055ff;
-    background: white;
-    font-weight: bold;
-    border-radius: 4px;
-    cursor: pointer;
+.auth-card .input-group {
+    height: 50px;
 }
 
-.btn-google .g-logo {
-    margin-right: 8px;
-    font-weight: bold;
-    font-size: 1.2rem;
+.auth-card .input-group .form-control {
+    height: 100%;
 }
 
-hr {
-    margin: 2rem 0;
+.auth-card .input-group .btn {
+    background-color: #f0f0f0;
     border: none;
-    border-top: 1px solid #ddd;
 }
 
-.register {
+.auth-card .btn-primary {
+    height: 50px;
+    font-weight: bold;
+    border-radius: 8px;
+}
+
+.auth-card .auth-link {
     text-align: center;
-    font-size: 0.9rem;
+    margin-top: 1.5rem;
 }
 
-.custom-input {
-    border-radius: 6px;
-    padding: 10px;
-}
-
-.custom-btn {
-    background-color: #1366ff;
-    border: none;
-    padding: 10px;
+.auth-card .auth-link a {
+    color: #0d6efd;
     font-weight: bold;
-    border-radius: 6px;
-}
-
-.custom-btn:hover {
-    background-color: #004de6;
+    text-decoration: none;
 }
