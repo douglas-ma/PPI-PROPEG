@@ -1,0 +1,128 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Criar Projeto{% endblock %}
+
+{% block content %}
+
+<div class="d-flex">
+    <form method="post" class="d-flex flex-grow-1">
+        {% csrf_token %}
+        {{ wizard.management_form }}
+
+        <div class="me-4" style="width: 250px;">
+            <div class="list-group">
+                {% for step_number, step_title in etapas_nomes %}
+                {% with step_index=step_number|add:"0" %}
+                <button type="submit" name="wizard_goto_step" value="{{ step_number }}"
+                    class="list-group-item list-group-item-action {% if wizard.steps.current == step_number %}active{% endif %} {% if step_index < wizard.steps.index %}step-completed{% endif %}"
+                    {% if step_index > wizard.steps.index %}disabled{% endif %}>
+                    {{ forloop.counter }}. {{ step_title }}
+                </button>
+                {% endwith %}
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex-grow-1">
+            <h2>Etapa {{ wizard.steps.step1 }} de {{ wizard.steps.count }}: {{ wizard.form.step_title }}</h2>
+            <hr>
+
+            {% if wizard.steps.current == '4' %}
+            <h4>Vínculo com ODS</h4>
+            <p>Selecione pelo menos um dos Objetivos de Desenvolvimento Sustentável da ONU.</p>
+            <p>Objetivos selecionados: <span id="ods-counter">0</span> de 17.</p>
+
+            <div style="display: none;">{{ wizard.form.ods }}</div>
+
+            <div id="ods-selection-grid" class="row g-3">
+                {% for ods in wizard.form.fields.ods.queryset %}
+                <div class="col-6 col-md-4 col-lg-3">
+                    <label class="ods-card">
+                        <input type="checkbox" name="{{ wizard.form.ods.html_name }}" value="{{ ods.id }}" {% if ods.id|stringformat:"s" in wizard.form.ods.value|stringformat:"s" %}checked{% endif %}>
+                        <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid">
+                        <span>{{ ods.titulo }}</span>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% elif wizard.steps.current == '3' %}
+            <h4>Equipe de Trabalho</h4>
+            <p>Adicione os alunos que participarão do projeto.</p>
+
+            {{ wizard.form.management_form }}
+
+            <table class="table">
+                <thead class="table-light">
+                    <tr>
+                        <th>Membro (Aluno)</th>
+                        <th>Carga Horária Semanal (h)</th>
+                        <th>Carga Horária Total (h)</th>
+                        <th style="width: 100px;">Ação</th>
+                    </tr>
+                </thead>
+                <tbody id="equipe-formset-container">
+                    {% for form in wizard.form %}
+                    <tr class="equipe-form-row">
+                        {{ form.id }}
+                        <td>{{ form.membro }}</td>
+                        <td>{{ form.carga_horaria_semanal }}</td>
+                        <td>{{ form.carga_horaria_total }}</td>
+                        <td class="text-center">
+                            <div style="display: none;">{{ form.DELETE }}</div>
+                            <button type="button" class="btn btn-danger btn-sm remove-form-row-btn">Remover</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <button type="button" id="add-form-btn" class="btn btn-outline-primary">+ Adicionar Membro</button>
+
+            <table style="display: none;">
+                <tbody id="empty-form-template">
+                    <tr class="equipe-form-row">
+                        {{ wizard.form.empty_form.id }}
+                        <td>{{ wizard.form.empty_form.membro }}</td>
+                        <td>{{ wizard.form.empty_form.carga_horaria_semanal }}</td>
+                        <td>{{ wizard.form.empty_form.carga_horaria_total }}</td>
+                        <td class="text-center">
+                            <div style="display: none;">{{ wizard.form.empty_form.DELETE }}</div>
+                            <button type="button" class="btn btn-danger btn-sm remove-form-row-btn">Remover</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            {% else %}
+            {{ wizard.form|crispy }}
+            {% endif %}
+
+            <hr>
+
+            <div class="d-flex justify-content-between mt-4">
+                <div>
+                    {% if wizard.steps.prev %}
+                    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.first }}"
+                        class="btn btn-secondary">
+                        <i class="bi bi-rewind-fill"></i> Primeira Etapa
+                    </button>
+                    <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}"
+                        class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Etapa Anterior
+                    </button>
+                    {% endif %}
+                </div>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        {% if wizard.steps.current == wizard.steps.last %}
+                        Finalizar e Submeter Projeto
+                        {% else %}
+                        Próxima Etapa <i class="bi bi-arrow-right"></i>
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

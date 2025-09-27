@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container text-center mt-5">
+    <h1>Cadastro Recebido!</h1>
+    <p class="lead">Obrigado por se registrar. Sua conta está em análise pela nossa equipe.</p>
+    <p>Você receberá um e-mail de confirmação assim que sua conta for ativada.</p>
+    <a href="{% url 'home' %}" class="btn btn-primary mt-3">Voltar à Página Inicial</a>
+</div>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base2.html" %}
+
+{% block title %}Histórico de Projetos{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Histórico de Projetos</h2>
+    <p>Consulte todos os projetos já submetidos na plataforma.</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" name="q" class="form-control" placeholder="Pesquisar por título..."
+                        value="{{ query|default:'' }}">
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">Todos os Status</option>
+                        {% for value, display in status_choices %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ display }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="ano" class="form-select">
+                        <option value="">Todos os Anos</option>
+                        {% for ano in anos_disponiveis %}
+                            <option value="{{ ano.year }}" {% if ano_filter == ano.year|stringformat:"s" %}selected{% endif %}>
+                                {{ ano.year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filtrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="?sort={% if sort_by == 'titulo' %}-titulo{% else %}titulo{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Título do Projeto {% if 'titulo' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'coordenador__first_name' %}-coordenador__first_name{% else %}coordenador__first_name{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Coordenador{% if 'coordenador' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'data_inicio' %}-data_inicio{% else %}data_inicio{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Data de Início {% if 'data_inicio' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
+                            </th>
+                            <th>
+                                <a href="?sort={% if sort_by == 'data_fim' %}-data_fim{% else %}data_fim{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Data de Fim {% if 'data_fim' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
+                            </th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for projeto in pagina_de_projetos %}
+                        <tr>
+                            <td>{{ projeto.titulo }}</td>
+                            <td>{{ projeto.coordenador.get_full_name }}</td>
+                            <td>{{ projeto.data_inicio|date:"d/m/Y" }}</td>
+                            <td>{{ projeto.data_fim|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                {% if projeto.status == 'aprovado' or projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
+                                <span class="badge bg-success">{{ projeto.get_status_display }}</span>
+                                {% elif projeto.status == 'submetido' %}
+                                <span class="badge bg-warning text-dark">{{ projeto.get_status_display }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ projeto.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
+                                    title="Ver Detalhes">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">Nenhum projeto encontrado com os filtros aplicados.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagina_de_projetos.has_other_pages %}
+        <div class="card-footer d-flex justify-content-between align-items-center">
+            <div class="text-muted">
+                Exibindo {{ pagina_de_projetos.start_index }}–{{ pagina_de_projetos.end_index }} de {{
+                pagina_de_projetos.paginator.count }} projetos
+            </div>
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if pagina_de_projetos.has_previous %}
+                    <li class="page-item"><a class="page-link"
+                            href="?page={{ pagina_de_projetos.previous_page_number }}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">&laquo;</a>
+                    </li>
+                    {% endif %}
+                    <li class="page-item active"><span class="page-link">{{ pagina_de_projetos.number }}</span></li>
+                    {% if pagina_de_projetos.has_next %}
+                    <li class="page-item"><a class="page-link"
+                            href="?page={{ pagina_de_projetos.next_page_number }}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">&raquo;</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

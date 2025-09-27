@@ -6,7 +6,7 @@ import re
 class PerfilUsuarioForm(forms.ModelForm):
     class Meta:
         model = Usuario
-        fields = ['first_name', 'last_name', 'email', 'telefone', 'titulacao', 'centro_lotacao']
+        fields = ['first_name', 'last_name', 'email', 'telefone', 'titulacao', 'centro_lotacao', 'curso']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -55,15 +55,17 @@ class RegistroUsuarioForm(forms.ModelForm):
 
     class Meta(UserCreationForm.Meta):
         model = Usuario
-        fields = ('cpf', 'first_name', 'last_name', 'email', 'perfil')
+        fields = ['cpf', 'first_name', 'last_name', 'email', 'perfil']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        
+        choices = self.fields['perfil'].choices
+
         self.fields['first_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Digite seu nome'})
         self.fields['last_name'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Digite seu sobrenome'})
         self.fields['cpf'].widget.attrs.update({'class': 'form-control', 'placeholder': '000.000.000-00'})
         self.fields['email'].widget.attrs.update({'class': 'form-control', 'placeholder': 'Digite seu email'})
+        self.fields['perfil'].choices = [choice for choice in choices if choice[0] != 'gestor']
 
     # Verificador para ver se as senhas são iguais
     def clean_password2(self):
@@ -81,7 +83,15 @@ class RegistroUsuarioForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+
+        user.username = self.cleaned_data['cpf']
+
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()
         return user
+    
+class UsuarioEditForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = ['first_name', 'last_name', 'email', 'cpf', 'perfil', 'status']

@@ -1,0 +1,22 @@
+{% extends "base2.html" %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Confirmar Exclusão</h2>
+    <hr>
+    
+    <div class="alert alert-danger">
+        <h4>Atenção!</h4>
+        <p>Você tem certeza que deseja excluir permanentemente o usuário <strong>"{{ usuario_selecionado.get_full_name }}"</strong> (CPF: {{ usuario_selecionado.cpf }})?</p>
+        <p>Esta ação não pode ser desfeita.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-danger float-end">Sim, excluir usuário</button>
+    </form>
+</div>
+{% endblock %}

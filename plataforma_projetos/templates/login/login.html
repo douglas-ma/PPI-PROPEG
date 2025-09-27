@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-{% load socialaccount %}
 {% block title %}Login{% endblock %}
 
 {% block content %}
@@ -10,7 +9,7 @@
     <div class="card auth-card shadow-sm">
         <a href="{% url 'home' %}" class="auth-back-arrow"><i class="bi bi-arrow-left"></i></a>
         
-        <h2 class="auth-title">Log In - {{ tipo_usuario }}</h2>
+        <h2 class="auth-title">Log In</h2>
 
         {% if messages %}
             {% for message in messages %}
@@ -21,7 +20,7 @@
             {% endfor %}
         {% endif %}
 
-        <form method="post" action="{% if tipo_usuario == 'Coordenador' %}{% url 'login_coordenador' %}{% else %}{% url 'login_aluno' %}{% endif %}">
+        <form method="post" action="{% url 'login' %}">
             {% csrf_token %}
 
             <div class="mb-3">
@@ -44,14 +43,11 @@
                     <input type="checkbox" class="form-check-input" id="remember" name="remember">
                     <label class="form-check-label" for="remember">Lembre de Mim</label>
                 </div>
-                <a href="#" class="auth-link small">Esqueceu sua Senha?</a>
+                <a href="{% url 'esqueceu_senha' %}" class="auth-link small">Esqueceu sua Senha?</a>
             </div>
 
             <button type="submit" class="btn btn-primary w-100 mb-3">Log In</button>
 
-            <a href="{% provider_login_url 'google' %}" class="btn btn-outline-primary w-100">
-                Fazer Log In com o Google
-            </a>
         </form>
 
         <div class="auth-link">

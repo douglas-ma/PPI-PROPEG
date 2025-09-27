@@ -1,0 +1,10 @@
+{% extends "base2.html" %}
+
+{% block title %}Projeto SUbmetido{% endblock %}
+
+{% block content %}
+    <h1>Projeto Submetido com Sucesso!</h1>
+    <p>O projeto "{{ projeto.titulo }}" foi enviado para análise.</p>
+    <p>Você receberá uma notificação quando houver uma atualização.</p>
+    <a href="{% url 'projeto_dashboard' %}" class="btn btn-primary">Voltar para Meus Projetos</a>
+{% endblock %}

@@ -42,28 +42,12 @@ INSTALLED_APPS = [
     'login',
     'projetos_institucionais',
     'cadastro',
-
-    # Apps de autenticação com o google
-    'django.contrib.sites',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
+    'formtools',
+    'crispy_forms',
+    'crispy_bootstrap5',
 ]
 
-# necessário para o django-allauth
-SITE_ID = 1  
 AUTH_USER_MODEL = 'projetos_institucionais.Usuario'
-
-AUTHENTICATION_BACKENDS = (
-    'django.contrib.auth.backends.ModelBackend',  # backend padrão
-    'allauth.account.auth_backends.AuthenticationBackend',  # backend do allauth
-)
-
-SOCIALACCOUNT_AUTO_SIGNUP = True
-LOGIN_REDIRECT_URL = "/"  # para onde o usuário vai após login
-LOGOUT_REDIRECT_URL = "/" # para onde vai após logout
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -73,8 +57,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'plataforma_projetos.urls'
@@ -143,7 +125,9 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-LOGIN_URL = 'login_coordenador'
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'tela_principal'
+
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -166,3 +150,8 @@ MESSAGE_TAGS = {
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
 }
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

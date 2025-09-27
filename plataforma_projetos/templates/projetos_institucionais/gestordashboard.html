@@ -1,0 +1,87 @@
+{% extends "base2.html" %}
+
+{% block title %}Painel do Gestor{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Painel do Gestor</h2>
+        <p class="text-muted mb-0">Bem-vindo, {{ user.get_full_name|default:user.username }}.</p>
+    </div>
+    <p>Abaixo estão os projetos que aguardam sua avaliação.</p>
+    <hr>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <strong>Projetos Submetidos</strong>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Título do Projeto</th>
+                            <th>Coordenador</th>
+                            <th>Data de Submissão</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for projeto in projetos_pendentes %}
+                        <tr>
+                            <td>{{ projeto.titulo }}</td>
+                            <td>{{ projeto.coordenador.get_full_name }}</td>
+                            <td>{{ projeto.data_inicio|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
+                                    title="Ver Detalhes">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                                <a href="{% url 'anexar_comprovante' pk=projeto.pk %}" class="btn btn-sm btn-warning"
+                                    title="Anexar Comprovante">
+                                    <i class="bi bi-paperclip"></i>
+                                </a>
+                                <a href="{% url 'aprovar_projeto' pk=projeto.pk %}"
+                                    class="btn btn-sm btn-success btn-confirm-action" data-bs-toggle="modal"
+                                    data-bs-target="#confirmationModal" data-action-title="Aprovar Projeto"
+                                    data-projeto-titulo="{{ projeto.titulo }}">
+                                    <i class="bi bi-check-lg"></i> Aprovar
+                                </a>
+                                <a href="{% url 'reprovar_projeto' pk=projeto.pk %}"
+                                    class="btn btn-sm btn-danger btn-confirm-action" data-bs-toggle="modal"
+                                    data-bs-target="#confirmationModal" data-action-title="Reprovar Projeto"
+                                    data-projeto-titulo="{{ projeto.titulo }}">
+                                    <i class="bi bi-x-lg"></i> Reprovar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">Não há projetos pendentes de avaliação no momento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalLabel">Confirmar Ação</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                Você tem certeza que deseja executar esta ação?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a href="#" id="confirmActionBtn" class="btn btn-primary">Confirmar</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

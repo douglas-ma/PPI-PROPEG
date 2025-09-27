@@ -1,0 +1,118 @@
+{% extends "base2.html" %}
+
+{% block title %}Usuários{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Gerenciamento de Usuários</h2>
+    </div>
+    <p>Visualize, pesquise e gerencie os usuários cadastrados na plataforma.</p>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="d-flex">
+                <input type="text" name="q" class="form-control me-2" placeholder="Pesquisar por nome ou CPF..." value="{{ query|default:'' }}">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Pesquisar</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <a href="?sort={% if sort_by == 'first_name' %}-first_name{% else %}first_name{% endif %}&q={{ query|default:'' }}&perfil={{ perfil_filter|default:'' }}">
+                                    Nome Completo
+                                    {% if 'first_name' in sort_by %}<i class="bi bi-arrow-{% if sort_by == '-first_name' %}down{% else %}up{% endif %}"></i>{% endif %}
+                                </a>
+                            </th>
+                            <th>Email</th>
+                            <th>
+                                <div class="dropdown">
+                                    <a class="dropdown-toggle text-decoration-none text-dark" href="#" role="button" id="perfilDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Perfil <i class="bi bi-funnel"></i>
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="perfilDropdown">
+                                        <li><a class="dropdown-item" href="?q={{ query|default:'' }}&sort={{ sort_by|default:'' }}">Todos os Perfis</a></li>
+                                        {% for value, display in perfil_choices %}
+                                            <li><a class="dropdown-item" href="?perfil={{ value }}&q={{ query|default:'' }}&sort={{ sort_by|default:'' }}">{{ display }}</a></li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in pagina_de_usuarios %}
+                        <tr>
+                            <td>{{ usuario.get_full_name }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td>{{ usuario.get_perfil_display }}</td>
+                            <td class="text-center">
+                                {% if usuario.status == 'ativo' %}
+                                <span class="badge bg-success">{{ usuario.get_status_display }}</span>
+                                {% elif usuario.status == 'pendente' %}
+                                <span class="badge bg-warning">{{ usuario.get_status_display }}</span>
+                                {% else %}
+                                <span class="badge bg-secondary">{{ usuario.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'usuario_detalhe' pk=usuario.pk %}" class="btn btn-sm btn-info" title="Ver Detalhes"><i
+                                        class="bi bi-eye"></i></a>
+                                <a href="{% url 'usuario_editar' pk=usuario.pk %}" class="btn btn-sm btn-secondary" title="Editar"><i
+                                        class="bi bi-pencil"></i></a>
+                                <a href="{% url 'usuario_deletar' pk=usuario.pk %}" class="btn btn-sm btn-danger" title="Excluir"><i
+                                        class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">Nenhum usuário encontrado.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if pagina_de_usuarios.has_other_pages %}
+        <div class="card-footer d-flex justify-content-center">
+            <div class="text-muted">
+                Exibindo {{ pagina_de_usuarios.start_index }}-{{ pagina_de_usuarios.end_index }} de {{ pagina_de_usuarios.paginator.count }} resultados.
+            </div>
+            
+            <nav>
+                <ul class="pagination mb-0">
+                    {% if pagina_de_usuarios.has_previous %}
+                        <li class="page-item"><a class="page-link" href="?page=1&q={{ query|default:'' }}&perfil={{ perfil_filter|default:'' }}&sort={{ sort_by|default:'' }}">&laquo;</a></li>
+                    {% else %}
+                        <li class="page-item disabled"><a class="page-link" href="#">&laquo;</a></li>
+                    {% endif %}
+                    
+                    {% for i in pagina_de_usuarios.paginator.page_range %}
+                        {% if pagina_de_usuarios.number == i %}
+                            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                        {% else %}
+                            <li class="page-item"><a class="page-link" href="?page={{ i }}&q={{ query|default:'' }}&perfil={{ perfil_filter|default:'' }}&sort={{ sort_by|default:'' }}">{{ i }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagina_de_usuarios.has_next %}
+                        <li class="page-item"><a class="page-link" href="?page={{ pagina_de_usuarios.next_page_number }}&q={{ query|default:'' }}&perfil={{ perfil_filter|default:'' }}&sort={{ sort_by|default:'' }}">&raquo;</a></li>
+                    {% else %}
+                         <li class="page-item disabled"><a class="page-link" href="#">&raquo;</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends "base2.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">{{ saudacao }}, {{ user.first_name|default:user.username }}!</h2>
+    <p class="lead">Bem-vindo(a) à Plataforma de Projetos da PROPEG.</p>
+    <hr>
+
+    {% if user.perfil == 'gestor' %}
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <h1 class="display-4 text-warning">{{ usuarios_pendentes }}</h1>
+                    <h5 class="card-title">Novos Cadastros Pendentes</h5>
+                    <p class="card-text">Usuários aguardando sua aprovação para acessar o sistema.</p>
+                    <a href="{% url 'gerenciar_usuarios' %}?is_active__exact=0" class="btn btn-warning">Verificar Cadastros</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <h1 class="display-4 text-primary">{{ projetos_pendentes }}</h1>
+                    <h5 class="card-title">Projetos para Avaliação</h5>
+                    <p class="card-text">Projetos submetidos por coordenadores que aguardam sua análise.</p>
+                    <a href="{% url 'gestor_dashboard' %}" class="btn btn-primary">Avaliar Projetos</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if user.perfil == 'coordenador' %}
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Seus Projetos</h5>
+                    <p><strong>{{ projetos_em_andamento }}</strong> em andamento.</p>
+                    <p><strong>{{ projetos_em_revisao }}</strong> aguardando avaliação.</p>
+                    <a href="{% url 'projeto_dashboard' %}" class="btn btn-primary mt-3">
+                        <i class="bi bi-kanban"></i> Ver Meus Projetos
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Acesso Rápido</h5>
+                    <p>Inicie o cadastro de uma nova proposta de projeto.</p>
+                    <a href="{% url 'projeto_criar' %}" class="btn btn-success mt-3">
+                        <i class="bi bi-plus-square"></i> Criar Novo Projeto
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+
+    {% if user.perfil == 'aluno' %}
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Sua Participação</h5>
+                    <p>Atualmente, você está vinculado a <strong>{{ projetos_participando }}</strong> projeto(s).</p>
+                    <a href="{% url 'aluno_meus_projetos' %}" class="btn btn-primary mt-2">
+                        <i class="bi bi-folder2-open"></i> Ver Meus Projetos
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">Seu Perfil</h5>
+                    {% if not endereco_preenchido %}
+                        <div class="alert alert-warning">
+                            <strong>Atenção!</strong> Parece que seu endereço não está cadastrado.
+                        </div>
+                    {% endif %}
+                    <p>Mantenha seus dados cadastrais sempre atualizados.</p>
+                    <a href="{% url 'perfil' %}" class="btn btn-secondary mt-2">
+                        <i class="bi bi-person-lines-fill"></i> Editar Meu Perfil
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

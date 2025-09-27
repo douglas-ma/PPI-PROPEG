@@ -41,6 +41,19 @@ class Usuario(AbstractUser):
         ('gestor', 'Gestor'),
     )
 
+    STATUS_CHOICES = (
+        ('pendente', 'Pendente'),
+        ('ativo', 'Ativo'),
+        ('inativo', 'Inativo'),
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='pendente',
+        verbose_name='Status',
+    )
+
     USERNAME_FIELD = 'cpf'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name', 'email']
 
@@ -49,6 +62,15 @@ class Usuario(AbstractUser):
     telefone = models.CharField(max_length=20, blank=True, null=True)
     perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     regime_trabalho = models.CharField(max_length=3, blank=True, null=True, verbose_name="Regime de Trabalho")
+    is_active = models.BooleanField(default=False, verbose_name="Ativo", help_text="Marque esta opção para ativar a conta do usuário.")
+
+    curso = models.ForeignKey(
+        'CursoGraduacao',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Curso de Graduação",
+    )
 
     endereco = models.OneToOneField(
         'Endereco',
@@ -157,6 +179,12 @@ class TipoEtico(models.Model):
 
 class ODS(models.Model):
     titulo = models.CharField(max_length=255, verbose_name="Título")
+    imagem = models.ImageField(
+        upload_to='ods_imagens/',
+        blank=True,
+        null=True,
+        verbose_name="Imagem",
+    )
 
     def __str__(self):
         return self.titulo
@@ -188,6 +216,7 @@ class AgenciaFinanciadora(models.Model):
 # Entidade Principal
 class Projeto(models.Model):
     STATUS_CHOICES = [
+        ('rascunho', 'Rascunho'),
         ('submetido', 'Submetido'),
         ('aguardando_conselho', 'Aguardando aprovação do conselho'),
         ('aprovado', 'Aprovado'),
@@ -196,19 +225,24 @@ class Projeto(models.Model):
         ('encerrado', 'Encerrado'),
     ]
     
-    titulo = models.CharField(max_length=255)
-    descricao = models.TextField(verbose_name="Descrição")
-    resumo = models.TextField()
-    introducao = models.TextField(verbose_name="Introdução")
-    objetivos = models.TextField()
-    metodologia = models.TextField()
+    titulo = models.CharField(max_length=255, blank=True, null=True)
+    descricao = models.TextField(verbose_name="Descrição", blank=True, null=True)
+    resumo = models.TextField(blank=True, null=True)
+    introducao = models.TextField(verbose_name="Introdução", blank=True, null=True)
+    objetivos = models.TextField(blank=True, null=True)
+    metodologia = models.TextField(blank=True, null=True)
     resultados = models.TextField(blank=True, null=True)
     referencias = models.TextField(blank=True, null=True)
-    data_inicio = models.DateField(verbose_name="Data de Início")
-    data_fim = models.DateField(verbose_name="Data de Fim")
-    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='submetido')
+    data_inicio = models.DateField(verbose_name="Data de Início", blank=True, null=True)
+    data_fim = models.DateField(verbose_name="Data de Fim", blank=True, null=True)
+    status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='rascunho')
     valor_fomento = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    
+    etica_obrigatoria = models.BooleanField(default=False, verbose_name="Envolve Aspectos Éticos?", blank=True, null=True)
+
+    eh_docente = models.BooleanField(default=False, verbose_name="É docente?", blank=True, null=True)
+    eh_pesquisador = models.BooleanField(default=False, verbose_name="É pesquisador?", blank=True, null=True)
+    eh_pesquisador_visitante = models.BooleanField(default=False, verbose_name="É pesquisador visitante?", blank=True, null=True)
+
     # Chaves Estrangeiras e Relações
     coordenador = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -225,7 +259,8 @@ class Projeto(models.Model):
     centro_lotacao = models.ForeignKey(
         CentroLotacao,
         on_delete=models.PROTECT,
-        verbose_name="Centro de Lotação"
+        verbose_name="Centro de Lotação",
+        null=True,
     )
     agencia_financiadora = models.ForeignKey(
         AgenciaFinanciadora,
@@ -249,18 +284,49 @@ class Projeto(models.Model):
     )
     alunos = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
+        through='EquipeProjeto',
         related_name='projetos_participados',
-        limit_choices_to={'perfil': 'aluno'},
         blank=True
     )
 
+    participa_pos_graduacao = models.BooleanField(default=False, blank=True, null=True, verbose_name="Participa de Programa de Pós-Graduação?")
+    programa_pos = models.ForeignKey(
+        'ProgramaPos',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Programa de Pós-Graduação"
+    )
+
+    palavras_chave = models.CharField(max_length=255, blank=True, null=True, help_text="Separe por vírgulas. Ex.: Tecnologia, Educação, Web")
+    parcerias = models.TextField(blank=True, null=True)
+
     def __str__(self):
-        return self.titulo
+        return self.titulo or f"Projeto Rascunho (ID: {self.id})"
     
     class Meta:
         ordering = ['-data_inicio']
         verbose_name = "Projeto"
         verbose_name_plural = "Projetos"
+
+class EquipeProjeto(models.Model):
+    """
+    Modelo intermediário para registrar os membros da equipe de um projeto
+    e suas informações específicas, como carga horária.
+    """
+    projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name='equipe')
+    membro = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='participa_em')
+    
+    carga_horaria_semanal = models.PositiveIntegerField(verbose_name="Carga Horária Semanal (h)")
+    carga_horaria_total = models.PositiveIntegerField(verbose_name="Carga Horária Total (h)")
+
+    class Meta:
+        verbose_name = "Membro da Equipe"
+        verbose_name_plural = "Equipes dos Projetos"
+        unique_together = ('projeto', 'membro')
+
+    def __str__(self):
+        return f"{self.membro.get_full_name()} no projeto {self.projeto.titulo}"
 
 # Modelos relacionados a um projeto
 def caminho_upload_arquivo(instance, filename): # função para gerar um caminho dinâmico para o upload de um arquivo
@@ -298,6 +364,46 @@ class Ata(models.Model):
     
     class Meta:
         verbose_name_plural = "Atas"
+
+class Anexo(models.Model):
+    """
+    Modelo para armazenar arquivos anexados a um projeto,
+    com um tipo definido para cada arquivo.
+    """
+    TIPO_ANEXO_CHOICES = (
+        ('comite_etica', 'Aprovação do Comitê de Ética'),
+        ('cronograma', 'Cronograma'),
+        ('imagens', 'Figuras, Imagens, etc.'),
+        ('projeto_completo', 'Projeto Completo'),
+        ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
+        ('outro', 'Outro'),
+    )
+
+    projeto = models.ForeignKey(
+        Projeto, 
+        on_delete=models.CASCADE, 
+        related_name='anexos'
+    )
+    
+    tipo_anexo = models.CharField(
+        max_length=50, 
+        choices=TIPO_ANEXO_CHOICES, 
+        verbose_name="Tipo de Anexo"
+    )
+    arquivo = models.FileField(
+        upload_to='anexos/%Y/%m/',
+        verbose_name="Arquivo"
+    )
+    
+    descricao = models.CharField(max_length=255, blank=True, null=True, verbose_name="Descrição")
+    data_upload = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.projeto.titulo} - {self.get_tipo_anexo_display()}"
+
+    class Meta:
+        verbose_name = "Anexo"
+        verbose_name_plural = "Anexos"
 
 class Relatorio(models.Model):
     TIPO_CHOICES = (

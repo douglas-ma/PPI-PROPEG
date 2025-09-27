@@ -1,0 +1,162 @@
+{% extends "base2.html" %}
+
+{% block title %}Detalhes Projeto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">{{ projeto.titulo }}</h2>
+            <span class="badge bg-primary fs-6">{{ projeto.get_status_display }}</span>
+        </div>
+        <div>
+            <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Painel do Gestor</a>
+        </div>
+    </div>
+    <hr>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Detalhes do Projeto</strong></div>
+                <div class="card-body">
+                    <h5>Resumo</h5>
+                    <p class="text-muted">{{ projeto.resumo|linebreaksbr }}</p>
+                    <hr>
+                    <h5>Palavras-chave</h5>
+                    <p class="text-muted">{{ projeto.palavras_chave }}</p>
+                    <hr>
+                    <h5>Introdução</h5>
+                    <p class="text-muted">{{ projeto.introducao|linebreaksbr }}</p>
+                    <hr>
+                    <h5>Objetivos</h5>
+                    <p class="text-muted">{{ projeto.objetivos|linebreaksbr }}</p>
+                    <hr>
+                    <h5>Metodologia</h5>
+                    <p class="text-muted">{{ projeto.metodologia|linebreaksbr }}</p>
+                    <hr>
+                    <h5>Resultados e/ou Impactos Esperados</h5>
+                    <p class="text-muted">{{ projeto.resultados|linebreaksbr }}</p>
+                    <hr>
+                    <h5>Referências</h5>
+                    <p class="text-muted">{{ projeto.referencias|linebreaksbr }}</p>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Equipe do Projeto</strong></div>
+                <ul class="list-group list-group-flush">
+                    {% for membro_equipe in projeto.equipe.all %}
+                    <li class="list-group-item">
+                        <p class="mb-1"><strong>Membro:</strong> {{ membro_equipe.membro.get_full_name }} ({{
+                            membro_equipe.membro.perfil }})</p>
+                        <small class="text-muted">
+                            <strong>CPF:</strong> {{ membro_equipe.membro.cpf }} |
+                            <strong>Curso:</strong> {{ membro_equipe.membro.curso|default:"Não informado" }} |
+                            <strong>Carga Horária:</strong> {{ membro_equipe.carga_horaria_semanal }}h/semana
+                        </small>
+                    </li>
+                    {% empty %}
+                    <li class="list-group-item text-muted">Nenhum membro na equipe.</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Vínculo com ODS</strong></div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for ods in projeto.ods.all %}
+                        <div class="col-4 mb-2">
+                            <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid"
+                                title="{{ ods.titulo }}">
+                        </div>
+                        {% empty %}
+                        <p class="text-muted">Nenhum ODS vinculado.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Anexos</strong></div>
+                <div class="card-body">
+                    {% if comprovante %}
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">Projeto Aprovado</h5>
+                        <p>O comprovante de aprovação foi anexado pelo gestor.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-success">
+                                <i class="bi bi-file-earmark-check-fill"></i> Baixar Comprovante
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+
+                    <h6>Documentos do Projeto:</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for anexo in outros_anexos %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                {{ anexo.get_tipo_anexo_display }}
+                                {% if anexo.descricao %}
+                                <small class="text-muted d-block">{{ anexo.descricao }}</small>
+                                {% endif %}
+                            </div>
+                            <a href="{{ anexo.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                Ver Arquivo
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li class="list-group-item text-muted">Nenhum outro anexo foi submetido.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Informações Gerais</strong></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Coordenador:</strong><br>{{ projeto.coordenador.get_full_name }}
+                    </li>
+                    <li class="list-group-item"><strong>Email:</strong><br>{{ projeto.coordenador.email }}</li>
+                    <li class="list-group-item"><strong>Vigência:</strong><br>{{ projeto.data_inicio|date:"d/m/Y" }} a
+                        {{ projeto.data_fim|date:"d/m/Y" }}</li>
+                </ul>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Vínculo Institucional</strong></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Centro de Lotação:</strong><br>{{ projeto.centro_lotacao }}</li>
+                    <li class="list-group-item"><strong>Curso:</strong><br>{{ projeto.curso }}</li>
+                    <li class="list-group-item"><strong>Programa de Pós-Graduação:</strong><br>{{
+                        projeto.programa_pos|default:"Não participa" }}</li>
+                    <li class="list-group-item"><strong>Grupos de Pesquisa:</strong><br>
+                        {% for grupo in projeto.grupos_pesquisa.all %}
+                        <span class="badge bg-secondary">{{ grupo.nome }}</span>
+                        {% empty %}
+                        Nenhum
+                        {% endfor %}
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card shadow-sm mb-4">
+                <div class="card-header"><strong>Financiamento e Ética</strong></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Agência Financiadora:</strong><br>{{
+                        projeto.agencia_financiadora|default:"N/A" }}</li>
+                    <li class="list-group-item"><strong>Valor do Fomento:</strong><br>R$ {{
+                        projeto.valor_fomento|default:"0,00" }}</li>
+                    <li class="list-group-item"><strong>Envolve Aspectos Éticos:</strong><br>{% if projeto.etica_obrigatoria %}Sim ({{ projeto.tipo_etica }}){% else %}Não{% endif %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Anexar Comprovante{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Anexar Comprovante de Aprovação</h2>
+    <p>Para o projeto: <strong>{{ projeto.titulo }}</strong></p>
+    <hr>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form|crispy }}
+                
+                <div class="mt-4">
+                    <a href="{% url 'gestor_dashboard' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary float-end">Salvar Anexo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

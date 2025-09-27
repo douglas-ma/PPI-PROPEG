@@ -1,0 +1,48 @@
+{% extends "base2.html" %}
+
+{% block title %}Visualizar Usuário{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="mb-0">Detalhes do Usuário: {{ usuario_selecionado.get_full_name }}</h2>
+        <div>
+            <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-outline-secondary">Voltar para a Lista</a>
+        </div>
+    </div>
+    <hr>
+
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h4>{{ usuario_selecionado.get_full_name }}</h4>
+            <span class="badge {% if usuario_selecionado.status == 'ativo' %}bg-success{% elif usuario_selecionado.status == 'pendente' %}bg-warning{% else %}bg-secondary{% endif %}">
+                {{ usuario_selecionado.get_perfil_display }} - {{ usuario_selecionado.status.capitalize }}
+            </span>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Nome Completo:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.first_name }} {{ usuario_selecionado.last_name }}</dd>
+
+                <dt class="col-sm-3">Email:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.email }}</dd>
+                
+                <dt class="col-sm-3">CPF:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.cpf }}</dd>
+
+                <dt class="col-sm-3">Telefone:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.telefone|default:"Não informado" }}</dd>
+
+                <dt class="col-sm-3">Curso:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.curso|default:"Não informado" }}</dd>
+                
+                <dt class="col-sm-3">Titulação:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.titulacao|default:"Não informada" }}</dd>
+                
+                <dt class="col-sm-3">Data de Cadastro:</dt>
+                <dd class="col-sm-9">{{ usuario_selecionado.date_joined|date:"d/m/Y H:i" }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+{% endblock %}

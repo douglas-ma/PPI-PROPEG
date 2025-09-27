@@ -1,0 +1,26 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Editar Usuário{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Editar Usuário</h2>
+    <p>Modificando o perfil de: <strong>{{ usuario_selecionado.get_full_name }}</strong></p>
+    <hr>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+
+                <div class="mt-4">
+                    <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary float-end">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

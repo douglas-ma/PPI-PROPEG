@@ -1,0 +1,99 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Revisão Projeto{% endblock %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    {{ wizard.management_form }}
+
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2>Revisão e Submissão</h2>
+    </div>
+    <p class="lead">Por favor, revise todas as informações do seu projeto. Se precisar corrigir algo, use os botões "Editar" em cada seção.</p>
+    <hr>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Etapa 2: Informações Gerais</strong>
+            <button type="submit" name="wizard_goto_step" value="1" class="btn btn-sm btn-outline-secondary">Editar</button>
+        </div>
+        <div class="card-body">
+            <dl class="row">
+                <dt class="col-sm-3">Título:</dt>
+                <dd class="col-sm-9">{{ todos_os_dados.titulo }}</dd>
+
+                <dt class="col-sm-3">Vigência:</dt>
+                <dd class="col-sm-9">{{ todos_os_dados.data_inicio|date:"d/m/Y" }} a {{ todos_os_dados.data_fim|date:"d/m/Y" }}</dd>
+
+                <dt class="col-sm-3">Centro de Lotação:</dt>
+                <dd class="col-sm-9">{{ todos_os_dados.centro_lotacao }}</dd>
+
+                <dt class="col-sm-3">Curso:</dt>
+                <dd class="col-sm-9">{{ todos_os_dados.curso }}</dd>
+
+                </dl>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Etapa 3: Detalhes do Projeto</strong>
+            <button type="submit" name="wizard_goto_step" value="2" class="btn btn-sm btn-outline-secondary">Editar</button>
+        </div>
+        <div class="card-body">
+            <h6>Resumo</h6>
+            <p>{{ todos_os_dados.resumo|linebreaks }}</p>
+            <h6>Palavras-chave</h6>
+            <p>{{ todos_os_dados.palavras_chave }}</p>
+            </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Etapa 4: Equipe de Trabalho</strong>
+            <button type="submit" name="wizard_goto_step" value="3" class="btn btn-sm btn-outline-secondary">Editar</button>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for membro_data in formset_equipe %}
+                {% if membro_data and membro_data.membro and not membro_data.DELETE %}
+                    <li class="list-group-item">
+                        <strong>Membro:</strong> {{ membro_data.membro.get_full_name }} |
+                        <strong>Carga Horária:</strong> {{ membro_data.carga_horaria_semanal }}h/semana (Total: {{ membro_data.carga_horaria_total }}h)
+                    </li>
+                {% endif %}
+            {% empty %}
+                <li class="list-group-item">Nenhum membro adicionado à equipe.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Etapa 5: Vínculo com ODS</strong>
+            <button type="submit" name="wizard_goto_step" value="4" class="btn btn-sm btn-outline-secondary">Editar</button>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for ods in ods_selecionados %}
+                <li class="list-group-item">
+                    <img src="{{ ods.imagem.url }}" style="height:40px; margin-right:8px;">
+                    {{ ods.titulo }}
+                </li>
+            {% empty %}
+                <li class="list-group-item">Nenhum ODS selecionado.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="d-flex justify-content-between mt-4">
+        <button name="wizard_goto_step" type="submit" value="{{ wizard.steps.prev }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar à Edição
+        </button>
+        
+        <button type="submit" class="btn btn-success btn-lg">
+            <i class="bi bi-check-circle-fill"></i> Confirmar e Submeter Projeto
+        </button>
+    </div>
+</form>
+{% endblock %}

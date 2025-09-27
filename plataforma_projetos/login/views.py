@@ -5,32 +5,33 @@ from django.contrib import messages
 from .forms import PerfilUsuarioForm, EnderecoForm, RegistroUsuarioForm
 import re
 
-def login_view(request, tipo_usuario):
-    contexto = {
-        "tipo_usuario": tipo_usuario.capitalize()
-    }
-
+def login_view(request):
     if request.method == 'POST':
         cpf = request.POST.get('cpf')
         senha = request.POST.get('senha')
 
         if not cpf or not senha:
             messages.error(request, 'CPF e senha são obrigatórios.')
-            return render(request, 'login/login.html', contexto)
+            return render(request, 'login/login.html')
         
         cpf_limpo = re.sub(r'[^0-9]', '', cpf)
         
         user = authenticate(request, cpf=cpf_limpo, password=senha)
 
         if user is not None:
-            if user.perfil == tipo_usuario:
+            if user.is_active:
                 login(request, user)
-                return redirect('projeto_dashboard')
+                if user.perfil == 'gestor':
+                    return redirect('tela_principal')
+                elif user.perfil == 'coordenador':
+                    return redirect('tela_principal')
+                else:
+                    return redirect('tela_principal')
             else:
-                messages.error(request, f'Acesso negado. Este usuário não é um {tipo_usuario}.')
+                messages.warning(request, f'Sua conta ainda está em análise e aguarda aprovação.')
         else:
             messages.error(request, 'CPF ou senha inválidos.')
-    return render(request, 'login/login.html', contexto)
+    return render(request, 'login/login.html')
 
 def logout_view(request):
     logout(request)
@@ -43,13 +44,12 @@ def registro_view(request):
     if request.method == 'POST':
         form = RegistroUsuarioForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            messages.success(request, 'Cadastro realizado com sucesso! Por favor, faça o login.')
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
 
-            if user.perfil == 'coordenador':
-                return redirect('login_coordenador')
-            else:
-                return redirect('login_aluno')
+            return render(request, 'login/registro_analise.html')
+    
     else:
         form = RegistroUsuarioForm()
     
