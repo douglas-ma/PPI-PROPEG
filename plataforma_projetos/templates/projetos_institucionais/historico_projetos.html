@@ -41,10 +41,10 @@
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
                             <th>
                                 <a href="?sort={% if sort_by == 'titulo' %}-titulo{% else %}titulo{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Título do Projeto {% if 'titulo' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>

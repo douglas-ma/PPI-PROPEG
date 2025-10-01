@@ -1,0 +1,23 @@
+{% extends "base2.html" %}
+{% block title %}Minhas Notificações{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Minhas Notificações</h2>
+    <hr>
+    <div class="list-group">
+        {% for notificacao in notificacoes %}
+            <div class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                    <p class="mb-1">{{ notificacao.mensagem|linebreaksbr }}</p>
+                    <small>{{ notificacao.data_criacao|timesince }} atrás</small>
+                </div>
+                {% if notificacao.link %}
+                <a href="{{ notificacao.link }}" class="btn btn-sm btn-outline-primary mt-2">Ver Detalhes</a>
+                {% endif %}
+            </div>
+        {% empty %}
+            <p class="text-muted">Você não tem nenhuma notificação.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

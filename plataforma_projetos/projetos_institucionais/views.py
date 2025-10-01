@@ -3,18 +3,24 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.core.mail import send_mail
+from django.core.mail import send_mail, EmailMessage
 from django.core.paginator import Paginator
+from django.core.files.base import ContentFile
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, ProtectedError
+from django.http import HttpResponseForbidden
+from django.urls import reverse
+from django.template.loader import render_to_string
 from .models import Projeto
 from .forms import *
 from login.forms import *
 from .decorators import gestor_required, coordenador_required, aluno_required
 from formtools.wizard.views import SessionWizardView
+from weasyprint import HTML
 import re
 import datetime
+
 
 ETAPAS_NOMES = [
     ("0", "Tipo de Projeto"),
@@ -92,55 +98,35 @@ class ProjetoCreateWizard(SessionWizardView):
         self.storage.extra_data['projeto_id'] = instance.id
         return instance
     
-    def process_step(self, form):
-        projeto = self.get_form_instance(self.steps.current)
-
-        if self.steps.current in ['1', '2']:
-            form.instance = projeto
-            form.save()
-        elif self.steps.current == '3':
-            if form.is_valid():
-                instances = form.save(commit=False)
-                for obj in instances:
-                    obj.projeto = projeto
-                    obj.save()
-                for obj in form.deleted_objects:
-                    obj.delete()
-        elif self.steps.current == '4':
-            if form.is_valid():
-                ods_selecionados = form.cleaned_data.get('ods')
-                if ods_selecionados:
-                    projeto.ods.set(ods_selecionados)
-
-        return self.get_form_step_data(form)
-
     @transaction.atomic
     def done(self, form_list, form_dict, **kwargs):
         projeto_id = self.storage.extra_data.get('projeto_id')
         projeto = Projeto.objects.get(pk=projeto_id)
 
-        dados_etapa2 = form_dict.get('1', {}).cleaned_data
-        dados_etapa3 = form_dict.get('2', {}).cleaned_data
-        dados_etapa5 = form_dict.get('4', {}).cleaned_data
+        dados_gerais = {}
+        for form_key in ['0', '1', '2']:
+            dados_gerais.update(form_dict.get(form_key, {}).cleaned_data)
+        
+        dados_etapa1 = form_dict.get('1', {}).cleaned_data
+        grupos_pesquisa_data = dados_etapa1.get('grupos_pesquisa', [])
 
-        grupos_pesquisa_data = dados_etapa2.pop('grupos_pesquisa', None)
-        ods_data = dados_etapa5.get('ods')
+        dados_etapa4 = form_dict.get('4', {}).cleaned_data
+        ods_data = dados_etapa4.get('ods', [])
 
-        for campo, valor in {**dados_etapa2, **dados_etapa3}.items():
-            setattr(projeto, campo, valor)
+        formset_equipe = form_dict.get('3', {})
+        dados_equipe = formset_equipe.cleaned_data if formset_equipe else []
+
+        for campo, valor in dados_gerais.items():
+            if hasattr(projeto, campo) and not isinstance(getattr(projeto, campo), models.Manager):
+                setattr(projeto, campo, valor)
         
         projeto.status = 'submetido'
         projeto.save()
 
-        if grupos_pesquisa_data:
-            projeto.grupos_pesquisa.set(grupos_pesquisa_data)
-        if ods_data:
-            projeto.ods.set(ods_data)
+        projeto.grupos_pesquisa.set(grupos_pesquisa_data)
+        projeto.ods.set(ods_data)
 
-        dados_equipe = form_dict['3'].cleaned_data
-        
         projeto.equipe.all().delete()
-        
         for membro_data in dados_equipe:
             if membro_data and membro_data.get('membro'):
                 EquipeProjeto.objects.create(
@@ -150,12 +136,46 @@ class ProjetoCreateWizard(SessionWizardView):
                     carga_horaria_total=membro_data.get('carga_horaria_total')
                 )
 
+        contexto_pdf = {
+            'projeto': projeto
+        }
+        html_string = render_to_string('projetos_institucionais/projeto_pdf.html', contexto_pdf)
+        pdf_file = HTML(string=html_string).write_pdf()
+
+        novo_anexo = Anexo(
+            projeto=projeto,
+            tipo_anexo='relatorio_submissao',
+            descricao='Relatório de Submissão gerado automaticamente pelo sistema.',
+        )
+        nome_arquivo = f'submissao_projeto_{projeto.pk}.pdf'
+        novo_anexo.arquivo.save(nome_arquivo, ContentFile(pdf_file), save=True)
+
         if 'projeto_id' in self.storage.extra_data:
             del self.storage.extra_data['projeto_id']
 
         return render(self.request, 'projetos_institucionais/projeto_wizard_done.html', {
             'projeto': projeto
         })
+
+class ProjetoUpdateWizard(ProjetoCreateWizard):
+    def get_form_instance(self, step):
+        pk = self.kwargs.get('pk')
+        self.storage.extra_data['projeto_id'] = pk
+        
+        return get_object_or_404(Projeto, pk=pk)
+    
+    @transaction.atomic
+    def done(self, form_list, form_dict, **kwargs):
+        response = super().done(form_list, form_dict, **kwargs)
+
+        projeto_pk = self.kwargs.get('pk')
+        if projeto_pk:
+            projeto = Projeto.objects.get(pk=projeto_pk)
+            if projeto.status == 'reprovado':
+                projeto.status = 'submetido'
+                projeto.save()
+        
+        return response
 
 @login_required
 def tela_principal(request):
@@ -196,25 +216,16 @@ def projeto_detalhe(request, pk):
 
     comprovante = projeto.anexos.filter(tipo_anexo='comprovante_aprovacao').first()
     outros_anexos = projeto.anexos.exclude(tipo_anexo='comprovante_aprovacao')
+    relatorio_submissao = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
 
     contexto = {
         'projeto': projeto,
         'comprovante': comprovante,
         'outros_anexos': outros_anexos,
+        'relatorio_submissao': relatorio_submissao,
     }
 
     return render(request, 'projetos_institucionais/projeto_detalhe.html', contexto)
-
-def projeto_editar(request, pk):
-    projeto = get_object_or_404(Projeto, pk=pk)
-    # if request.method == 'POST':
-    #     form = ProjetoForm(request.POST, instance=projeto)
-    #     if form.is_valid():
-    #         form.save()
-    #         return redirect('projeto_detalhe', pk=projeto.pk)
-    # else:
-    #     form = ProjetoForm(instance=projeto)
-    return render(request, 'projetos_institucionais/projeto_form.html')
 
 def projeto_deletar(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk)
@@ -236,6 +247,7 @@ def projeto_dashboard(request):
         'projetos_em_andamento': projetos_em_andamento,
         'projetos_em_revisao': projetos_em_revisao,
         'projetos_arquivados': projetos_arquivados,
+        'AnexoForm': AnexoForm(),
     }
     return render(request, 'projetos_institucionais/meusprojetos.html', contexto)
 
@@ -253,9 +265,11 @@ def aluno_projeto_dashboard(request):
 @gestor_required
 def gestor_dashboard(request):
     projetos_pendentes = Projeto.objects.filter(status='submetido').order_by('data_inicio')
+    projetos_aguardando_conselho = Projeto.objects.filter(status='aguardando_conselho').order_by('data_inicio')
     
     contexto = {
-        'projetos_pendentes': projetos_pendentes
+        'projetos_pendentes': projetos_pendentes,
+        'projetos_aguardando_conselho': projetos_aguardando_conselho,
     }
     return render(request, 'projetos_institucionais/gestordashboard.html', contexto)
 
@@ -266,12 +280,15 @@ def aprovar_projeto(request, pk):
     projeto.status = 'em_andamento'
     projeto.save()
 
-    send_mail(
-        subject=f'Seu projeto "{projeto.titulo}" foi APROVADO!',
-        message=f'Olá, {projeto.coordenador.first_name}!\n\nTemos boas notícias: seu projeto "{projeto.titulo}" foi aprovado e agora está em andamento. Você pode acessar o sistema para mais detalhes.\n\nAtenciosamente,\nEquipe PROPEG',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[projeto.coordenador.email],
+    subject = f'Seu projeto "{projeto.titulo}" foi APROVADO!'
+    message = (
+        f'Olá, {projeto.coordenador.first_name}!\n\n'
+        f'Temos boas notícias: seu projeto "{projeto.titulo}" foi aprovado e agora está em andamento. '
+        f'Você pode acessar o sistema para mais detalhes.'
     )
+    
+    link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+    enviar_email_e_notificacao(subject, message, projeto.coordenador, link=link_projeto)
 
     messages.success(request, f'O projeto "{projeto.titulo}" aprovado com sucesso.')
     return redirect('gestor_dashboard')
@@ -283,12 +300,15 @@ def reprovar_projeto(request, pk):
     projeto.status = 'reprovado'
     projeto.save()
 
-    send_mail(
-        subject=f'Atualização sobre seu projeto "{projeto.titulo}"',
-        message=f'Olá, {projeto.coordenador.first_name}.\n\nApós análise, o projeto "{projeto.titulo}" foi reprovado. Para mais informações, por favor, entre em contato com a equipe responsável.\n\nAtenciosamente,\nEquipe PROPEG',
-        from_email=settings.DEFAULT_FROM_EMAIL,
-        recipient_list=[projeto.coordenador.email],
+    subject = f'Atualização sobre seu projeto "{projeto.titulo}"'
+    message = (
+        f'Olá, {projeto.coordenador.first_name}.\n\n'
+        f'Após análise, o projeto "{projeto.titulo}" foi reprovado. '
+        f'Você pode acessar o sistema para editar e ressubmeter o projeto, se desejar.'
     )
+    
+    link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+    enviar_email_e_notificacao(subject, message, projeto.coordenador, link=link_projeto)
 
     messages.error(request, f'O projeto "{projeto.titulo}" reprovado.')
     return redirect('gestor_dashboard')
@@ -360,6 +380,8 @@ def usuario_detalhe(request, pk):
 @gestor_required
 def usuario_editar(request, pk):
     usuario_selecionado = get_object_or_404(Usuario, pk=pk)
+    status_antigo = usuario_selecionado.status
+
     if request.method == 'POST':
         form = UsuarioEditForm(request.POST, instance=usuario_selecionado)
         if form.is_valid():
@@ -369,7 +391,35 @@ def usuario_editar(request, pk):
             else:
                 user.is_active = False
             user.save()
-            messages.success(request, 'Usuário atualizado com sucesso!')
+
+            status_novo = user.status
+            if status_novo != status_antigo:
+                subject = 'Sua conta na Plataforma PROPEG foi ativada!'
+                message = (
+                    f'Olá, {user.first_name}!\n\n'
+                    f'Sua conta em nossa plataforma foi ativada por um gestor. '
+                    f'Você já pode acessar o sistema com seu CPF e senha.\n\n'
+                    f'Atenciosamente, \nEquipe PROPEG'
+                )
+                enviar_email_e_notificacao(subject, message, user)
+                messages.success(request, f'Usuário "{user.get_full_name()}" ativado e notificado por email.')
+            elif status_novo == 'inativo' and status_antigo == 'ativo':
+                subject = 'Aviso: Sua conta na Plataforma PROPEG foi inativada'
+                message = (
+                    f'Olá, {user.first_name}.\n\n'
+                    f'Sua conta em nossa plataforma foi inativada por um gestor. '
+                    f'Se você acredita que isso foi um engano, por favor, entre em contato com a administração.\n\n'
+                    f'Atenciosamente,\nEquipe PROPEG'
+                )
+                send_mail(
+                    subject,
+                    message,
+                    settings.DEFAULT_FROM_EMAIL,
+                    [user.email],
+                )
+                messages.warning(request, f'Usuário "{user.get_full_name()}" inativado e notificado por email.')
+            else:
+                messages.success(request, 'Usuário atualizado com sucesso!')
             return redirect('gerenciar_usuarios')
     else:
         form = UsuarioEditForm(instance=usuario_selecionado)
@@ -439,3 +489,165 @@ def historico_projetos(request):
     }
 
     return render(request, 'projetos_institucionais/historico_projetos.html', contexto)
+
+@login_required
+@gestor_required
+def encaminhar_para_conselho(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+    if projeto.status == 'submetido':
+        projeto.status = 'aguardando_conselho'
+        projeto.save()
+
+        relatorio_anexo = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
+
+        if projeto.centro_lotacao and projeto.centro_lotacao.email:
+            subject_conselho = f'Novo Projeto para Análise do Conselho: "{projeto.titulo}"'
+            message_conselho = (
+                f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
+                f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, foi encaminhado para sua análise e aprovação.\n\n'
+                f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
+                f'Atenciosamente,\nEquipe de Gestão PROPEG'
+            )
+            
+            email_conselho = EmailMessage(
+                subject_conselho,
+                message_conselho,
+                settings.DEFAULT_FROM_EMAIL,
+                [projeto.centro_lotacao.email],
+            )
+
+            if relatorio_anexo and relatorio_anexo.arquivo:
+                email_conselho.attach(
+                    relatorio_anexo.arquivo.name.split('/')[-1],
+                    relatorio_anexo.arquivo.read(),
+                    'application/pdf'
+                )
+            
+            email_conselho.send()
+
+        subject_coordenador = f'Atualização do seu Projeto: "{projeto.titulo}"'
+        message_coordenador = (
+            f'Olá, {projeto.coordenador.first_name}!\n\n'
+            f'Seu projeto "{projeto.titulo}" foi revisado pela gestão e encaminhado com sucesso para a análise do conselho do seu centro de lotação.\n\n'
+            f'O status do seu projeto foi atualizado para "Aguardando aprovação do conselho". Você será notificado sobre as próximas etapas.\n\n'
+            f'Atenciosamente,\nEquipe PROPEG'
+        )
+        link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+        enviar_email_e_notificacao(subject_coordenador, message_coordenador, projeto.coordenador, link=link_projeto)
+        messages.success(request, f'O projeto "{projeto.titulo}" foi encaminhado ao conselho e o coordenador foi notificado.')
+    else:
+        messages.warning(request, f'O projeto "{projeto.titulo}" não está no status "Submetido" e não pode ser encaminhado.')
+
+    return redirect('gestor_dashboard')
+
+@login_required
+@coordenador_required
+def adicionar_anexo(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+    if request.user != projeto.coordenador:
+        return HttpResponseForbidden("Você não tem permissão para realizar esta ação.")
+    
+    if request.method == 'POST':
+        form = AnexoForm(request.POST, request.FILES)
+        if form.is_valid():
+            anexo = form.save(commit=False)
+            anexo.projeto = projeto
+            anexo.save()
+            messages.success(request, 'Anexo adicionado com sucesso!')
+        else:
+            messages.error(request, 'Houve um erro ao adicionar o anexo. Verifique o formulário.')
+    
+    return redirect(request.META.get('HTTP_REFERER', 'projeto_dashboard'))
+
+@login_required
+@coordenador_required
+def deletar_anexo(request, anexo_id):
+    anexo = get_object_or_404(Anexo, pk=anexo_id)
+    if request.user != anexo.projeto.coordenador:
+        return HttpResponseForbidden("Você não tem permissão para realizar esta ação.")
+    
+    if request.method == 'POST':
+        anexo.arquivo.delete(save=True)
+        anexo.delete()
+        messages.success(request, 'Anexo excluído com sucesso.')
+
+    return redirect(request.META.get('HTTP_REFERER', 'projeto_dashboard'))
+
+@login_required
+def projeto_equipe(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+    contexto = {
+        'projeto': projeto
+    }
+    return render(request, 'projetos_institucionais/projeto_equipe.html', contexto)
+
+@login_required
+def visualizar_perfil(request, pk):
+    usuario_selecionado = get_object_or_404(Usuario, pk=pk)
+    
+    contexto = {
+        'usuario_selecionado': usuario_selecionado,
+    }
+    
+    return render(request, 'projetos_institucionais/usuario_detalhe.html', contexto)
+
+@login_required
+def projeto_anexos(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+
+    relatorio_submissao = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
+    comprovante_aprovacao = projeto.anexos.filter(tipo_anexo='comprovante_aprovacao').first()
+    anexos_gerenciaveis = projeto.anexos.exclude(tipo_anexo__in=['relatorio_submissao', 'comprovante_aprovacao'])
+
+    
+    if request.method == 'POST':
+        if request.user != projeto.coordenador:
+            return HttpResponseForbidden("Você não tem permissão para realizar esta ação.")
+        
+        form = AnexoForm(request.POST, request.FILES)
+        if form.is_valid():
+            anexo = form.save(commit=False)
+            anexo.projeto = projeto
+            anexo.save()
+            messages.success(request, 'Anexo adicionado com sucesso!')
+            return redirect('projeto_anexos', pk=projeto.pk)
+        else:
+            messages.error(request, 'Houve um erro ao adicionar o anexo.')
+    else:
+        form = AnexoForm()
+
+    contexto = {
+        'projeto': projeto,
+        'relatorio_submissao': relatorio_submissao,
+        'comprovante_aprovacao': comprovante_aprovacao,
+        'anexos': anexos_gerenciaveis,
+        'form': form,
+    }
+    return render(request, 'projetos_institucionais/projeto_anexos.html', contexto)
+
+
+def enviar_email_e_notificacao(subject, message, destinatario_usuario, link=None):
+    """
+    Envia um email e cria uma notificação no sistema para o usuário.
+    """
+    # Envia o email
+    send_mail(
+        subject,
+        message,
+        settings.DEFAULT_FROM_EMAIL,
+        [destinatario_usuario.email],
+    )
+    # Cria a notificação
+    Notificacao.objects.create(
+        destinatario=destinatario_usuario,
+        mensagem=message,
+        link=link
+    )
+
+
+@login_required
+def lista_notificacoes(request):
+    notificacoes = Notificacao.objects.filter(destinatario=request.user)
+    notificacoes.update(lida=True)
+    
+    return render(request, 'projetos_institucionais/notificacoes.html', {'notificacoes': notificacoes})

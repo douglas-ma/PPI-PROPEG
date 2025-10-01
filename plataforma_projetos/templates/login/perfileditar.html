@@ -1,45 +1,30 @@
 {% extends "base2.html" %}
+{% load crispy_forms_tags %}
 
 {% block title %}Editar Perfil{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container-fluid">
+    <h2 class="mb-3">Editar Perfil</h2>
+    <hr>
+    
     <div class="card shadow-sm">
-        <div class="card-header">
-            <h4 class="mb-0">Editar Perfil</h4>
-        </div>
         <div class="card-body">
             <form method="post">
                 {% csrf_token %}
                 
-                <div class="mb-3">
-                    {{ form.first_name.label_tag }}
-                    {{ form.first_name }}
-                </div>
-                <div class="mb-3">
-                    {{ form.last_name.label_tag }}
-                    {{ form.last_name }}
-                </div>
-                <div class="mb-3">
-                    {{ form.email.label_tag }}
-                    {{ form.email }}
-                </div>
-                <div class="mb-3">
-                    {{ form.telefone.label_tag }}
-                    {{ form.telefone }}
-                </div>
-                <div class="mb-3">
-                    {{ form.titulacao.label_tag }}
-                    {{ form.titulacao }}
-                </div>
-                <div class="mb-3">
-                    {{ form.centro_lotacao.label_tag }}
-                    {{ form.centro_lotacao }}
-                </div>
-                <hr>
+                <h5 class="mb-3">Informações Pessoais e Institucionais</h5>
+                {{ user_form|crispy }}
                 
-                <button type="submit" class="btn btn-success">Salvar Alterações</button>
-                <a href="{% url 'perfil' %}" class="btn btn-danger">Cancelar</a>
+                <hr class="my-4">
+                
+                <h5 class="mb-3">Endereço</h5>
+                {{ endereco_form|crispy }}
+                
+                <div class="mt-4">
+                    <a href="{% url 'perfil' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary float-end">Salvar Alterações</button>
+                </div>
             </form>
         </div>
     </div>

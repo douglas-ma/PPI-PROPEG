@@ -151,24 +151,26 @@ document.addEventListener('DOMContentLoaded', function() {
     const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
     const totalFormsInput = document.querySelector('#id_form-TOTAL_FORMS');
 
-    if (addFormBtn) {
-        addFormBtn.addEventListener('click', function() {
-            let currentFormCount = formsetContainer.children.length;
-            let newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
-            
-            formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
-            totalFormsInput.value = currentFormCount + 1;
+    if (formsetContainer){
+        if (addFormBtn) {
+            addFormBtn.addEventListener('click', function() {
+                let currentFormCount = formsetContainer.children.length;
+                let newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
+                
+                formsetContainer.insertAdjacentHTML('beforeend', newFormHtml);
+                totalFormsInput.value = currentFormCount + 1;
+            });
+        }
+
+        formsetContainer.addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('remove-form-row-btn')) {
+                const formRow = e.target.closest('.equipe-form-row');
+                const deleteCheckbox = formRow.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                }
+                formRow.style.display = 'none';
+            }
         });
     }
-
-    formsetContainer.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('remove-form-row-btn')) {
-            const formRow = e.target.closest('.equipe-form-row');
-            const deleteCheckbox = formRow.querySelector('input[type="checkbox"][name$="-DELETE"]');
-            if (deleteCheckbox) {
-                deleteCheckbox.checked = true;
-            }
-            formRow.style.display = 'none';
-        }
-    });
 });

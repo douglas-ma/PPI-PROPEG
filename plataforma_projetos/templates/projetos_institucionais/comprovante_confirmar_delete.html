@@ -1,0 +1,25 @@
+{% extends "base2.html" %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h2 class="mb-3">Confirmar Exclusão do Comprovante</h2>
+    <p>Você tem certeza que deseja excluir o comprovante do projeto: <strong>{{ projeto.titulo }}</strong>?</p>
+    <p class="text-danger">Esta ação não pode ser desfeita.</p>
+    <hr>
+    
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <p><strong>Arquivo:</strong> {{ anexo.arquivo.name }}</p>
+            <form method="post">
+                {% csrf_token %}
+                <div class="mt-4">
+                    <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-danger float-end">Sim, Excluir</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

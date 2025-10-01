@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 from projetos_institucionais.models import Usuario, Endereco
+from validate_docbr import CPF
 import re
 
 class PerfilUsuarioForm(forms.ModelForm):
@@ -27,6 +28,7 @@ class PerfilUsuarioForm(forms.ModelForm):
         self.fields['titulacao'].label = "Titulação"
         self.fields['centro_lotacao'].label = "Centro de Lotação"
 
+
 class EnderecoForm(forms.ModelForm):
     class Meta:
         model = Endereco
@@ -36,6 +38,7 @@ class EnderecoForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'
+
 
 class RegistroUsuarioForm(forms.ModelForm):
     perfil = forms.ChoiceField(
@@ -77,21 +80,36 @@ class RegistroUsuarioForm(forms.ModelForm):
     def clean_cpf(self):
         cpf = self.cleaned_data.get('cpf')
         if cpf:
-            # Remove todos os caracteres que não são dígitos
-            return re.sub(r'[^0-9]', '', cpf)
+            cpf_numeros = re.sub(r'[^0-9]', '', cpf)
+            cpf_validator = CPF()
+            if not cpf_validator.validate(cpf_numeros):
+                raise forms.ValidationError("CPF inválido. Por favor, verifique o número digitado.")
+            return cpf_numeros
         return cpf
 
     def save(self, commit=True):
         user = super().save(commit=False)
 
-        user.username = self.cleaned_data['cpf']
+        cpf_limpo = self.cleaned_data['cpf']
+        user.username = cpf_limpo
+        user.cpf = cpf_limpo
 
         user.set_password(self.cleaned_data["password"])
         if commit:
             user.save()
         return user
-    
+
+
 class UsuarioEditForm(forms.ModelForm):
     class Meta:
         model = Usuario
-        fields = ['first_name', 'last_name', 'email', 'cpf', 'perfil', 'status']
+        fields = [
+            'first_name', 'last_name', 'email', 'cpf', 'perfil', 'status'
+        ]
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['first_name'].disabled = True
+        self.fields['last_name'].disabled = True
+        self.fields['cpf'].disabled = True
+        self.fields['email'].disabled = True

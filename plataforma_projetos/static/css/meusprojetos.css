@@ -1,54 +1,115 @@
+/* --- CABEÇALHO DO DASHBOARD --- */
 .dashboard-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
+
+/* --- ABAS DE NAVEGAÇÃO --- */
 .dashboard-tabs .nav-link {
     color: #6c757d;
+    font-weight: 500;
+    border: none;
+    border-bottom: 3px solid transparent;
 }
 .dashboard-tabs .nav-link.active {
-    color: #007bff;
-    border-bottom: 2px solid #007bff;
+    color: #0d6efd;
+    background-color: transparent;
+    border-bottom: 3px solid #0d6efd;
 }
+.dashboard-tabs .nav-link .badge {
+    margin-left: 8px;
+}
+
+/* --- CONTAINER PRINCIPAL (ESTILO KANBAN) --- */
 .dashboard-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(3, 1fr); 
     gap: 1.5rem;
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 12px;
 }
+
+/* --- COLUNAS DE PROJETOS --- */
 .coluna-projetos h5 {
     margin-bottom: 1rem;
     color: #495057;
+    font-weight: 600;
+    padding-left: 0.5rem;
 }
+
+/* --- CARD DE PROJETO --- */
 .card-projeto {
-    background-color: #fff;
-    border: 1px solid #e9ecef;
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
     border-radius: 8px;
     padding: 1rem;
     margin-bottom: 1rem;
     cursor: pointer;
-    transition: box-shadow 0.2s;
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
 }
+
 .card-projeto:hover {
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
 }
+
 .card-projeto .categoria {
     font-size: 0.8rem;
+    font-weight: 500;
     color: #6c757d;
     margin-bottom: 0.25rem;
 }
-.card-projeto .descricao {
+
+.card-projeto .titulo-projeto {
     font-weight: 600;
     color: #212529;
     margin-bottom: 1rem;
 }
-.card-footer {
+
+/* --- IMAGEM OU PLACEHOLDER DO PROJETO --- */
+.imagem-projeto-container {
+    width: 100%;
+    padding-top: 56.25%;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.imagem-projeto-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Estilo do placeholder se não houver imagem */
+.imagem-placeholder {
+    font-size: 2rem;
+    color: #adb5bd;
+}
+
+/* --- RODAPÉ DO CARD --- */
+.card-footer-projeto {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #6c757d;
 }
-.card-footer i {
-    margin-left: 0.5rem;
+
+.card-footer-projeto .icones-info,
+.card-footer-projeto .menu-opcoes {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.card-footer-projeto a {
+    color: inherit;
+    text-decoration: none;
 }

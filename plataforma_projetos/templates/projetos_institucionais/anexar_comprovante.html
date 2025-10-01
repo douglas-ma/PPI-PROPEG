@@ -11,7 +11,7 @@
     
     <div class="card shadow-sm">
         <div class="card-body">
-            <form method="post" enctype="multipart/form-data">
+            <form method="post" enctype="multipart/form-data" onsubmit="return confirm('Você tem certeza que deseja anexar este arquivo como comprovante de aprovação?');">
                 {% csrf_token %}
                 {{ form|crispy }}
                 

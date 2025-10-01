@@ -1,0 +1,90 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Anexos do Projeto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">Gerenciar Anexos</h2>
+            <p class="text-muted">Projeto: {{ projeto.titulo }}</p>
+        </div>
+        <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Dashboard</a>
+    </div>
+    <hr>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header"><strong>Anexos do Projeto</strong></div>
+                <div class="card-body">
+                    
+                    {% if relatorio_submissao %}
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">Relatório de Submissão (Automático)</h5>
+                        <p class="mb-1">Este documento foi gerado pelo sistema durante a última submissão.</p>
+                        <small class="text-muted"><i class="bi bi-clock"></i> Emitido em: {{ relatorio_submissao.data_upload|date:"d/m/Y" }} às {{ relatorio_submissao.data_upload|time:"H:i" }}</small>
+                        <hr class="my-2">
+                        <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-sm btn-info">Visualizar Relatório</a>
+                    </div>
+                    {% endif %}
+
+                    {% if comprovante_aprovacao %}
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">Comprovante de Aprovação (Gestor)</h5>
+                        <p class="mb-1">Este documento foi anexado pelo gestor para confirmar a aprovação do projeto.</p>
+                        <small class="text-muted"><i class="bi bi-clock"></i> Enviado em: {{ comprovante_aprovacao.data_upload|date:"d/m/Y" }} às {{ comprovante_aprovacao.data_upload|time:"H:i" }}</small>
+                        <hr class="my-2">
+                        <a href="{{ comprovante_aprovacao.arquivo.url }}" target="_blank" class="btn btn-sm btn-success">Visualizar Comprovante</a>
+                    </div>
+                    {% endif %}
+
+                    <h6>Documentos Adicionais</h6>
+                    <ul class="list-group list-group-flush">
+                        {% for anexo in anexos %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>{{ anexo.get_tipo_anexo_display }}</strong>
+                                    <small class="d-block text-muted">{{ anexo.descricao|default:"Sem descrição." }}</small>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="btn btn-outline-primary btn-sm me-2">
+                                        <i class="bi bi-eye"></i> Visualizar
+                                    </a>
+                                    {% if user == projeto.coordenador %}
+                                    <form action="{% url 'deletar_anexo' anexo.pk %}" method="post" onsubmit="return confirm('Tem certeza que deseja excluir este anexo?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger btn-sm" title="Excluir Anexo">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </li>
+                        {% empty %}
+                            <li class="list-group-item text-muted">Nenhum anexo adicional foi enviado.</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        {% if user == projeto.coordenador %}
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header"><strong>Adicionar Novo Anexo</strong></div>
+                <div class="card-body">
+                    <p class="small text-muted">Use este formulário para enviar documentos como cronogramas, aprovações de comitê de ética, etc.</p>
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {{ form|crispy }}
+                        <button type="submit" class="btn btn-primary mt-3 float-end">Enviar Anexo</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

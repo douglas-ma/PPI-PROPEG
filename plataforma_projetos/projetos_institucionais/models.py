@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
+from validate_docbr import CPF
 
 class UsuarioManager(BaseUserManager):
     """
@@ -10,6 +11,10 @@ class UsuarioManager(BaseUserManager):
     def create_user(self, cpf, username, email, password, **extra_fields):
         if not cpf:
             raise ValueError('O CPF deve ser fornecido')
+        cpf_validator = CPF()
+        cpf_numeros = ''.join(filter(str.isdigit, cpf))
+        if not cpf_validator.validate(cpf_numeros):
+            raise ValueError('O CPF fornecido é inválido.')
         if not username:
             raise ValueError('O nome de usuário (username) é obrigatório')
         if not email:
@@ -301,6 +306,13 @@ class Projeto(models.Model):
     palavras_chave = models.CharField(max_length=255, blank=True, null=True, help_text="Separe por vírgulas. Ex.: Tecnologia, Educação, Web")
     parcerias = models.TextField(blank=True, null=True)
 
+    imagem_capa = models.ImageField(
+        upload_to='projetos_capas/',
+        null=True,
+        blank=True,
+        verbose_name="Imagem de Capa",
+    )
+
     def __str__(self):
         return self.titulo or f"Projeto Rascunho (ID: {self.id})"
     
@@ -376,6 +388,7 @@ class Anexo(models.Model):
         ('imagens', 'Figuras, Imagens, etc.'),
         ('projeto_completo', 'Projeto Completo'),
         ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
+        ('relatorio_submissao', 'Relatório de Submissão (Automático)'),
         ('outro', 'Outro'),
     )
 
@@ -430,3 +443,23 @@ class Relatorio(models.Model):
     class Meta:
         verbose_name = "Relatório"
         verbose_name_plural = "Relatórios"
+
+
+class Notificacao(models.Model):
+    destinatario = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='notificacoes',
+    )
+    mensagem = models.TextField()
+    lida = models.BooleanField(default=False)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+    link = models.URLField(blank=True, null=True, help_text="Link para a página relevante, se houver.")
+
+    def __str__(self):
+        return f"Notificação para {self.destinatario.username}: {self.mensagem[:30]}"
+
+    class Meta:
+        ordering = ['-data_criacao']
+        verbose_name = "Notificação"
+        verbose_name_plural = "Notificações"

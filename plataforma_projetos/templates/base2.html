@@ -6,6 +6,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}{% endblock %} - PROPEG</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
@@ -129,9 +130,14 @@
                 </a>
                 {% endif %}
                 <div class="d-flex align-items-center">
-                    <a href="#" class="text-dark position-relative me-3">
+                    <a href="{% url 'lista_notificacoes' %}" class="text-dark position-relative me-3">
                         <i class="bi bi-bell fs-4"></i>
-                        <!-- <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"></span> # ÍCONE DE NOTIFICAÇÂO DO SINO -->
+                        {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ unread_notifications_count }}
+                            <span class="visually-hidden">notificações não lidas</span>
+                        </span>
+                        {% endif %}
                     </a>
                     {% if user.is_authenticated %}
                     <div class="dropdown dropup">

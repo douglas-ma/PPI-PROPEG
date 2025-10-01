@@ -1,0 +1,241 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Projeto: {{ projeto.titulo }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 3cm 2cm 2cm 3cm;
+            
+            @top-center {
+                content: element(header);
+            }
+
+            @bottom-right {
+                content: "Página " counter(page);
+                font-size: 10pt;
+            }
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+            text-align: justify;
+            counter-reset: h2;
+        }
+
+        .header {
+            position: running(header);
+            text-align: center;
+            font-size: 10pt;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+            margin-bottom: 1cm;
+        }
+
+        .header img {
+            height: 50px;
+            margin-bottom: 5px;
+        }
+
+        .capa {
+            text-align: center;
+            page-break-after: always;
+        }
+        .capa .universidade { font-size: 14pt; }
+        .capa .proreitoria { font-size: 12pt; }
+        .capa h1 {
+            font-family: Arial, sans-serif;
+            font-size: 16pt;
+            margin-top: 4cm;
+            margin-bottom: 4cm;
+        }
+        .capa .coordenador { margin-top: 4cm; }
+        .capa .local-data {
+            position: absolute;
+            bottom: 3cm;
+            left: 0;
+            right: 0;
+        }
+        .quebra-pagina { page-break-before: always; }
+
+        .sumario a {
+            text-decoration: none;
+            color: black;
+        }
+        .sumario ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        .sumario li {
+            margin-bottom: 10px;
+        }
+        .sumario a::after {
+            content: leader('.') target-counter(attr(href), page);
+        }
+
+        h2 {
+            font-family: Arial, sans-serif;
+            font-size: 13pt;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 18pt;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 3px;
+        }
+
+        h2::before {
+            counter-increment: h2;
+            content: counter(h2) ". ";
+        }
+        
+        p { margin-bottom: 12pt; }
+        strong { font-weight: bold; }
+
+        /* --- ESTILOS DAS TABELAS --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18pt;
+        }
+        th, td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .tabela-info td:first-child {
+            font-weight: bold;
+            width: 30%;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo da Universidade">
+        <div>UNIVERSIDADE FEDERAL DO ACRE</div>
+        <div>PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO - PROPEG</div>
+    </div>
+
+    <div class="capa">
+        <p class="universidade">UNIVERSIDADE FEDERAL DO ACRE</p>
+        <p class="proreitoria">PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO - PROPEG</p>
+        
+        <h1>{{ projeto.titulo }}</h1>
+        
+        <p class="coordenador"><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
+        
+        <div class="local-data">
+            <p>Rio Branco, Acre</p>
+            <p>{{ projeto.data_inicio|date:"Y" }}</p>
+        </div>
+    </div>
+
+    <div class="sumario">
+        <h2 style="text-align: center; border: none;">SUMÁRIO</h2>
+        <ul>
+            <li><a href="#info-gerais">INFORMAÇÕES GERAIS</a></li>
+            <li><a href="#detalhes-projeto">DETALHES DO PROJETO</a></li>
+            <li><a href="#vinculo-institucional">VÍNCULO INSTITUCIONAL</a></li>
+            <li><a href="#aspectos-eticos">ASPECTOS ÉTICOS E FINANCIAMENTO</a></li>
+            <li><a href="#equipe">EQUIPE DE TRABALHO</a></li>
+            <li><a href="#ods">VÍNCULO COM ODS</a></li>
+        </ul>
+    </div>
+
+    <div class="quebra-pagina">
+        <h2 id="info-gerais">INFORMAÇÕES GERAIS</h2>
+        <table class="tabela-info">
+            <tr><td>Título do Projeto:</td><td>{{ projeto.titulo }}</td></tr>
+            <tr><td>Coordenador(a):</td><td>{{ projeto.coordenador.get_full_name }}</td></tr>
+            <tr><td>Vigência:</td><td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>
+            <tr><td>É docente?</td><td>{% if projeto.eh_docente %}Sim{% else %}Não{% endif %}</td></tr>
+            <tr><td>É pesquisador?</td><td>{% if projeto.eh_pesquisador %}Sim{% else %}Não{% endif %}</td></tr>
+            <tr><td>É pesquisador visitante?</td><td>{% if projeto.eh_pesquisador_visitante %}Sim{% else %}Não{% endif %}</td></tr>
+        </table>
+
+        <h2 id="detalhes-projeto">DETALHES DO PROJETO</h2>
+        <p><strong>Resumo:</strong> {{ projeto.resumo|linebreaksbr }}</p>
+        <p><strong>Palavras-chave:</strong> {{ projeto.palavras_chave }}</p>
+        <p><strong>Introdução:</strong> {{ projeto.introducao|linebreaksbr }}</p>
+        <p><strong>Objetivos:</strong> {{ projeto.objetivos|linebreaksbr }}</p>
+        <p><strong>Metodologia:</strong> {{ projeto.metodologia|linebreaksbr }}</p>
+        <p><strong>Resultados e/ou Impactos Esperados:</strong> {{ projeto.resultados|linebreaksbr }}</p>
+        <p><strong>Parcerias:</strong> {{ projeto.parcerias|default:"Nenhuma parceria informada."|linebreaksbr }}</p>
+        <p><strong>Referências:</strong> {{ projeto.referencias|default:"Nenhuma referência informada."|linebreaksbr }}</p>
+
+        <h2 id="vinculo-institucional">VÍNCULO INSTITUCIONAL</h2>
+        <table class="tabela-info">
+            <tr><td>Centro de Lotação:</td><td>{{ projeto.centro_lotacao }}</td></tr>
+            <tr><td>Curso de Graduação:</td><td>{{ projeto.curso|default:"Não se aplica" }}</td></tr>
+            <tr><td>Participa de Pós-Graduação?</td><td>{% if projeto.participa_pos_graduacao %}Sim{% else %}Não{% endif %}</td></tr>
+            {% if projeto.participa_pos_graduacao %}
+            <tr><td>Programa de Pós-Graduação:</td><td>{{ projeto.programa_pos }}</td></tr>
+            {% endif %}
+            <tr><td>Grupos de Pesquisa:</td>
+                <td>
+                    {% for grupo in projeto.grupos_pesquisa.all %}
+                        - {{ grupo.nome }}<br>
+                    {% empty %}
+                        Nenhum
+                    {% endfor %}
+                </td>
+            </tr>
+        </table>
+
+        <h2 id="aspectos-eticos">ASPECTOS ÉTICOS E FINANCIAMENTO</h2>
+        <table class="tabela-info">
+            <tr><td>Agência Financiadora:</td><td>{{ projeto.agencia_financiadora|default:"Não possui financiamento externo" }}</td></tr>
+            <tr><td>Valor do Fomento:</td><td>R$ {{ projeto.valor_fomento|default:"0,00" }}</td></tr>
+            <tr><td>Envolve Aspectos Éticos?</td><td>{% if projeto.etica_obrigatoria %}Sim{% else %}Não{% endif %}</td></tr>
+            {% if projeto.etica_obrigatoria %}
+            <tr><td>Tipo de Comitê de Ética:</td><td>{{ projeto.tipo_etica }}</td></tr>
+            {% endif %}
+        </table>
+
+        <h2 id="equipe">EQUIPE DE TRABALHO</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome Completo</th>
+                    <th>CPF</th>
+                    <th>Curso</th>
+                    <th>Carga Horária Semanal</th>
+                    <th>Carga Horária Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for membro_equipe in projeto.equipe.all %}
+                <tr>
+                    <td>{{ membro_equipe.membro.get_full_name }}</td>
+                    <td>{{ membro_equipe.membro.cpf }}</td>
+                    <td>{{ membro_equipe.membro.curso|default:"N/A" }}</td>
+                    <td>{{ membro_equipe.carga_horaria_semanal }}h</td>
+                    <td>{{ membro_equipe.carga_horaria_total }}h</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" style="text-align: center;">Nenhum membro na equipe.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <h2 id="ods">VÍNCULO COM OBJETIVOS DE DESENVOLVIMENTO SUSTENTÁVEL (ODS)</h2>
+        <ul>
+            {% for ods in projeto.ods.all %}
+            <li>{{ ods.titulo }}</li>
+            {% empty %}
+            <li>Nenhum ODS vinculado.</li>
+            {% endfor %}
+        </ul>
+
+    </div>
+</body>
+</html>

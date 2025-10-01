@@ -116,6 +116,34 @@ class Etapa6_RevisaoForm(forms.Form):
     pass
 
 
+class CoordenadorProfileForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = [
+            'first_name', 'last_name', 'email', 'telefone', 'titulacao', 'centro_lotacao', 'regime_trabalho'
+        ]
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'titulacao': 'Titulação Máxima',
+            'centro_lotacao': 'Centro de Lotação',
+            'regime_trabalho': 'Regime de Trabalho (Ex: 20h, 40h, DE)',
+        }
+
+
+class AlunoProfileForm(forms.ModelForm):
+    class Meta:
+        model = Usuario
+        fields = [
+            'first_name', 'last_name', 'email', 'telefone', 'curso'
+        ]
+        labels = {
+            'first_name': 'Nome',
+            'last_name': 'Sobrenome',
+            'curso': 'Curso de Graduação',
+        }
+
+
 class AnexoComprovanteForm(forms.ModelForm):
     class Meta:
         model = Anexo
@@ -125,12 +153,32 @@ class AnexoComprovanteForm(forms.ModelForm):
             'descricao': 'Descrição (opcional)',
         }
 
+
 class UsuarioAlunoEditForm(forms.ModelForm):
     class Meta:
         model = Usuario
         fields = ['first_name', 'last_name', 'telefone']
 
+
 class EnderecoForm(forms.ModelForm):
     class Meta:
         model = Endereco
         exclude = ['id']
+
+
+class AnexoForm(forms.ModelForm):
+    class Meta:
+        model = Anexo
+        fields = ['tipo_anexo', 'arquivo', 'descricao']
+        labels = {
+            'tipo_anexo': 'Tipo de Anexo',
+            'arquivo': 'Selecione o arquivo',
+            'descricao': 'Descrição (opcional)',
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        tipos_excluidos = ['comprovante_aprovacao', 'relatorio_submissao']
+        self.fields['tipo_anexo'].choices = [
+            (k, v) for k, v in self.fields['tipo_anexo'].choices if k not in tipos_excluidos
+        ]

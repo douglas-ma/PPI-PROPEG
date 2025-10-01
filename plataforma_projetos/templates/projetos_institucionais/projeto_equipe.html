@@ -1,0 +1,68 @@
+{% extends "base2.html" %}
+
+{% block title %}Equipe do Projeto{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h2 class="mb-0">Equipe do Projeto</h2>
+            <p class="text-muted">Projeto: {{ projeto.titulo }}</p>
+        </div>
+        <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Dashboard</a>
+    </div>
+    <hr>
+    
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <strong>Membros</strong>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Nome Completo</th>
+                            <th scope="col">Papel</th>
+                            <th scope="col">CPF</th>
+                            <th scope="col">Curso</th>
+                            <th scope="col">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>{{ projeto.coordenador.get_full_name }}</td>
+                            <td><span class="badge bg-primary">Coordenador(a)</span></td>
+                            <td>{{ projeto.coordenador.cpf }}</td>
+                            <td>N/A</td>
+                            <td>
+                                <a href="{% url 'visualizar_perfil' projeto.coordenador.pk %}" class="btn btn-sm btn-outline-primary" title="Visualizar Perfil do Usuário">
+                                    <i class="bi bi-eye-fill"></i> Visualizar
+                                </a>
+                            </td>
+                        </tr>
+                        
+                        {% for membro_equipe in projeto.equipe.all %}
+                        <tr>
+                            <td>{{ membro_equipe.membro.get_full_name }}</td>
+                            <td><span class="badge bg-secondary">Membro da Equipe</span></td>
+                            <td>{{ membro_equipe.membro.cpf }}</td>
+                            <td>{{ membro_equipe.membro.curso|default:"Não informado" }}</td>
+                            <td>
+                                <a href="{% url 'visualizar_perfil' membro_equipe.membro.pk %}" class="btn btn-sm btn-outline-primary" title="Visualizar Perfil do Usuário">
+                                    <i class="bi bi-eye-fill"></i> Visualizar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Nenhum aluno vinculado à equipe.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

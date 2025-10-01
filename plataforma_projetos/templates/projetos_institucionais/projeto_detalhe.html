@@ -10,6 +10,19 @@
             <span class="badge bg-primary fs-6">{{ projeto.get_status_display }}</span>
         </div>
         <div>
+            {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
+                <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-warning me-2">
+                    <i class="bi bi-pencil-square"></i> Editar e Ressubmeter Projeto
+                </a>
+            {% endif %}
+            {% if user.perfil == 'gestor' and projeto.status == 'submetido' %}
+                <form action="{% url 'encaminhar_para_conselho' projeto.pk %}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja encaminhar este projeto para o conselho?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-info me-2">
+                        <i class="bi bi-send-fill"></i> Encaminhar ao Conselho
+                    </button>
+                </form>
+            {% endif %}
             <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Painel do Gestor</a>
         </div>
     </div>
@@ -38,11 +51,14 @@
                     <h5>Resultados e/ou Impactos Esperados</h5>
                     <p class="text-muted">{{ projeto.resultados|linebreaksbr }}</p>
                     <hr>
+                    <h5>Parcerias</h5>
+                    <p class="text-muted">{{ projeto.parcerias|default:"Nenhuma parceria informada."|linebreaksbr }}</p>
+                    <hr>
                     <h5>Referências</h5>
                     <p class="text-muted">{{ projeto.referencias|linebreaksbr }}</p>
                 </div>
             </div>
-
+            
             <div class="card shadow-sm mb-4">
                 <div class="card-header"><strong>Equipe do Projeto</strong></div>
                 <ul class="list-group list-group-flush">
@@ -83,14 +99,21 @@
                 <div class="card-body">
                     {% if comprovante %}
                     <div class="alert alert-success">
-                        <h5 class="alert-heading">Projeto Aprovado</h5>
-                        <p>O comprovante de aprovação foi anexado pelo gestor.</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h5 class="alert-heading mb-0">Projeto Aprovado</h5>
+                            </div>
+                            <div>
+                                <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-success btn-sm">
+                                    <i class="bi bi-file-earmark-check-fill"></i> Baixar
+                                </a>
+                                <a href="{% url 'deletar_anexo' comprovante.pk %}" class="btn btn-danger btn-sm">
+                                    <i class="bi bi-trash-fill"></i> Excluir
+                                </a>
+                            </div>
+                        </div>
                         <hr>
-                        <p class="mb-0">
-                            <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-success">
-                                <i class="bi bi-file-earmark-check-fill"></i> Baixar Comprovante
-                            </a>
-                        </p>
+                        <p class="mb-0">O comprovante de aprovação foi anexado pelo gestor.</p>
                     </div>
                     {% endif %}
 
@@ -103,6 +126,9 @@
                                 {% if anexo.descricao %}
                                 <small class="text-muted d-block">{{ anexo.descricao }}</small>
                                 {% endif %}
+                                <small class="text-secondary d-block mt-1">
+                                    <i class="bi bi-clock"></i> Enviado em {{ anexo.data_upload|date:"d/m/Y" }} às {{ anexo.data_upload|time:"H:i" }}
+                                </small>
                             </div>
                             <a href="{{ anexo.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                                 Ver Arquivo
@@ -126,6 +152,16 @@
                     <li class="list-group-item"><strong>Email:</strong><br>{{ projeto.coordenador.email }}</li>
                     <li class="list-group-item"><strong>Vigência:</strong><br>{{ projeto.data_inicio|date:"d/m/Y" }} a
                         {{ projeto.data_fim|date:"d/m/Y" }}</li>
+                    {% if relatorio_submissao %}
+                    <li class="list-group-item">
+                        <strong>Última Submissão:</strong><br>
+                        {{ relatorio_submissao.data_upload|date:"d/m/Y" }} às {{ relatorio_submissao.data_upload|time:"H:i" }}
+                        <br>
+                        <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                            Ver Relatório de Submissão
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
 

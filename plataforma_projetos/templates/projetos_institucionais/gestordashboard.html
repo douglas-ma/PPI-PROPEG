@@ -6,18 +6,17 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="mb-0">Painel do Gestor</h2>
-        <p class="text-muted mb-0">Bem-vindo, {{ user.get_full_name|default:user.username }}.</p>
     </div>
     <p>Abaixo estão os projetos que aguardam sua avaliação.</p>
     <hr>
 
-    <div class="card shadow-sm">
+    <div class="card shadow-sm mt-4">
         <div class="card-header">
-            <strong>Projetos Submetidos</strong>
+            <h5 class="mb-0">Projetos Submetidos</h5>
         </div>
-        <div class="card-body p-0">
+        <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover">
                     <thead>
                         <tr>
                             <th>Título do Projeto</th>
@@ -58,6 +57,60 @@
                         {% empty %}
                         <tr>
                             <td colspan="4" class="text-center">Não há projetos pendentes de avaliação no momento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Projetos Aguardando Aprovação do Conselho</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Título do Projeto</th>
+                            <th>Coordenador</th>
+                            <th>Data de Submissão</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for projeto in projetos_aguardando_conselho %}
+                        <tr>
+                            <td>{{ projeto.titulo }}</td>
+                            <td>{{ projeto.coordenador.get_full_name }}</td>
+                            <td>{{ projeto.anexos.first.data_upload|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-eye-fill"></i> Detalhes
+                                </a>
+                                <a href="{% url 'anexar_comprovante' pk=projeto.pk %}" class="btn btn-sm btn-warning"
+                                    title="Anexar Comprovante">
+                                    <i class="bi bi-paperclip"></i>
+                                </a>
+                                <a href="{% url 'aprovar_projeto' pk=projeto.pk %}"
+                                    class="btn btn-sm btn-success btn-confirm-action" data-bs-toggle="modal"
+                                    data-bs-target="#confirmationModal" data-action-title="Aprovar Projeto"
+                                    data-projeto-titulo="{{ projeto.titulo }}">
+                                    <i class="bi bi-check-lg"></i> Aprovar
+                                </a>
+                                <a href="{% url 'reprovar_projeto' pk=projeto.pk %}"
+                                    class="btn btn-sm btn-danger btn-confirm-action" data-bs-toggle="modal"
+                                    data-bs-target="#confirmationModal" data-action-title="Reprovar Projeto"
+                                    data-projeto-titulo="{{ projeto.titulo }}">
+                                    <i class="bi bi-x-lg"></i> Reprovar
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhum projeto aguardando aprovação do conselho.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

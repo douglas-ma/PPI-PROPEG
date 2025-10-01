@@ -3,6 +3,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import PerfilUsuarioForm, EnderecoForm, RegistroUsuarioForm
+from projetos_institucionais.forms import CoordenadorProfileForm, AlunoProfileForm
 import re
 
 def login_view(request):
@@ -60,20 +61,45 @@ def registro_view(request):
 
 @login_required
 def perfil_view(request):
-    return render(request, 'login/perfilusuario.html')
+    contexto = {
+        'usuario': request.user
+    }
+    return render(request, 'login/perfilusuario.html', contexto)
 
 @login_required
 def perfil_editar_view(request):
+    user = request.user
+    user_form_class = None
+
+    if user.perfil == 'coordenador':
+        user_form_class = CoordenadorProfileForm
+    elif user.perfil == 'aluno':
+        user_form_class = AlunoProfileForm
+    else:
+        messages.info(request, 'Seu perfil é gerenciado pelo sistema.')
+        return redirect('perfil')
+
+    endereco_instance = user.endereco if hasattr(user, 'endereco') else None
+
     if request.method == 'POST':
-        form = PerfilUsuarioForm(request.POST, instance=request.user)
-        if form.is_valid():
-            form.save()
+        user_form = user_form_class(request.POST, instance=user)
+        endereco_form = EnderecoForm(request.POST, instance=endereco_instance)
+        
+        if user_form.is_valid() and endereco_form.is_valid():
+            endereco = endereco_form.save()
+            usuario = user_form.save(commit=False)
+            usuario.endereco = endereco
+            usuario.save()
+
             messages.success(request, 'Seu perfil foi atualizado com sucesso!')
             return redirect('perfil')
     else:
-        form = PerfilUsuarioForm(instance=request.user)
+        user_form = user_form_class(instance=user)
+        endereco_form = EnderecoForm(instance=endereco_instance)
+
     contexto = {
-        'form': form
+        'user_form': user_form,
+        'endereco_form': endereco_form,
     }
     return render(request, 'login/perfileditar.html', contexto)
 
