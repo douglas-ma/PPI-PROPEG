@@ -17,13 +17,25 @@
     </div>
 
     <ul class="nav nav-tabs dashboard-tabs mb-4">
-        <li class="nav-item"><a class="nav-link active" href="#">Visão Geral <span class="badge bg-secondary">{{ projetos_em_andamento.count|add:projetos_em_revisao.count|add:projetos_arquivados.count }}</span></a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Projetos em Andamento <span class="badge bg-primary">{{ projetos_em_andamento.count }}</span></a></li>
-        <li class="nav-item"><a class="nav-link" href="#">Projetos em Revisão <span class="badge bg-warning text-dark">{{ projetos_em_revisao.count }}</span></a></li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'visao_geral' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=visao_geral">Visão Geral</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'em_andamento' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=em_andamento">Projetos em Andamento</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'em_revisao' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=em_revisao">Projetos em Revisão</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'rejeitados' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=rejeitados">Projetos Rejeitados</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if active_tab == 'finalizados' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=finalizados">Projetos Finalizados</a>
+        </li>    
     </ul>
 
+    {% if active_tab == 'visao_geral' %}
     <div class="dashboard-container">
-        
         <div class="coluna-projetos">
             <h5>Em Andamento</h5>
             {% for projeto in projetos_em_andamento %}
@@ -43,44 +55,22 @@
         </div>
         
         <div class="coluna-projetos">
-            <h5>Projetos Arquivados</h5>
-            {% for projeto in projetos_arquivados %}
+            <h5>Projetos Rejeitados</h5>
+            {% for projeto in projetos_rejeitados %}
                 {% include 'projetos_institucionais/partials/projeto_card.html' %}
             {% empty %}
-                <p>Nenhum projeto arquivado.</p>
+                <p>Nenhum projeto rejeitado.</p>
             {% endfor %}
         </div>
-
     </div>
+    {% else %}
+        {% include 'projetos_institucionais/partials/_projeto_table.html' %}
+    {% endif %}
 </div>
 
 
-{% for projeto in projetos_em_andamento|add:projetos_em_revisao|add:projetos_arquivados %}
-<div class="modal fade" id="detalheProjetoModal-{{ projeto.pk }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ projeto.titulo }}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p><strong>Status:</strong> <span class="badge bg-info">{{ projeto.get_status_display }}</span></p>
-                <p><strong>Coordenador:</strong> {{ projeto.coordenador.get_full_name }}</p>
-                <p><strong>Período:</strong> {{ projeto.data_inicio|date:"d/m/Y" }} até {{ projeto.data_fim|date:"d/m/Y" }}</p>
-                <hr>
-                <h6>Resumo</h6>
-                <p>{{ projeto.resumo }}</p>
-                <hr>
-                <h6>Objetivos</h6>
-                <p>{{ projeto.objetivos }}</p>
-                </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <a href="{% url 'projeto_editar' pk=projeto.pk %}" class="btn btn-primary">Editar Projeto</a>
-            </div>
-        </div>
-    </div>
-</div>
+{% for projeto in todos_os_projetos %}
+    {% include 'projetos_institucionais/partials/modals.html' with projeto=projeto AnexoForm=AnexoForm %}
 {% endfor %}
 
 {% endblock %}

@@ -14,9 +14,10 @@
 
     <div class="card-footer-projeto">
         <div class="icones-info">
-            <a href="{% url 'projeto_equipe' projeto.pk %}" class="btn btn-link text-secondary p-0" title="Ver Equipe" onclick="event.stopPropagation();">
+            <button type="button" class="btn btn-link text-secondary p-0" data-bs-toggle="modal" data-bs-target="#equipeModal-{{ projeto.pk }}" title="Ver Equipe" onclick="event.stopPropagation();">
                 <i class="fas fa-users"></i>
-            </a>
+            </button>
+            
             <a href="{% url 'projeto_anexos' projeto.pk %}" class="btn btn-link text-secondary p-0" title="Gerenciar Anexos" onclick="event.stopPropagation();">
                 <i class="fas fa-paperclip"></i>
             </a>

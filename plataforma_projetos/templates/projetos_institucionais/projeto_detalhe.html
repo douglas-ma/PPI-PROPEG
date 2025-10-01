@@ -7,7 +7,19 @@
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
             <h2 class="mb-0">{{ projeto.titulo }}</h2>
-            <span class="badge bg-primary fs-6">{{ projeto.get_status_display }}</span>
+            <span class="badge fs-6
+                {% if projeto.status == 'reprovado' %}
+                    bg-danger
+                {% elif projeto.status == 'em_andamento' %}
+                    bg-success
+                {% elif projeto.status == 'submetido' or projeto.status == 'aguardando_conselho' %}
+                    bg-warning text-dark
+                {% elif projeto.status == 'encerrado' %}
+                    bg-dark
+                {% else %}
+                    bg-primary
+                {% endif %}">
+                {{ projeto.get_status_display }}</span>
         </div>
         <div>
             {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
@@ -23,7 +35,11 @@
                     </button>
                 </form>
             {% endif %}
+            {% if user.perfil == 'gestor' %}
             <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Painel do Gestor</a>
+            {% elif user.perfil == 'coordenador' %}
+            <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary">Voltar aos Meus Projetos</a>
+            {% endif %}
         </div>
     </div>
     <hr>
@@ -64,11 +80,10 @@
                 <ul class="list-group list-group-flush">
                     {% for membro_equipe in projeto.equipe.all %}
                     <li class="list-group-item">
-                        <p class="mb-1"><strong>Membro:</strong> {{ membro_equipe.membro.get_full_name }} ({{
-                            membro_equipe.membro.perfil }})</p>
+                        <p class="mb-1"><strong>Membro:</strong> {{ membro_equipe.membro.get_full_name }} ({{ membro_equipe.membro.get_perfil_display }})</p>
                         <small class="text-muted">
                             <strong>CPF:</strong> {{ membro_equipe.membro.cpf }} |
-                            <strong>Curso:</strong> {{ membro_equipe.membro.curso|default:"Não informado" }} |
+                            <strong>Curso:</strong> {{ membro_equipe.membro.curso.nome|default:"Não informado" }} |
                             <strong>Carga Horária:</strong> {{ membro_equipe.carga_horaria_semanal }}h/semana
                         </small>
                     </li>
@@ -169,9 +184,8 @@
                 <div class="card-header"><strong>Vínculo Institucional</strong></div>
                 <ul class="list-group list-group-flush">
                     <li class="list-group-item"><strong>Centro de Lotação:</strong><br>{{ projeto.centro_lotacao }}</li>
-                    <li class="list-group-item"><strong>Curso:</strong><br>{{ projeto.curso }}</li>
-                    <li class="list-group-item"><strong>Programa de Pós-Graduação:</strong><br>{{
-                        projeto.programa_pos|default:"Não participa" }}</li>
+                    <li class="list-group-item"><strong>Curso:</strong><br>{{ projeto.curso.nome|default:"Não informado" }}</li>
+                    <li class="list-group-item"><strong>Programa de Pós-Graduação:</strong><br>{{ projeto.programa_pos.nome|default:"Não participa" }}</li>
                     <li class="list-group-item"><strong>Grupos de Pesquisa:</strong><br>
                         {% for grupo in projeto.grupos_pesquisa.all %}
                         <span class="badge bg-secondary">{{ grupo.nome }}</span>
@@ -185,11 +199,9 @@
             <div class="card shadow-sm mb-4">
                 <div class="card-header"><strong>Financiamento e Ética</strong></div>
                 <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Agência Financiadora:</strong><br>{{
-                        projeto.agencia_financiadora|default:"N/A" }}</li>
-                    <li class="list-group-item"><strong>Valor do Fomento:</strong><br>R$ {{
-                        projeto.valor_fomento|default:"0,00" }}</li>
-                    <li class="list-group-item"><strong>Envolve Aspectos Éticos:</strong><br>{% if projeto.etica_obrigatoria %}Sim ({{ projeto.tipo_etica }}){% else %}Não{% endif %}</li>
+                    <li class="list-group-item"><strong>Agência Financiadora:</strong><br>{{ projeto.agencia_financiadora.nome|default:"N/A" }}</li>
+                    <li class="list-group-item"><strong>Valor do Fomento:</strong><br>R$ {{ projeto.valor_fomento|default:"0,00" }}</li>
+                    <li class="list-group-item"><strong>Envolve Aspectos Éticos:</strong><br>{% if projeto.etica_obrigatoria %}Sim ({{ projeto.tipo_etica.nome }}){% else %}Não{% endif %}</li>
                 </ul>
             </div>
         </div>

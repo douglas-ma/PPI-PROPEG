@@ -1,0 +1,74 @@
+<div class="modal fade" id="detalheProjetoModal-{{ projeto.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ projeto.titulo }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p><strong>Status:</strong> <span class="badge bg-info">{{ projeto.get_status_display }}</span></p>
+                <p><strong>Coordenador:</strong> {{ projeto.coordenador.get_full_name }}</p>
+                <p><strong>Período:</strong> {{ projeto.data_inicio|date:"d/m/Y" }} até {{ projeto.data_fim|date:"d/m/Y" }}</p>
+                <hr>
+                <h6>Resumo</h6>
+                <p>{{ projeto.resumo }}</p>
+                <hr>
+                <h6>Objetivos</h6>
+                <p>{{ projeto.objetivos }}</p>
+                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                <a href="{% url 'projeto_editar' pk=projeto.pk %}" class="btn btn-primary">Editar Projeto</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="equipeModal-{{ projeto.pk }}" tabindex="-1" aria-labelledby="equipeModalLabel-{{ projeto.pk }}" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="equipeModalLabel-{{ projeto.pk }}">Equipe do Projeto: {{ projeto.titulo }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Nome Completo</th>
+                                    <th scope="col">Papel</th>
+                                    <th scope="col">CPF</th>
+                                    <th scope="col">Curso</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ projeto.coordenador.get_full_name }}</td>
+                                    <td><span class="badge bg-primary">Coordenador(a)</span></td>
+                                    <td>{{ projeto.coordenador.cpf }}</td>
+                                    <td>N/A</td>
+                                </tr>
+                                
+                                {% for membro_equipe in projeto.equipe.all %}
+                                <tr>
+                                    <td>{{ membro_equipe.membro.get_full_name }}</td>
+                                    <td><span class="badge bg-secondary">Membro da Equipe</span></td>
+                                    <td>{{ membro_equipe.membro.cpf }}</td>
+                                    <td>{{ membro_equipe.membro.curso|default:"Não informado" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">Nenhum aluno vinculado à equipe.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>

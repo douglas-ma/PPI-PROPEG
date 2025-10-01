@@ -32,7 +32,6 @@ urlpatterns = [
     path('projetos/<int:pk>/reprovar/', views.reprovar_projeto, name='reprovar_projeto'),
     path('projetos/<int:pk>/adicionar_anexo/', views.adicionar_anexo, name='adicionar_anexo'),
     path('projetos/<int:pk>/anexar-comprovante/', views.anexar_comprovante, name='anexar_comprovante'),
-    path('projetos/<int:pk>/equipe/', views.projeto_equipe, name='projeto_equipe'),
     path('projetos/<int:pk>/anexos/', views.projeto_anexos, name='projeto_anexos'),
     path('projetos/<int:pk>/encaminhar-conselho/', views.encaminhar_para_conselho, name='encaminhar_para_conselho'),
     path('projetos/anexo/<int:anexo_id>/deletar/', views.deletar_anexo, name='deletar_anexo'),

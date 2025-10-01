@@ -237,18 +237,43 @@ def projeto_deletar(request, pk):
 @login_required
 @coordenador_required
 def projeto_dashboard(request):
-    projetos = Projeto.objects.filter(coordenador=request.user)
-
-    projetos_em_andamento = projetos.filter(status='em_andamento')
-    projetos_em_revisao = projetos.filter(Q(status='submetido') | Q(status='aguardando_conselho'))
-    projetos_arquivados = projetos.filter(Q(status='encerrado') | Q(status='reprovado'))
-
+    active_tab = request.GET.get('tab', 'visao_geral')
     contexto = {
-        'projetos_em_andamento': projetos_em_andamento,
-        'projetos_em_revisao': projetos_em_revisao,
-        'projetos_arquivados': projetos_arquivados,
+        'active_tab': active_tab,
         'AnexoForm': AnexoForm(),
     }
+
+    if active_tab == 'visao_geral':
+        projetos_em_andamento = Projeto.objects.filter(status='em_andamento')
+        projetos_em_revisao = Projeto.objects.filter(Q(status='submetido') | Q(status='aguardando_conselho'))
+        projetos_rejeitados = Projeto.objects.filter(status='reprovado')
+
+        contexto.update({
+            'projetos_em_andamento': projetos_em_andamento,
+            'projetos_em_revisao': projetos_em_revisao,
+            'projetos_rejeitados': projetos_rejeitados,
+        })
+        todos_os_projetos = list(projetos_em_andamento) + list(projetos_em_revisao)
+        contexto['todos_os_projetos'] = todos_os_projetos
+    else:
+        status_map = {
+            'em_andamento': (['em_andamento'], 'Projetos em Andamento'),
+            'em_revisao': (['submetido','aguardando_conselho'], 'Projetos em Revisão'),
+            'finalizados': (['encerrado'], 'Projetos Finalizados'),
+            'rejeitados': (['reprovado'], 'Projetos Rejeitados'),
+        }
+
+        status_filter, table_title = status_map.get(active_tab, ([], ''))
+        if status_filter:
+            lista_projetos = Projeto.objects.filter(coordenador=request.user, status__in=status_filter).order_by('-data_inicio')
+
+            paginator = Paginator(lista_projetos, 10)
+            page_number = request.GET.get('page')
+            page_obj = paginator.get_page(page_number)
+
+            contexto['page_obj'] = page_obj
+            contexto['table_title'] = table_title
+
     return render(request, 'projetos_institucionais/meusprojetos.html', contexto)
 
 @login_required
@@ -572,14 +597,6 @@ def deletar_anexo(request, anexo_id):
         messages.success(request, 'Anexo excluído com sucesso.')
 
     return redirect(request.META.get('HTTP_REFERER', 'projeto_dashboard'))
-
-@login_required
-def projeto_equipe(request, pk):
-    projeto = get_object_or_404(Projeto, pk=pk)
-    contexto = {
-        'projeto': projeto
-    }
-    return render(request, 'projetos_institucionais/projeto_equipe.html', contexto)
 
 @login_required
 def visualizar_perfil(request, pk):
