@@ -152,10 +152,16 @@ class ProjetoCreateWizard(SessionWizardView):
         formset_equipe = form_dict.get('3', {})
         dados_equipe = formset_equipe.cleaned_data if formset_equipe else []
 
+        projeto.edital = dados_gerais.pop('edital', None)
+        imagem_capa_salvar = dados_gerais.pop('imagem_capa', None)
+
         for campo, valor in dados_gerais.items():
             if hasattr(projeto, campo) and not isinstance(getattr(projeto, campo), models.Manager):
                 setattr(projeto, campo, valor)
         
+        if imagem_capa_salvar:
+            projeto.imagem_capa = imagem_capa_salvar
+
         projeto.status = 'submetido'
         projeto.save()
 
@@ -315,7 +321,7 @@ def projeto_dashboard(request):
             'projetos_em_revisao': projetos_em_revisao,
             'projetos_rejeitados': projetos_rejeitados,
         })
-        todos_os_projetos = list(projetos_em_andamento) + list(projetos_em_revisao)
+        todos_os_projetos = list(projetos_em_andamento) + list(projetos_em_revisao) + list(projetos_rejeitados)
         contexto['todos_os_projetos'] = todos_os_projetos
     else:
         status_map = {
@@ -920,3 +926,85 @@ def listar_relatorios_gestor(request):
         'status_filter': status_filter,
     }
     return render(request, 'projetos_institucionais/gestor_relatorios.html', contexto)
+
+@login_required
+@gestor_required
+def gestor_listar_editais(request):
+    editais = Edital.objects.all()
+    contexto = {
+        'editais': editais
+    }
+    return render(request, 'projetos_institucionais/gestor_edital_lista.html', contexto)
+
+@login_required
+@gestor_required
+def gestor_criar_edital(request):
+    if request.method == 'POST':
+        form = EditalForm(request.POST, request.FILES)
+        formset = AnexoEditalFormSet(request.POST, request.FILES, instance=Edital())
+        if form.is_valid() and formset.is_valid():
+            edital = form.save(commit=False)
+            edital.criado_por = request.user
+            edital.save()
+            
+            formset.instance = edital
+            formset.save()
+            
+            messages.success(request, "Edital cadastrado com sucesso!")
+            return redirect('gestor_listar_editais')
+    else:
+        form = EditalForm()
+        formset = AnexoEditalFormSet(instance=Edital())
+
+    contexto = {'form': form, 'formset': formset}
+    return render(request, 'projetos_institucionais/gestor_edital_form.html', contexto)
+
+@login_required
+@gestor_required
+def gestor_editar_edital(request, pk):
+    edital = get_object_or_404(Edital, pk=pk)
+    if request.method == 'POST':
+        form = EditalForm(request.POST, request.FILES, instance=edital)
+        formset = AnexoEditalFormSet(request.POST, request.FILES, instance=edital)
+        if form.is_valid() and formset.is_valid():
+            form.save()
+            formset.save()
+            messages.success(request, "Edital atualizado com sucesso!")
+            return redirect('gestor_listar_editais')
+    else:
+        form = EditalForm(instance=edital)
+        formset = AnexoEditalFormSet(instance=edital)
+
+    contexto = {
+        'form': form, 'formset': formset, 'edital': edital
+    }
+    return render(request, 'projetos_institucionais/gestor_edital_form.html', contexto)
+
+@login_required
+@gestor_required
+def gestor_deletar_edital(request, pk):
+    edital = get_object_or_404(Edital, pk=pk)
+    if request.method == 'POST':
+        edital.delete()
+        messages.success(request, "Edital excluído com sucesso.")
+        return redirect('gestor_listar_editais')
+    
+    contexto = {
+        'edital': edital
+    }
+    return render(request, 'projetos_institucionais/edital_confirm_delete.html', contexto)
+
+@login_required
+@coordenador_required
+def listar_editais_abertos(request):
+    hoje = date.today()
+    editais_abertos = Edital.objects.filter(
+        status='aberto',
+        data_inicio_submissoes__lte=hoje,
+        data_fim_submissoes__gte=hoje
+    ).prefetch_related('anexos')
+
+    contexto = {
+        'editais': editais_abertos
+    }
+    return render(request, 'projetos_institucionais/editais_abertos_lista.html', contexto)

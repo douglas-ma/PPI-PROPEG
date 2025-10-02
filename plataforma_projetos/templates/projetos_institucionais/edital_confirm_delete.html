@@ -1,0 +1,17 @@
+{% extends "base2.html" %}
+
+{% block title %}Confirmar Exclusão{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Confirmar Exclusão</h2>
+    <hr>
+    <p>Você tem certeza que deseja excluir o edital "<strong>{{ edital.titulo }}</strong>"?</p>
+    <p class="text-danger">Esta ação não pode ser desfeita.</p>
+    <form method="post">
+        {% csrf_token %}
+        <a href="{% url 'gestor_listar_editais' %}" class="btn btn-secondary">Cancelar</a>
+        <button type="submit" class="btn btn-danger">Sim, excluir</button>
+    </form>
+</div>
+{% endblock %}

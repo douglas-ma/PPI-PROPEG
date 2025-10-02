@@ -60,7 +60,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link text-muted disabled">
+                    <a href="{% url 'gestor_listar_editais' %}" class="nav-link {% if request.resolver_match.url_name == 'gestor_listar_editais' %}active{% else %}text-dark{% endif %}">
                         <i class="bi bi-file-earmark-plus"></i>
                         <span>Editais</span>
                     </a>
@@ -90,7 +90,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link {% if request.resolver_match.url_name == 'editais_abertos' %}active{% else %}text-dark{% endif %}">
+                    <a href="{% url 'listar_editais_abertos' %}" class="nav-link {% if request.resolver_match.url_name == 'listar_editais_abertos' %}active{% else %}text-dark{% endif %}">
                         <i class="bi bi-file-earmark-text"></i>
                         <span>Editais Abertos</span>
                     </a>

@@ -12,6 +12,8 @@ urlpatterns = [
     path('perfil/<int:pk>/visualizar/', views.visualizar_perfil, name='visualizar_perfil'),
     path('aluno/projetos/meusprojetos/', views.aluno_projeto_dashboard, name='aluno_meus_projetos'),
     path('notificacoes/', views.lista_notificacoes, name='lista_notificacoes'),
+    path('editais/abertos/', views.listar_editais_abertos, name='listar_editais_abertos'),
+    path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),
 
     path('projetos/', views.projeto_listar, name='projeto_listar'),
     path('projetos/<int:pk>/', views.projeto_detalhe, name='projeto_detalhe'),
@@ -27,6 +29,10 @@ urlpatterns = [
     path('gestor/usuarios/<int:pk>/deletar/', views.usuario_deletar, name='usuario_deletar'),
     path('gestor/relatorios/', views.listar_relatorios_gestor, name='gestor_relatorios'),
     path('gestor/projetos/historico/', views.historico_projetos, name='historico_projetos'),
+    path('gestor/editais/', views.gestor_listar_editais, name='gestor_listar_editais'),
+    path('gestor/editais/novo/', views.gestor_criar_edital, name='gestor_criar_edital'),
+    path('gestor/editais/<int:pk>/editar/', views.gestor_editar_edital, name='gestor_editar_edital'),
+    path('gestor/editais/<int:pk>/deletar/', views.gestor_deletar_edital, name='gestor_deletar_edital'),
 
     path('projetos/<int:pk>/aprovar/', views.aprovar_projeto, name='aprovar_projeto'),
     path('projetos/<int:pk>/reprovar/', views.reprovar_projeto, name='reprovar_projeto'),

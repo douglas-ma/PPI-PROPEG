@@ -38,6 +38,7 @@ class UsuarioManager(BaseUserManager):
             
         return self.create_user(cpf, username, email, password, **extra_fields)
 
+
 # Classe de usuário
 class Usuario(AbstractUser):
     PERFIL_CHOICES = (
@@ -103,6 +104,7 @@ class Usuario(AbstractUser):
     def __str__(self):
         return self.get_full_name() or self.username or self.cpf
 
+
 # Entidades mais simples
 class Endereco(models.Model):
     rua = models.CharField(max_length=255)
@@ -120,6 +122,7 @@ class Endereco(models.Model):
         verbose_name = "Endereço"
         verbose_name_plural = "Endereços"
 
+
 class Titulacao(models.Model):
     nome = models.CharField(max_length=100, unique=True)
 
@@ -129,6 +132,7 @@ class Titulacao(models.Model):
     class Meta:
         verbose_name = "Titulação"
         verbose_name_plural = "Titulações"
+
 
 class CentroLotacao(models.Model):
     nome = models.CharField(max_length=255, verbose_name="Nome")
@@ -141,6 +145,7 @@ class CentroLotacao(models.Model):
     class Meta:
         verbose_name = "Centro de Lotação"
         verbose_name_plural = "Centros de Lotação"
+
 
 class CursoGraduacao(models.Model):
     nome = models.CharField(max_length=255)
@@ -157,6 +162,7 @@ class CursoGraduacao(models.Model):
         verbose_name= "Curso de Graduação"
         verbose_name_plural = "Cursos de Graduação"
 
+
 class ProgramaPos(models.Model):
     nome = models.CharField(max_length=255, verbose_name="Nome")
     centro_lotacao = models.ForeignKey(
@@ -172,6 +178,7 @@ class ProgramaPos(models.Model):
         verbose_name = "Programa de Pós-Graduação"
         verbose_name_plural = "Programas de Pós-Graduação"
 
+
 class TipoEtico(models.Model):
     nome = models.CharField(max_length=255)
 
@@ -181,6 +188,7 @@ class TipoEtico(models.Model):
     class Meta:
         verbose_name = "Tipo Ético"
         verbose_name_plural = "Tipos Éticos"
+
 
 class ODS(models.Model):
     titulo = models.CharField(max_length=255, verbose_name="Título")
@@ -198,6 +206,7 @@ class ODS(models.Model):
         verbose_name = "ODS"
         verbose_name_plural = "ODS"
     
+
 class GrupoPesquisa(models.Model):
     nome = models.CharField(max_length=255)
 
@@ -208,6 +217,7 @@ class GrupoPesquisa(models.Model):
         verbose_name = "Grupo de Pesquisa"
         verbose_name_plural = "Grupos de Pesquisa"
 
+
 class AgenciaFinanciadora(models.Model):
     nome = models.CharField(max_length=255)
 
@@ -217,6 +227,51 @@ class AgenciaFinanciadora(models.Model):
     class Meta:
         verbose_name = "Agência Financiadora"
         verbose_name_plural = "Agências Financiadoras"
+
+
+class Edital(models.Model):
+    STATUS_CHOICES = (
+        ('rascunho', 'Rascunho'),
+        ('aberto', 'Aberto'),
+        ('fechado', 'Fechado'),
+    )
+
+    titulo = models.CharField(max_length=255, verbose_name="Título do Edital")
+    descricao = models.TextField(verbose_name="Descrição Resumida")
+    data_inicio_submissoes = models.DateField(verbose_name="Início das Submissões")
+    data_fim_submissoes = models.DateField(verbose_name="Fim das Submissões")
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='rascunho')
+    
+    documento_principal = models.FileField(
+        upload_to='editais/documentos/',
+        verbose_name="Documento Principal do Edital (PDF)"
+    )
+    
+    criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.titulo
+
+    class Meta:
+        verbose_name = "Edital"
+        verbose_name_plural = "Editais"
+        ordering = ['-data_inicio_submissoes']
+
+
+class AnexoEdital(models.Model):
+    edital = models.ForeignKey(Edital, on_delete=models.CASCADE, related_name='anexos')
+    descricao = models.CharField(max_length=255, verbose_name="Descrição do Anexo")
+    arquivo = models.FileField(upload_to='editais/anexos/')
+    data_upload = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Anexo '{self.descricao}' do edital '{self.edital.titulo}'"
+
+    class Meta:
+        verbose_name = "Anexo do Edital"
+        verbose_name_plural = "Anexos do Edital"
+
 
 # Entidade Principal
 class Projeto(models.Model):
@@ -315,6 +370,15 @@ class Projeto(models.Model):
         verbose_name="Imagem de Capa",
     )
 
+    edital = models.ForeignKey(
+        Edital,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='projetos',
+        verbose_name="Edital Vinculado"
+    )
+
     def __str__(self):
         return self.titulo or f"Projeto Rascunho (ID: {self.id})"
     
@@ -322,6 +386,7 @@ class Projeto(models.Model):
         ordering = ['-data_inicio']
         verbose_name = "Projeto"
         verbose_name_plural = "Projetos"
+
 
 class EquipeProjeto(models.Model):
     """
@@ -346,6 +411,7 @@ class EquipeProjeto(models.Model):
 def caminho_upload_arquivo(instance, filename): # função para gerar um caminho dinâmico para o upload de um arquivo
     return f'projetos/{instance.projeto.id}/{instance.__class__.__name__.lower()}/{filename}'
 
+
 class Documento(models.Model):
     nome = models.CharField(max_length=255)
     tipo = models.CharField(max_length=100)
@@ -359,6 +425,7 @@ class Documento(models.Model):
     def __str__(self):
         return self.nome
     
+
 class Ata(models.Model):
     descricao = models.CharField(max_length=255, verbose_name="Descrição")
     data_reuniao = models.DateField(verbose_name="Data da Reunião")
@@ -378,6 +445,7 @@ class Ata(models.Model):
     
     class Meta:
         verbose_name_plural = "Atas"
+
 
 class Anexo(models.Model):
     """
@@ -419,6 +487,7 @@ class Anexo(models.Model):
     class Meta:
         verbose_name = "Anexo"
         verbose_name_plural = "Anexos"
+
 
 class Relatorio(models.Model):
     TIPO_CHOICES = (

@@ -4,6 +4,7 @@ from django.forms import inlineformset_factory
 from django_select2.forms import Select2Widget, Select2MultipleWidget
 from django.db.models import Q
 from .models import *
+from datetime import date
 import os
 
 class Etapa1_TipoFinanciamentoForm(forms.Form):
@@ -38,6 +39,18 @@ class MultipleFileField(forms.FileField):
 
 class Etapa2_InfoGeraisForm(forms.ModelForm):    
     title = "Informações Gerais"
+
+    edital = forms.ModelChoiceField(
+        queryset=Edital.objects.filter(
+            status='aberto',
+            data_inicio_submissoes__lte=date.today(),
+            data_fim_submissoes__gte=date.today(),
+        ),
+        required=False,
+        label="Vincular a um Edital (Opcional)",
+        empty_label="Nenhum / Projeto sem vínculo com edital",
+        help_text="Selecione um edital aberto para vincular seu projeto."
+    )
 
     titulo = forms.CharField(label="Título do Projeto", max_length=255)
     data_inicio = forms.DateField(
@@ -99,6 +112,11 @@ class Etapa2_InfoGeraisForm(forms.ModelForm):
         label="Tipo Ético", 
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'Digite o tipo de comitê de ética'})
+    )
+    imagem_capa = forms.ImageField(
+        label="Imagem de Capa do Projeto (Opcional)",
+        required=False,
+        help_text="Esta imagem será exibida nos cards do projeto. Use uma imagem representativa."
     )
     anexos_gerais = MultipleFileField(
         label="Anexos Adicionais",
@@ -301,3 +319,28 @@ class RelatorioForm(forms.Form):
         help_text="Para relatórios parciais, descreva as próximas etapas. Para relatórios finais, descreva os desdobramentos."
     )
 
+
+class EditalForm(forms.ModelForm):
+    class Meta:
+        model = Edital
+        fields = [
+            'titulo', 'descricao', 'data_inicio_submissoes', 
+            'data_fim_submissoes', 'status', 'documento_principal'
+        ]
+        widgets = {
+            'data_inicio_submissoes': forms.DateInput(attrs={'type': 'date'}),
+            'data_fim_submissoes': forms.DateInput(attrs={'type': 'date'}),
+            'descricao': forms.Textarea(attrs={'rows': 4}),
+        }
+    
+AnexoEditalFormSet = inlineformset_factory(
+    Edital, 
+    AnexoEdital,
+    fields=('descricao', 'arquivo'),
+    extra=1,
+    can_delete=True,
+    labels={
+        'descricao': 'Descrição do Anexo',
+        'arquivo': 'Arquivo do Anexo',
+    }
+)

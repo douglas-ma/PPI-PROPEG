@@ -1,0 +1,48 @@
+{% extends "base2.html" %}
+
+{% block title %}Editais Abertos{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-3">Editais com Submissões Abertas</h2>
+    <hr>
+
+    {% for edital in editais %}
+    <div class="card mb-4 shadow-sm">
+        <div class="card-header">
+            <h5 class="mb-0">{{ edital.titulo }}</h5>
+        </div>
+        <div class="card-body">
+            <p class="card-text">{{ edital.descricao|linebreaksbr }}</p>
+            <p><strong>Período de submissão:</strong> {{ edital.data_inicio_submissoes|date:"d/m/Y" }} até {{ edital.data_fim_submissoes|date:"d/m/Y" }}</p>
+            
+            <h6>Documentos do Edital:</h6>
+            <ul class="list-group">
+                <li class="list-group-item list-group-item-action">
+                    <a href="{{ edital.documento_principal.url }}" target="_blank" class="text-decoration-none text-danger fw-bold">
+                        <i class="bi bi-file-earmark-pdf-fill"></i> Documento Principal
+                    </a>
+                </li>
+                {% for anexo in edital.anexos.all %}
+                <li class="list-group-item list-group-item-action">
+                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="text-decoration-none">
+                        <i class="bi bi-paperclip"></i> {{ anexo.descricao }}
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="card-footer text-end">
+            <a href="{% url 'projeto_criar' %}" class="btn btn-success">
+                <i class="bi bi-plus-circle-fill"></i> Submeter Novo Projeto para este Edital
+            </a>
+        </div>
+    </div>
+    {% empty %}
+    <div class="alert alert-info">
+        Nenhum edital com submissões abertas no momento.
+    </div>
+    {% endfor %}
+
+</div>
+{% endblock %}

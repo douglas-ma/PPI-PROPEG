@@ -70,11 +70,11 @@
                             <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }}</td>
                             <td class="text-center">{{ projeto.data_fim|date:"d/m/Y" }}</td>
                             <td class="text-center">
-                                {% if projeto.status == 'aprovado' or projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
+                                {% if projeto.status == 'aprovado' or projeto.status == 'em_andamento' %}
                                 <span class="badge bg-success">{{ projeto.get_status_display }}</span>
                                 {% elif projeto.status == 'submetido' %}
                                 <span class="badge bg-warning text-dark">{{ projeto.get_status_display }}</span>
-                                {% elif projeto.status == 'reprovado' or projeto.status == 'aguardando_encerramento' %}
+                                {% elif projeto.status == 'reprovado' or projeto.status == 'aguardando_encerramento' or projeto.status == 'encerrado' %}
                                 <span class="badge bg-danger">{{ projeto.get_status_display }}</span>
                                 {% else %}
                                 <span class="badge bg-warning">{{ projeto.get_status_display }}</span>

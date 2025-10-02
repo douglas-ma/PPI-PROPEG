@@ -2,15 +2,11 @@
     <p class="categoria">{{ projeto.curso.nome|default:"Geral" }}</p>
     <p class="titulo-projeto">{{ projeto.titulo }}</p>
     
-    <div class="imagem-projeto-container">
-        {% if projeto.imagem_capa %} 
-            <img src="{{ projeto.imagem_capa.url }}" alt="Imagem do Projeto">
-        {% else %}
-            <div class="imagem-placeholder">
-                <i class="fas fa-image"></i>
-            </div>
-        {% endif %}
+    {% if projeto.imagem_capa %} 
+    <div class="imagem-projeto-container" style="background-image: url('{{ projeto.imagem_capa.url }}');">
+        <!-- <img src="{{ projeto.imagem_capa.url }}" alt="Imagem do Projeto"> -->
     </div>
+    {% endif %}
 
     <div class="card-footer-projeto">
         <div class="icones-info">

@@ -1,24 +1,81 @@
 <div class="modal fade" id="detalheProjetoModal-{{ projeto.pk }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">{{ projeto.titulo }}</h5>
+            <div class="modal-header border-0">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p><strong>Status:</strong> <span class="badge bg-info">{{ projeto.get_status_display }}</span></p>
-                <p><strong>Coordenador:</strong> {{ projeto.coordenador.get_full_name }}</p>
-                <p><strong>Período:</strong> {{ projeto.data_inicio|date:"d/m/Y" }} até {{ projeto.data_fim|date:"d/m/Y" }}</p>
-                <hr>
-                <h6>Resumo</h6>
-                <p>{{ projeto.resumo }}</p>
-                <hr>
-                <h6>Objetivos</h6>
-                <p>{{ projeto.objetivos }}</p>
+            <div class="modal-body px-4 px-md-5">
+
+                <div class="text-center mb-4">
+                    <h6 class="text-primary text-uppercase">
+                        {% if projeto.curso %}
+                            {{ projeto.curso.nome }}
+                        {% elif projeto.centro_lotacao %}
+                            {{ projeto.centro_lotacao.sigla }}
+                        {% else %}
+                            Projeto
+                        {% endif %}
+                    </h6>
+                    <h2 class="display-5">{{ projeto.titulo }}</h2>
                 </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
-                <a href="{% url 'projeto_editar' pk=projeto.pk %}" class="btn btn-primary">Editar Projeto</a>
+
+                {% if projeto.imagem_capa %}
+                <div class="text-center my-4">
+                    <img src="{{ projeto.imagem_capa.url }}" class="img-fluid rounded shadow-sm" alt="Imagem do projeto {{ projeto.titulo }}">
+                </div>
+                {% endif %}
+
+                {% if projeto.resumo %}
+                <div class="text-center my-5">
+                    <figure>
+                        <blockquote class="blockquote">
+                            <p class="h4 fst-italic">"{{ projeto.resumo }}"</p>
+                        </blockquote>
+                        <figcaption class="blockquote-footer">
+                            Resumo do Projeto
+                        </figcaption>
+                    </figure>
+                </div>
+                {% endif %}
+
+                <div class="row g-5">
+                    {% if projeto.objetivos %}
+                    <div class="col-md-6">
+                        <h5>Objetivos</h5>
+                        <p class="text-muted">{{ projeto.objetivos|linebreaksbr }}</p>
+                    </div>
+                    {% endif %}
+                    {% if projeto.metodologia %}
+                    <div class="col-md-6">
+                        <h5>Metodologia</h5>
+                        <p class="text-muted">{{ projeto.metodologia|linebreaksbr }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+            </div>
+            <div class="modal-footer border-0">
+                <div>
+                    <button type="button" class="btn btn-link text-secondary p-0 me-2" data-bs-toggle="modal" data-bs-target="#equipeModal-{{ projeto.pk }}" title="Ver Equipe">
+                        <i class="fas fa-users fs-5"></i>
+                    </button>
+                    
+                    <a href="{% url 'projeto_anexos' projeto.pk %}" class="btn btn-link text-secondary p-0" title="Gerenciar Anexos">
+                        <i class="fas fa-paperclip fs-5"></i>
+                    </a>
+                </div>
+
+                <button type="button" class="btn btn-secondary ms-auto" data-bs-dismiss="modal">Fechar</button>
+                
+                {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
+                    <a href="{% url 'projeto_editar' pk=projeto.pk %}" class="btn btn-warning">
+                        <i class="bi bi-pencil-fill"></i> Editar e Resubmeter
+                    </a>
+                {% else %}
+                    <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-primary">
+                        <i class="bi bi-arrows-fullscreen"></i> Ver Página Completa
+                    </a>
+                {% endif %}
             </div>
         </div>
     </div>

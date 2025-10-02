@@ -155,3 +155,12 @@ html, body {
 .table thead th a::after {
     display: none;
 }
+
+.imagem-projeto-container {
+        height: 180px;
+        width: 100%;
+        background-size: contain;       
+        background-position: center;
+        background-repeat: no-repeat;
+        background-color: #ffffff; 
+    }

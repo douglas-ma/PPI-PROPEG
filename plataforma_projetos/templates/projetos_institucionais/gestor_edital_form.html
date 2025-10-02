@@ -1,0 +1,44 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if edital %}Editar Edital{% else %}Novo Edital{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2>{% if edital %}Editar Edital{% else %}Cadastrar Novo Edital{% endif %}</h2>
+    <hr>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="card mb-4">
+            <div class="card-header">Informações Principais</div>
+            <div class="card-body">
+                {{ form|crispy }}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Outros Anexos</div>
+            <div class="card-body">
+                {{ formset.management_form }}
+                {% for anexo_form in formset %}
+                    <div class="row align-items-center mb-3">
+                        <div class="col-md-5">{{ anexo_form.descricao|as_crispy_field }}</div>
+                        <div class="col-md-5">{{ anexo_form.arquivo|as_crispy_field }}</div>
+                        <div class="col-md-2">
+                            {% if anexo_form.instance.pk %}
+                                {{ anexo_form.DELETE|as_crispy_field }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <hr>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="mt-4 d-flex justify-content-end">
+            <a href="{% url 'gestor_listar_editais' %}" class="btn btn-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-success">Salvar Edital</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

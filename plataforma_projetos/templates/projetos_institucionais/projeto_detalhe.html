@@ -173,6 +173,10 @@
                     <li class="list-group-item"><strong>Coordenador:</strong><br>{{ projeto.coordenador.get_full_name }}
                     </li>
                     <li class="list-group-item"><strong>Email:</strong><br>{{ projeto.coordenador.email }}</li>
+                    {% if todos_os_dados.edital %}
+                    <dt class="col-sm-3">Edital Vinculado:</dt>
+                    <dd class="col-sm-9">{{ todos_os_dados.edital.titulo }}</dd>
+                    {% endif %}
                     <li class="list-group-item"><strong>Vigência:</strong><br>{{ projeto.data_inicio|date:"d/m/Y" }} a
                         {{ projeto.data_fim|date:"d/m/Y" }}</li>
                     {% if relatorio_submissao %}
