@@ -227,6 +227,7 @@ class Projeto(models.Model):
         ('aprovado', 'Aprovado'),
         ('reprovado', 'Reprovado'),
         ('em_andamento', 'Em andamento'),
+        ('aguardando_encerramento', 'Aguardando Encerramento'),
         ('encerrado', 'Encerrado'),
     ]
     

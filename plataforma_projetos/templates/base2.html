@@ -66,7 +66,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link text-muted disabled">
+                    <a href="{% url 'gestor_relatorios' %}" class="nav-link {% if request.resolver_match.url_name == 'gestor_relatorios' %}active{% else %}text-dark{% endif %}">
                         <i class="bi bi-file-text"></i>
                         <span>Relatórios</span>
                     </a>

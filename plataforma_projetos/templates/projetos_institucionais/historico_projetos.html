@@ -52,10 +52,10 @@
                             <th>
                                 <a href="?sort={% if sort_by == 'coordenador__first_name' %}-coordenador__first_name{% else %}coordenador__first_name{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Coordenador{% if 'coordenador' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
                             </th>
-                            <th>
+                            <th class="text-center">
                                 <a href="?sort={% if sort_by == 'data_inicio' %}-data_inicio{% else %}data_inicio{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Data de Início {% if 'data_inicio' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
                             </th>
-                            <th>
+                            <th class="text-center">
                                 <a href="?sort={% if sort_by == 'data_fim' %}-data_fim{% else %}data_fim{% endif %}&q={{ query|default:'' }}&status={{ status_filter|default:'' }}&ano={{ ano_filter|default:'' }}">Data de Fim {% if 'data_fim' in sort_by %}<i class="bi bi-arrow-{% if sort_by|first == '-' %}down{% else %}up{% endif %}"></i>{% endif %}</a>
                             </th>
                             <th class="text-center">Status</th>
@@ -67,15 +67,17 @@
                         <tr>
                             <td>{{ projeto.titulo }}</td>
                             <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td>{{ projeto.data_inicio|date:"d/m/Y" }}</td>
-                            <td>{{ projeto.data_fim|date:"d/m/Y" }}</td>
+                            <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }}</td>
+                            <td class="text-center">{{ projeto.data_fim|date:"d/m/Y" }}</td>
                             <td class="text-center">
                                 {% if projeto.status == 'aprovado' or projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
                                 <span class="badge bg-success">{{ projeto.get_status_display }}</span>
                                 {% elif projeto.status == 'submetido' %}
                                 <span class="badge bg-warning text-dark">{{ projeto.get_status_display }}</span>
+                                {% elif projeto.status == 'reprovado' or projeto.status == 'aguardando_encerramento' %}
+                                <span class="badge bg-danger">{{ projeto.get_status_display }}</span>
                                 {% else %}
-                                <span class="badge bg-secondary">{{ projeto.get_status_display }}</span>
+                                <span class="badge bg-warning">{{ projeto.get_status_display }}</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">

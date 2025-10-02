@@ -25,7 +25,7 @@ urlpatterns = [
     path('gestor/usuarios/<int:pk>/', views.usuario_detalhe, name='usuario_detalhe'),
     path('gestor/usuarios/<int:pk>/editar/', views.usuario_editar, name='usuario_editar'),
     path('gestor/usuarios/<int:pk>/deletar/', views.usuario_deletar, name='usuario_deletar'),
-
+    path('gestor/relatorios/', views.listar_relatorios_gestor, name='gestor_relatorios'),
     path('gestor/projetos/historico/', views.historico_projetos, name='historico_projetos'),
 
     path('projetos/<int:pk>/aprovar/', views.aprovar_projeto, name='aprovar_projeto'),
@@ -34,6 +34,7 @@ urlpatterns = [
     path('projetos/<int:pk>/anexar-comprovante/', views.anexar_comprovante, name='anexar_comprovante'),
     path('projetos/<int:pk>/anexos/', views.projeto_anexos, name='projeto_anexos'),
     path('projetos/<int:pk>/iniciar/', views.iniciar_projeto, name='iniciar_projeto'),
+    path('projetos/<int:pk>/encerrar/', views.encerrar_projeto, name='encerrar_projeto'),
     path('projetos/<int:pk>/encaminhar-conselho/', views.encaminhar_para_conselho, name='encaminhar_para_conselho'),
     path('projetos/anexo/<int:anexo_id>/deletar/', views.deletar_anexo, name='deletar_anexo'),
     path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),

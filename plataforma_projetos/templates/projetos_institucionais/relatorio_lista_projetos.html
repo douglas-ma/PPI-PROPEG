@@ -25,7 +25,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for projeto in projetos %}
+                        {% for projeto in projetos_no_prazo %}
                         <tr>
                             <td>
                                 <a href="{% url 'projeto_detalhe' projeto.pk %}" class="text-dark fw-bold text-decoration-none">
@@ -81,7 +81,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for projeto in projetos %}
+                        {% for projeto in projetos_atrasados %}
                         <tr>
                             <td>
                                 <a href="{% url 'projeto_detalhe' projeto.pk %}" class="text-dark fw-bold text-decoration-none">

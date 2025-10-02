@@ -320,7 +320,7 @@ def projeto_dashboard(request):
     else:
         status_map = {
             'em_andamento': (['em_andamento'], 'Projetos em Andamento'),
-            'em_revisao': (['submetido','aguardando_conselho'], 'Projetos em Revisão'),
+            'em_revisao': (['submetido','aguardando_conselho', 'aguardando_encerramento'], 'Projetos em Revisão'),
             'finalizados': (['encerrado'], 'Projetos Finalizados'),
             'avaliados': (['aprovado', 'reprovado'], 'Projetos Aprovados e Rejeitados'),
         }
@@ -349,14 +349,23 @@ def aluno_projeto_dashboard(request):
 
     return render(request, 'projetos_institucionais/aluno_projeto_dashboard.html', contexto)
 
+@login_required
 @gestor_required
 def gestor_dashboard(request):
     projetos_pendentes = Projeto.objects.filter(status='submetido').order_by('data_inicio')
     projetos_aguardando_conselho = Projeto.objects.filter(status='aguardando_conselho').order_by('data_inicio')
-    
+    projetos_aguardando_encerramento = Projeto.objects.filter(status='aguardando_encerramento').order_by('data_fim')
+    usuarios_pendentes = Usuario.objects.filter(status='pendente', is_active=False).order_by('date_joined')
+
     contexto = {
         'projetos_pendentes': projetos_pendentes,
         'projetos_aguardando_conselho': projetos_aguardando_conselho,
+        'projetos_aguardando_encerramento': projetos_aguardando_encerramento,
+        'usuarios_pendentes': usuarios_pendentes,
+        'count_projetos_pendentes': projetos_pendentes.count(),
+        'count_aguardando_conselho': projetos_aguardando_conselho.count(),
+        'count_aguardando_encerramento': projetos_aguardando_encerramento.count(),
+        'count_usuarios_pendentes': usuarios_pendentes.count(),
     }
     return render(request, 'projetos_institucionais/gestordashboard.html', contexto)
 
@@ -807,6 +816,9 @@ def criar_relatorio(request, pk):
                 anexo_pdf=arquivo_pdf_django,
             )
             if novo_relatorio.tipo == 'final':
+                projeto.status = 'aguardando_encerramento'
+                projeto.save()
+
                 gestores = Usuario.objects.filter(perfil='gestor', is_active=True)
                 subject = f'Relatório Final Submetido: "{projeto.titulo}"'
                 message = (
@@ -843,3 +855,68 @@ def finalizar_projeto(request, pk):
     projeto.save()
     messages.success(request, 'Projeto encerrado com sucesso!')
     return redirect('projeto_detalhe', pk=pk)
+
+@login_required
+@gestor_required
+def encerrar_projeto(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+    
+    if projeto.status == 'aguardando_encerramento':
+        projeto.status = 'encerrado'
+        projeto.save()
+
+        subject = f'Seu projeto "{projeto.titulo}" foi oficialmente encerrado'
+        message = (
+            f'Olá, {projeto.coordenador.first_name}!\n\n'
+            f'Informamos que o projeto "{projeto.titulo}" foi revisado e oficialmente encerrado pela gestão.\n\n'
+            f'Agradecemos pelo seu trabalho e dedicação.\nEquipe PROPEG'
+        )
+        link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+        enviar_email_e_notificacao(subject, message, projeto.coordenador, link=link_projeto)
+
+        messages.success(request, f'O projeto "{projeto.titulo}" foi encerrado com sucesso.')
+    else:
+        messages.warning(request, 'Este projeto não está aguardando encerramento.')
+
+    return redirect('gestor_dashboard')
+
+@login_required
+@gestor_required
+def listar_relatorios_gestor(request):
+    queryset = Relatorio.objects.select_related('projeto', 'projeto__coordenador').all().order_by('-data_envio')
+
+    query = request.GET.get('q', '')
+    ano_filter = request.GET.get('ano', '')
+    tipo_filter = request.GET.get('tipo', '')
+    status_filter = request.GET.get('status', '')
+
+    if query:
+        queryset = queryset.filter(
+            Q(projeto__titulo__icontains=query) |
+            Q(projeto__coordenador__first_name__icontains=query) |
+            Q(projeto__coordenador__last_name__icontains=query)
+        )
+    if ano_filter:
+        queryset = queryset.filter(projeto__data_inicio__year=ano_filter)
+    if tipo_filter:
+        queryset = queryset.filter(tipo=tipo_filter)
+    if status_filter:
+        queryset = queryset.filter(projeto__status=status_filter)
+
+    paginator = Paginator(queryset, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    anos_disponiveis = Projeto.objects.dates('data_inicio', 'year', order='DESC')
+
+    contexto = {
+        'page_obj': page_obj,
+        'anos_disponiveis': anos_disponiveis,
+        'tipo_choices': Relatorio.TIPO_CHOICES,
+        'status_choices': Projeto.STATUS_CHOICES,
+        'query': query,
+        'ano_filter': ano_filter,
+        'tipo_filter': tipo_filter,
+        'status_filter': status_filter,
+    }
+    return render(request, 'projetos_institucionais/gestor_relatorios.html', contexto)

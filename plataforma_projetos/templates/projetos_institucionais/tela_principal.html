@@ -30,6 +30,16 @@
                 </div>
             </div>
         </div>
+        <div class="col-md-6">
+            <div class="card text-center h-100 shadow-sm">
+                <div class="card-body">
+                    <h1 class="display-4 text-danger">{{ count_aguardando_encerramento }}</h1>
+                    <h5 class="card-title">Projetos para Encerramento</h5>
+                    <p class="card-text">Projetos com relatório final enviado que aguardam sua análise.</p>
+                    <a href="{% url 'gestor_dashboard' %}" class="btn btn-danger">Avaliar Projetos</a>
+                </div>
+            </div>
+        </div>
     </div>
     {% endif %}
 

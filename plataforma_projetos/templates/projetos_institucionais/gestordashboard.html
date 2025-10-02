@@ -10,6 +10,40 @@
     <p>Abaixo estão os projetos que aguardam sua avaliação.</p>
     <hr>
 
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Usuários com Cadastro Pendente</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Nome Completo</th>
+                            <th>Email</th>
+                            <th class="text-center">Data de Cadastro</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for usuario in usuarios_pendentes %}
+                        <tr>
+                            <td>{{ usuario.get_full_name }}</td>
+                            <td>{{ usuario.email }}</td>
+                            <td class="text-center">{{ usuario.date_joined|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'usuario_editar' usuario.pk %}" class="btn btn-sm btn-primary">Analisar Cadastro</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">Nenhum usuário pendente.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <div class="card shadow-sm mt-4">
         <div class="card-header">
             <h5 class="mb-0">Projetos Submetidos</h5>
@@ -21,7 +55,7 @@
                         <tr>
                             <th>Título do Projeto</th>
                             <th>Coordenador</th>
-                            <th>Data de Submissão</th>
+                            <th class="text-center">Data de Submissão</th>
                             <th class="text-center">Ações</th>
                         </tr>
                     </thead>
@@ -30,7 +64,7 @@
                         <tr>
                             <td>{{ projeto.titulo }}</td>
                             <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td>{{ projeto.data_inicio|date:"d/m/Y" }}</td>
+                            <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }}</td>
                             <td class="text-center">
                                 <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
                                     title="Ver Detalhes">
@@ -76,7 +110,7 @@
                         <tr>
                             <th>Título do Projeto</th>
                             <th>Coordenador</th>
-                            <th>Data de Submissão</th>
+                            <th class="text-center">Data de Submissão</th>
                             <th class="text-center">Ações</th>
                         </tr>
                     </thead>
@@ -85,7 +119,7 @@
                         <tr>
                             <td>{{ projeto.titulo }}</td>
                             <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td>{{ projeto.anexos.first.data_upload|date:"d/m/Y" }}</td>
+                            <td class="text-center">{{ projeto.anexos.first.data_upload|date:"d/m/Y" }}</td>
                             <td class="text-center">
                                 <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info" title="Ver Detalhes">
                                     <i class="bi bi-eye-fill"></i>
@@ -112,6 +146,44 @@
                         <tr>
                             <td colspan="4" class="text-center text-muted">Nenhum projeto aguardando aprovação do conselho.</td>
                         </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0">Projetos Aguardando Encerramento</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Título do Projeto</th>
+                            <th>Coordenador</th>
+                            <th class="text-center">Data de Término</th>
+                            <th class="text-center">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for projeto in projetos_aguardando_encerramento %}
+                        <tr>
+                            <td>{{ projeto.titulo }}</td>
+                            <td>{{ projeto.coordenador.get_full_name }}</td>
+                            <td class="text-center">{{ projeto.data_fim|date:"d/m/Y" }}</td>
+                            <td class="text-center">
+                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
+                                    title="Ver Detalhes">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                                <a href="{% url 'encerrar_projeto' projeto.pk %}" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Encerrar Projeto</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center text-muted">Nenhum projeto aguardando encerramento.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
