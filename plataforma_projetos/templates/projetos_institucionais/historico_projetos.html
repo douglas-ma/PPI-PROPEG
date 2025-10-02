@@ -77,7 +77,7 @@
                                 {% elif projeto.status == 'reprovado' or projeto.status == 'aguardando_encerramento' or projeto.status == 'encerrado' %}
                                 <span class="badge bg-danger">{{ projeto.get_status_display }}</span>
                                 {% else %}
-                                <span class="badge bg-warning">{{ projeto.get_status_display }}</span>
+                                <span class="badge bg-warning text-dark">{{ projeto.get_status_display }}</span>
                                 {% endif %}
                             </td>
                             <td class="text-center">

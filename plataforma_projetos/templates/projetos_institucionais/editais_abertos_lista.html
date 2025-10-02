@@ -5,44 +5,76 @@
 {% block content %}
 <div class="container-fluid mt-4">
     <h2 class="mb-3">Editais com Submissões Abertas</h2>
-    <hr>
-
-    {% for edital in editais %}
-    <div class="card mb-4 shadow-sm">
-        <div class="card-header">
-            <h5 class="mb-0">{{ edital.titulo }}</h5>
-        </div>
+    <div class="card shadow-sm">
         <div class="card-body">
-            <p class="card-text">{{ edital.descricao|linebreaksbr }}</p>
-            <p><strong>Período de submissão:</strong> {{ edital.data_inicio_submissoes|date:"d/m/Y" }} até {{ edital.data_fim_submissoes|date:"d/m/Y" }}</p>
-            
-            <h6>Documentos do Edital:</h6>
-            <ul class="list-group">
-                <li class="list-group-item list-group-item-action">
-                    <a href="{{ edital.documento_principal.url }}" target="_blank" class="text-decoration-none text-danger fw-bold">
-                        <i class="bi bi-file-earmark-pdf-fill"></i> Documento Principal
-                    </a>
-                </li>
-                {% for anexo in edital.anexos.all %}
-                <li class="list-group-item list-group-item-action">
-                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="text-decoration-none">
-                        <i class="bi bi-paperclip"></i> {{ anexo.descricao }}
-                    </a>
-                </li>
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="card-footer text-end">
-            <a href="{% url 'projeto_criar' %}" class="btn btn-success">
-                <i class="bi bi-plus-circle-fill"></i> Submeter Novo Projeto para este Edital
-            </a>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Edital</th>
+                            <th class="text-center">Período de Submissão</th>
+                            <th>Documentos</th>
+                            <th class="text-center">Ação</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for edital in editais %}
+                        <tr>
+                            <td>
+                                <strong>{{ edital.titulo_completo }}</strong>
+                                <p class="text-muted small mb-0">{{ edital.descricao }}</p>
+                            </td>
+                            <td class="text-center">{{ edital.data_inicio_submissoes|date:"d/m/Y" }} a {{ edital.data_fim_submissoes|date:"d/m/Y" }}</td>
+                            <td>
+                                <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-danger mb-1">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Edital (PDF)
+                                </a>
+                                {% if edital.anexos.all %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary mb-1" data-bs-toggle="modal" data-bs-target="#anexosModal-{{ edital.pk }}">
+                                    <i class="bi bi-paperclip"></i> Outros Anexos ({{ edital.anexos.all|length }})
+                                </button>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <a href="{% url 'projeto_criar' %}" class="btn btn-success">
+                                    <i class="bi bi-plus-circle-fill"></i> Submeter Projeto
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">Nenhum edital com submissões abertas no momento.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
-    {% empty %}
-    <div class="alert alert-info">
-        Nenhum edital com submissões abertas no momento.
-    </div>
-    {% endfor %}
-
 </div>
+
+{% for edital in editais %}
+{% if edital.anexos.all %}
+<div class="modal fade" id="anexosModal-{{ edital.pk }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Anexos de "{{ edital.titulo_completo }}"</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="list-group">
+                    {% for anexo in edital.anexos.all %}
+                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="list-group-item list-group-item-action">
+                        <i class="bi bi-download"></i> {{ anexo.descricao }}
+                    </a>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
 {% endblock %}

@@ -953,10 +953,12 @@ def gestor_criar_edital(request):
             messages.success(request, "Edital cadastrado com sucesso!")
             return redirect('gestor_listar_editais')
     else:
-        form = EditalForm()
+        form = EditalForm(initial={'ano': date.today().year})
         formset = AnexoEditalFormSet(instance=Edital())
 
-    contexto = {'form': form, 'formset': formset}
+    contexto = {
+        'form': form, 'formset': formset
+    }
     return render(request, 'projetos_institucionais/gestor_edital_form.html', contexto)
 
 @login_required

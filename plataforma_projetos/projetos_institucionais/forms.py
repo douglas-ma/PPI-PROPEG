@@ -324,13 +324,16 @@ class EditalForm(forms.ModelForm):
     class Meta:
         model = Edital
         fields = [
-            'titulo', 'descricao', 'data_inicio_submissoes', 
+            'tipo', 'numero', 'ano', 'titulo', 'descricao', 'data_inicio_submissoes', 
             'data_fim_submissoes', 'status', 'documento_principal'
         ]
         widgets = {
             'data_inicio_submissoes': forms.DateInput(attrs={'type': 'date'}),
             'data_fim_submissoes': forms.DateInput(attrs={'type': 'date'}),
             'descricao': forms.Textarea(attrs={'rows': 4}),
+        }
+        labels = {
+            'titulo': 'Título Descritivo do Edital',
         }
     
 AnexoEditalFormSet = inlineformset_factory(

@@ -236,7 +236,10 @@ class Edital(models.Model):
         ('fechado', 'Fechado'),
     )
 
-    titulo = models.CharField(max_length=255, verbose_name="Título do Edital")
+    tipo = models.CharField(max_length=50, default='PROPEG', verbose_name="Tipo/Origem", help_text="Ex: PROPEG, PROEX, etc.")
+    numero = models.PositiveIntegerField(verbose_name="Número do Edital")
+    ano = models.PositiveIntegerField(verbose_name="Ano do Edital")
+    titulo = models.CharField(max_length=255, verbose_name="Título Descritivo do Edital")
     descricao = models.TextField(verbose_name="Descrição Resumida")
     data_inicio_submissoes = models.DateField(verbose_name="Início das Submissões")
     data_fim_submissoes = models.DateField(verbose_name="Fim das Submissões")
@@ -250,13 +253,18 @@ class Edital(models.Model):
     criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     data_criacao = models.DateTimeField(auto_now_add=True)
 
+    @property
+    def titulo_completo(self):
+        return f"Edital {self.tipo} n°{self.numero}/{self.ano} - {self.titulo}"
+
     def __str__(self):
-        return self.titulo
+        return self.titulo_completo
 
     class Meta:
         verbose_name = "Edital"
         verbose_name_plural = "Editais"
-        ordering = ['-data_inicio_submissoes']
+        ordering = ['-ano', '-numero']
+        unique_together = ('numero', 'ano', 'tipo')
 
 
 class AnexoEdital(models.Model):
