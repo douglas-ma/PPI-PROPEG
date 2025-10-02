@@ -33,8 +33,12 @@ urlpatterns = [
     path('projetos/<int:pk>/adicionar_anexo/', views.adicionar_anexo, name='adicionar_anexo'),
     path('projetos/<int:pk>/anexar-comprovante/', views.anexar_comprovante, name='anexar_comprovante'),
     path('projetos/<int:pk>/anexos/', views.projeto_anexos, name='projeto_anexos'),
+    path('projetos/<int:pk>/iniciar/', views.iniciar_projeto, name='iniciar_projeto'),
     path('projetos/<int:pk>/encaminhar-conselho/', views.encaminhar_para_conselho, name='encaminhar_para_conselho'),
     path('projetos/anexo/<int:anexo_id>/deletar/', views.deletar_anexo, name='deletar_anexo'),
+    path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),
+    path('projetos/<int:pk>/criar-relatorio/', views.criar_relatorio, name='relatorio_criar'),
+    path('ajax/load-cursos/', views.load_cursos, name='ajax_load_cursos'),
 ]   
 
 if settings.DEBUG:

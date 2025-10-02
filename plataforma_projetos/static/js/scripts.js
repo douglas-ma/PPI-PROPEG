@@ -174,3 +174,52 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    /**
+     * Função reutilizável para configurar um campo condicional.
+     * @param {string} triggerName - O 'name' do campo de rádio que dispara a ação (ex: '1-etica_obrigatoria').
+     * @param {string} targetId - O 'id' do DIV que envolve o campo a ser mostrado/escondido (ex: 'div_id_1-tipo_etica').
+     * @param {string} showValue - O valor do rádio que deve mostrar o campo (geralmente 'True' para 'Sim').
+     */
+    function setupConditionalField(triggerName, targetId, showValue) {
+            // O ID gerado pelo Crispy Forms geralmente é 'div_id_PREFIXO-NOME_DO_CAMPO'
+        const targetElement = document.getElementById(`div_id_${targetId}`);
+        const triggerRadios = document.querySelectorAll(`input[name="${triggerName}"]`);
+
+        if (!targetElement || triggerRadios.length === 0) {
+            // Se não encontrar, tenta sem o prefixo 'div_id_'
+            const fallbackTarget = document.getElementById(targetId);
+            if (!fallbackTarget) return; // Se ainda não encontrar, desiste
+            targetElement = fallbackTarget;
+        }
+
+        function updateVisibility() {
+            const selectedRadio = document.querySelector(`input[name="${triggerName}"]:checked`);
+            // Se nenhum rádio estiver selecionado, esconde o campo
+            if (!selectedRadio) {
+                targetElement.style.display = 'none';
+                return;
+            }
+            
+            if (selectedRadio.value === showValue) {
+                targetElement.style.display = 'block';
+            } else {
+                targetElement.style.display = 'none';
+            }
+        }
+
+        triggerRadios.forEach(radio => {
+            radio.addEventListener('change', updateVisibility);
+        });
+        
+        // Força a atualização da visibilidade no carregamento da página
+        updateVisibility();
+    }
+
+    // --- CORREÇÃO 2: Usar os IDs corretos ---
+    // O prefixo '1-' é adicionado pelo form wizard
+    setupConditionalField('1-etica_obrigatoria', '1-tipo_etica', 'True');
+    setupConditionalField('1-participa_pos_graduacao', '1-programa_pos', 'True');
+});

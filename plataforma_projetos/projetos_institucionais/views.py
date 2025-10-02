@@ -6,10 +6,11 @@ from django.contrib import messages
 from django.core.mail import send_mail, EmailMessage
 from django.core.paginator import Paginator
 from django.core.files.base import ContentFile
+from django.core.files.storage import FileSystemStorage
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, ProtectedError
-from django.http import HttpResponseForbidden
+from django.http import HttpResponseForbidden, JsonResponse
 from django.urls import reverse
 from django.template.loader import render_to_string
 from .models import Projeto
@@ -19,6 +20,7 @@ from .decorators import gestor_required, coordenador_required, aluno_required
 from formtools.wizard.views import SessionWizardView
 from weasyprint import HTML
 import re
+from datetime import date
 import datetime
 
 
@@ -39,6 +41,8 @@ def request_home(request):
 class ProjetoCreateWizard(SessionWizardView):
     template_name = 'projetos_institucionais/projeto_wizard_form.html'
 
+    file_storage = FileSystemStorage(location=os.path.join(settings.MEDIA_ROOT, 'temp_wizard_files'))
+
     form_list = [
         ('0', Etapa1_TipoFinanciamentoForm),
         ('1', Etapa2_InfoGeraisForm),
@@ -47,6 +51,15 @@ class ProjetoCreateWizard(SessionWizardView):
         ('4', Etapa5_ODSForm),
         ('5', Etapa6_RevisaoForm),
     ]
+
+    def process_step(self, form):
+        if self.steps.current == '1':
+            files = form.cleaned_data.get('anexos_gerais', [])
+            if files:
+                file_names = [f.name for f in files]
+                self.storage.extra_data['anexos_gerais_nomes'] = file_names
+        
+        return self.get_form_step_data(form)
 
     def get_template_names(self):
         if self.steps.current == '5':
@@ -62,7 +75,7 @@ class ProjetoCreateWizard(SessionWizardView):
             context['formset_equipe'] = self.get_cleaned_data_for_step('3')
             ods_data = self.get_cleaned_data_for_step('4')
             context['ods_selecionados'] = ods_data.get('ods') if ods_data else []
-
+            context['anexos_gerais_review'] = self.storage.extra_data.get('anexos_gerais_nomes', [])
         return context
 
     def get_form(self, step=None, data=None, files=None):
@@ -98,6 +111,12 @@ class ProjetoCreateWizard(SessionWizardView):
         self.storage.extra_data['projeto_id'] = instance.id
         return instance
     
+    def get_form_kwargs(self, step=None):
+        kwargs = super().get_form_kwargs(step)
+        if step == '3':
+            kwargs['form_kwargs'] = {'coordenador': self.request.user}
+        return kwargs
+    
     @transaction.atomic
     def done(self, form_list, form_dict, **kwargs):
         projeto_id = self.storage.extra_data.get('projeto_id')
@@ -107,8 +126,25 @@ class ProjetoCreateWizard(SessionWizardView):
         for form_key in ['0', '1', '2']:
             dados_gerais.update(form_dict.get(form_key, {}).cleaned_data)
         
-        dados_etapa1 = form_dict.get('1', {}).cleaned_data
-        grupos_pesquisa_data = dados_etapa1.get('grupos_pesquisa', [])
+        anexos_a_salvar = dados_gerais.pop('anexos_gerais', [])
+        centro_lotacao_obj = dados_gerais.get('centro_lotacao')
+        nome_agencia = dados_gerais.pop('agencia_financiadora', None)
+        
+        if nome_agencia:
+            agencia_obj, _ = AgenciaFinanciadora.objects.get_or_create(nome=nome_agencia.strip())
+            projeto.agencia_financiadora = agencia_obj
+
+        nome_programa = dados_gerais.pop('programa_pos', None)
+        if nome_programa and centro_lotacao_obj:
+            programa_obj, _ = ProgramaPos.objects.get_or_create(nome=nome_programa.strip(), defaults={'centro_lotacao': centro_lotacao_obj})
+            projeto.programa_pos = programa_obj
+        
+        nome_tipo_etica = dados_gerais.pop('tipo_etica', None)
+        if nome_tipo_etica:
+            etica_obj, _ = TipoEtico.objects.get_or_create(nome=nome_tipo_etica.strip())
+            projeto.tipo_etica = etica_obj
+
+        grupos_str = dados_gerais.pop('grupos_pesquisa', '')
 
         dados_etapa4 = form_dict.get('4', {}).cleaned_data
         ods_data = dados_etapa4.get('ods', [])
@@ -123,8 +159,27 @@ class ProjetoCreateWizard(SessionWizardView):
         projeto.status = 'submetido'
         projeto.save()
 
-        projeto.grupos_pesquisa.set(grupos_pesquisa_data)
+        lista_de_grupos = []
+        if grupos_str:
+            nomes_grupos = [nome.strip() for nome in grupos_str.split(',') if nome.strip()]
+            for nome in nomes_grupos:
+                grupo_obj, _ = GrupoPesquisa.objects.get_or_create(nome=nome)
+                lista_de_grupos.append(grupo_obj)
+        projeto.grupos_pesquisa.set(lista_de_grupos)
         projeto.ods.set(ods_data)
+
+        if anexos_a_salvar:
+            anexos_nomes = self.storage.extra_data.get('anexos_gerais_nomes', [])
+            
+            for file_content, file_name in zip(anexos_a_salvar, anexos_nomes):
+                django_file = ContentFile(file_content, name=file_name)
+                
+                Anexo.objects.create(
+                    projeto=projeto,
+                    tipo_anexo='outro',
+                    arquivo=django_file,
+                    descricao=f"Anexo geral: {file_name}"
+                )
 
         projeto.equipe.all().delete()
         for membro_data in dados_equipe:
@@ -156,6 +211,11 @@ class ProjetoCreateWizard(SessionWizardView):
         return render(self.request, 'projetos_institucionais/projeto_wizard_done.html', {
             'projeto': projeto
         })
+
+def load_cursos(request):
+    centro_id = request.GET.get('centro_id')
+    cursos = CursoGraduacao.objects.filter(centro_lotacao_id=centro_id).order_by('nome')
+    return JsonResponse(list(cursos.values('id', 'nome')), safe=False)
 
 class ProjetoUpdateWizard(ProjetoCreateWizard):
     def get_form_instance(self, step):
@@ -217,12 +277,14 @@ def projeto_detalhe(request, pk):
     comprovante = projeto.anexos.filter(tipo_anexo='comprovante_aprovacao').first()
     outros_anexos = projeto.anexos.exclude(tipo_anexo='comprovante_aprovacao')
     relatorio_submissao = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
+    relatorios_enviados = projeto.relatorios.all().order_by('-data_envio')
 
     contexto = {
         'projeto': projeto,
         'comprovante': comprovante,
         'outros_anexos': outros_anexos,
         'relatorio_submissao': relatorio_submissao,
+        'relatorios_enviados': relatorios_enviados,
     }
 
     return render(request, 'projetos_institucionais/projeto_detalhe.html', contexto)
@@ -260,7 +322,7 @@ def projeto_dashboard(request):
             'em_andamento': (['em_andamento'], 'Projetos em Andamento'),
             'em_revisao': (['submetido','aguardando_conselho'], 'Projetos em Revisão'),
             'finalizados': (['encerrado'], 'Projetos Finalizados'),
-            'rejeitados': (['reprovado'], 'Projetos Rejeitados'),
+            'avaliados': (['aprovado', 'reprovado'], 'Projetos Aprovados e Rejeitados'),
         }
 
         status_filter, table_title = status_map.get(active_tab, ([], ''))
@@ -302,14 +364,14 @@ def gestor_dashboard(request):
 def aprovar_projeto(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk)
 
-    projeto.status = 'em_andamento'
+    projeto.status = 'aprovado'
     projeto.save()
 
     subject = f'Seu projeto "{projeto.titulo}" foi APROVADO!'
     message = (
         f'Olá, {projeto.coordenador.first_name}!\n\n'
-        f'Temos boas notícias: seu projeto "{projeto.titulo}" foi aprovado e agora está em andamento. '
-        f'Você pode acessar o sistema para mais detalhes.'
+        f'Temos boas notícias: seu projeto "{projeto.titulo}" foi aprovado pelo gestor.'
+        f'Você já pode iniciá-lo a partir do seu painel ou aguardar a data de início programada.'
     )
     
     link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
@@ -337,6 +399,33 @@ def reprovar_projeto(request, pk):
 
     messages.error(request, f'O projeto "{projeto.titulo}" reprovado.')
     return redirect('gestor_dashboard')
+
+@login_required
+@coordenador_required
+def iniciar_projeto(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk, coordenador=request.user)
+
+    if projeto.status == 'aprovado':
+        projeto.status = 'em_andamento'
+        projeto.save()
+
+        subject = f'O projeto "{projeto.titulo}" foi iniciado!'
+        message = (
+            f'O projeto "{projeto.titulo}", do qual você faz parte, acaba de ser iniciado pelo coordenador. '
+            f'Acesse a plataforma para acompanhar as atividades.'
+        )
+        link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+        
+        enviar_email_e_notificacao(subject, message, projeto.coordenador, link=link_projeto)
+
+        for membro_equipe in projeto.equipe.all():
+            enviar_email_e_notificacao(subject, message, membro_equipe.membro, link=link_projeto)
+
+        messages.success(request, f'O projeto "{projeto.titulo}" foi iniciado e toda a equipe foi notificada.')
+    else:
+        messages.warning(request, 'Este projeto não pode ser iniciado.')
+
+    return redirect('projeto_detalhe', pk=pk)
 
 @gestor_required
 def anexar_comprovante(request, pk):
@@ -668,3 +757,89 @@ def lista_notificacoes(request):
     notificacoes.update(lida=True)
     
     return render(request, 'projetos_institucionais/notificacoes.html', {'notificacoes': notificacoes})
+
+@login_required
+@coordenador_required
+def listar_projetos_para_relatorio(request):
+    hoje = date.today()
+
+    projetos_sem_relatorio_final = Projeto.objects.filter(
+        coordenador=request.user,
+        status='em_andamento'
+    ).exclude(relatorios__tipo='final')
+
+    projetos_no_prazo = projetos_sem_relatorio_final.filter(data_fim__gte=hoje).order_by('data_fim')
+    projetos_atrasados = projetos_sem_relatorio_final.filter(data_fim__lt=hoje).order_by('data_fim')
+    
+    for p in projetos_no_prazo: p.dias_restantes = (p.data_fim - hoje).days
+    for p in projetos_atrasados: p.dias_atraso = abs((p.data_fim - hoje).days)
+
+    contexto = {
+        'projetos_no_prazo': projetos_no_prazo,
+        'projetos_atrasados': projetos_atrasados,
+    }
+    return render(request, 'projetos_institucionais/relatorio_lista_projetos.html', contexto)
+
+@login_required
+@coordenador_required
+def criar_relatorio(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk, coordenador=request.user)
+    if request.method == 'POST':
+        form = RelatorioForm(request.POST)
+        if form.is_valid():
+            dados = form.cleaned_data
+
+            contexto_pdf = {
+                'projeto': projeto,
+                'dados_relatorio': dados,
+                'data_geracao': date.today(),
+            }
+            html_string = render_to_string('projetos_institucionais/relatorio_pdf_template.html', contexto_pdf)
+            pdf_file = HTML(string=html_string, base_url=request.build_absolute_uri()).write_pdf()
+
+            nome_arquivo = f'relatorio_{dados["tipo_relatorio"]}_projeto_{projeto.pk}.pdf'
+            arquivo_pdf_django = ContentFile(pdf_file, name=nome_arquivo)
+
+            novo_relatorio = Relatorio.objects.create(
+                projeto=projeto,
+                responsavel=request.user,
+                tipo=dados['tipo_relatorio'],
+                anexo_pdf=arquivo_pdf_django,
+            )
+            if novo_relatorio.tipo == 'final':
+                gestores = Usuario.objects.filter(perfil='gestor', is_active=True)
+                subject = f'Relatório Final Submetido: "{projeto.titulo}"'
+                message = (
+                    f'O coordenador {projeto.coordenador.get_full_name()} submeteu o relatório final para o projeto "{projeto.titulo}".\n\n'
+                    f'O projeto agora está pronto para sua análise e finalização.'
+                )
+                link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
+
+                for gestor in gestores:
+                    enviar_email_e_notificacao(subject, message, gestor, link=link_projeto)
+
+            messages.success(request, 'Relatório enviado com sucesso e salvo no projeto.')
+            return redirect('projeto_detalhe', pk=projeto.pk)
+    else:
+        form = RelatorioForm()
+    
+    contexto = {
+        'form': form,
+        'projeto': projeto,
+    }
+    return render(request, 'projetos_institucionais/relatorio_form.html', contexto)
+
+@login_required
+@gestor_required
+def finalizar_projeto(request, pk):
+    projeto = get_object_or_404(Projeto, pk=pk)
+    tem_relatorio_final = projeto.relatorios.filter(tipo='final').exists()
+
+    if not tem_relatorio_final:
+        messages.error(request, 'Ação não permitida: o projeto não pode ser encerrado sem a submissão do relatório final.')
+        return redirect('projeto_detalhe', pk=pk)
+    
+    projeto.status = 'encerrado'
+    projeto.save()
+    messages.success(request, 'Projeto encerrado com sucesso!')
+    return redirect('projeto_detalhe', pk=pk)

@@ -21,7 +21,7 @@
                                 {{ projeto.titulo }}
                             </a>
                         </td>
-                        <td><span class="badge bg-primary">{{ projeto.get_status_display }}</span></td>
+                        <td><span class="badge bg-{% if projeto.status == 'aprovado' or projeto.status == 'em_andamento' %}success{% elif projeto.status == 'submetido' or projeto.status == 'aguardando_conselho' %}primary{% else %}danger{% endif %}">{{ projeto.get_status_display }}</span></td>
                         <td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td>
                         <td class="text-end">
                             <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver Detalhes">
@@ -30,6 +30,11 @@
                             {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
                             <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-sm btn-outline-primary" title="Editar Projeto">
                                 <i class="bi bi-pencil-fill"></i>
+                            </a>
+                            {% endif %}
+                            {% if user == projeto.coordenador and projeto.status == "aprovado" %}
+                            <a href="{% url 'iniciar_projeto' projeto.pk %}" class="btn btn-sm btn-outline-success" title="Iniciar Projeto">
+                                <i class="bi bi-play-circle-fill"></i>
                             </a>
                             {% endif %}
                         </td>

@@ -86,9 +86,9 @@
                             <td>{{ projeto.titulo }}</td>
                             <td>{{ projeto.coordenador.get_full_name }}</td>
                             <td>{{ projeto.anexos.first.data_upload|date:"d/m/Y" }}</td>
-                            <td>
-                                <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-eye-fill"></i> Detalhes
+                            <td class="text-center">
+                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info" title="Ver Detalhes">
+                                    <i class="bi bi-eye-fill"></i>
                                 </a>
                                 <a href="{% url 'anexar_comprovante' pk=projeto.pk %}" class="btn btn-sm btn-warning"
                                     title="Anexar Comprovante">

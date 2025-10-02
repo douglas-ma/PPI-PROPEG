@@ -35,6 +35,14 @@
                     </button>
                 </form>
             {% endif %}
+            {% if user == projeto.coordenador and projeto.status == 'aprovado' %}
+                <form action="{% url 'iniciar_projeto' projeto.pk %}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja iniciar este projeto? Esta ação notificará toda a equipe.');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success me-2">
+                        <i class="bi bi-play-circle-fill"></i> Iniciar Projeto
+                    </button>
+                </form>
+            {% endif %}
             {% if user.perfil == 'gestor' %}
             <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Painel do Gestor</a>
             {% elif user.perfil == 'coordenador' %}
@@ -202,6 +210,34 @@
                     <li class="list-group-item"><strong>Agência Financiadora:</strong><br>{{ projeto.agencia_financiadora.nome|default:"N/A" }}</li>
                     <li class="list-group-item"><strong>Valor do Fomento:</strong><br>R$ {{ projeto.valor_fomento|default:"0,00" }}</li>
                     <li class="list-group-item"><strong>Envolve Aspectos Éticos:</strong><br>{% if projeto.etica_obrigatoria %}Sim ({{ projeto.tipo_etica.nome }}){% else %}Não{% endif %}</li>
+                </ul>
+            </div>
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-text"></i> Relatórios de Atividades Enviados
+                    </h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    {% for relatorio in relatorios_enviados %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong class="d-block">{{ relatorio.get_tipo_display }}</strong>
+                                <small class="text-secondary d-block mt-1">
+                                    <i class="bi bi-clock"></i> Enviado em {{ relatorio.data_envio|date:"d/m/Y" }} às {{ relatorio.data_envio|time:"H:i" }} por {{ relatorio.responsavel.get_full_name }}
+                                </small>
+                            </div>
+                            <div>
+                                <a href="{{ relatorio.anexo_pdf.url }}" class="btn btn-sm btn-outline-danger" target="_blank" title="Baixar PDF">
+                                    <i class="bi bi-file-earmark-pdf-fill"></i> Baixar PDF
+                                </a>
+                            </div>
+                        </li>
+                    {% empty %}
+                        <li class="list-group-item">
+                            <p class="text-muted mb-0">Nenhum relatório de atividades foi enviado para este projeto ainda.</p>
+                        </li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

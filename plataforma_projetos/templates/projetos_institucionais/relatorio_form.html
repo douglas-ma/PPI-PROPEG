@@ -1,0 +1,28 @@
+{% extends "base2.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Emitir Relatório{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2 class="mb-1">Emitir Relatório de Atividades</h2>
+    <p class="lead text-muted">Projeto: {{ projeto.titulo }}</p>
+    <hr>
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="card">
+            <div class="card-body">
+                {{ form|crispy }}
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-end mt-4">
+            <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-circle-fill"></i> Gerar e Enviar Relatório
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -266,6 +266,7 @@ class Projeto(models.Model):
         on_delete=models.PROTECT,
         verbose_name="Centro de Lotação",
         null=True,
+        blank=True,
     )
     agencia_financiadora = models.ForeignKey(
         AgenciaFinanciadora,
@@ -424,7 +425,7 @@ class Relatorio(models.Model):
         ('final', 'Final')
     )
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
-    data_envio = models.DateField(auto_now_add=True)
+    data_envio = models.DateTimeField(auto_now_add=True)
     anexo_pdf = models.FileField(upload_to=caminho_upload_arquivo)
     responsavel = models.ForeignKey(
         settings.AUTH_USER_MODEL,

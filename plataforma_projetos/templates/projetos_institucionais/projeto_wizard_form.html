@@ -6,7 +6,7 @@
 {% block content %}
 
 <div class="d-flex">
-    <form method="post" class="d-flex flex-grow-1">
+    <form method="post" class="d-flex flex-grow-1" enctype="multipart/form-data">
         {% csrf_token %}
         {{ wizard.management_form }}
 
@@ -56,7 +56,8 @@
             <table class="table">
                 <thead class="table-light">
                     <tr>
-                        <th>Membro (Aluno)</th>
+                        <th>Membro</th>
+                        <th>Perfil</th>
                         <th>Carga Horária Semanal (h)</th>
                         <th>Carga Horária Total (h)</th>
                         <th style="width: 100px;">Ação</th>
@@ -67,6 +68,7 @@
                     <tr class="equipe-form-row">
                         {{ form.id }}
                         <td>{{ form.membro }}</td>
+                        <td>{{ form.instance.membro.get_perfil_display }}</td>
                         <td>{{ form.carga_horaria_semanal }}</td>
                         <td>{{ form.carga_horaria_total }}</td>
                         <td class="text-center">
@@ -84,6 +86,7 @@
                     <tr class="equipe-form-row">
                         {{ wizard.form.empty_form.id }}
                         <td>{{ wizard.form.empty_form.membro }}</td>
+                        <td>{{ wizard.form.empty_form.membro.get_perfil_display }}</td>
                         <td>{{ wizard.form.empty_form.carga_horaria_semanal }}</td>
                         <td>{{ wizard.form.empty_form.carga_horaria_total }}</td>
                         <td class="text-center">

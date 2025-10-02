@@ -39,6 +39,22 @@
 
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
+            <strong>Anexos Adicionais</strong>
+            <button type="submit" name="wizard_goto_step" value="1" class="btn btn-sm btn-outline-secondary">Editar</button>
+        </div>
+        <ul class="list-group list-group-flush">
+            {% for nome_arquivo in anexos_gerais_review %}
+                <li class="list-group-item">
+                    <i class="bi bi-file-earmark-text"></i> {{ nome_arquivo }}
+                </li>
+            {% empty %}
+                <li class="list-group-item">Nenhum anexo adicional foi enviado.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <strong>Etapa 3: Detalhes do Projeto</strong>
             <button type="submit" name="wizard_goto_step" value="2" class="btn btn-sm btn-outline-secondary">Editar</button>
         </div>

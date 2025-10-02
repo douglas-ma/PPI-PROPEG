@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório do Projeto: {{ projeto.titulo }}</title>
+    <style>
+        /* Você pode copiar os estilos básicos do seu 'projeto_pdf.html' aqui */
+        body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; }
+        h1 { font-size: 16pt; text-align: center; margin-bottom: 2cm; }
+        h2 { font-size: 14pt; border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 1.5cm; }
+        p { text-align: justify; }
+        .info-header { background-color: #f2f2f2; padding: 10px; border: 1px solid #ccc; margin-bottom: 1cm;}
+    </style>
+</head>
+<body>
+    <h1>Relatório de Atividades - {{ dados_relatorio.tipo_relatorio|capfirst }}</h1>
+
+    <div class="info-header">
+        <p><strong>Projeto:</strong> {{ projeto.titulo }}</p>
+        <p><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
+        <p><strong>Tipo de Relatório:</strong> {{ dados_relatorio.tipo_relatorio|capfirst }}</p>
+        <p><strong>Data de Emissão:</strong> {{ data_geracao|date:"d/m/Y" }}</p>
+    </div>
+
+    <h2>1. Resumo das Atividades Realizadas no Período</h2>
+    <p>{{ dados_relatorio.resumo_atividades|linebreaksbr }}</p>
+
+    <h2>2. Resultados Alcançados</h2>
+    <p>{{ dados_relatorio.resultados_alcancados|linebreaksbr }}</p>
+
+    <h2>3. Dificuldades Encontradas</h2>
+    <p>{{ dados_relatorio.dificuldades|default:"Nenhuma dificuldade informada."|linebreaksbr }}</p>
+
+    <h2>4. Próximos Passos e Planejamento Futuro</h2>
+    <p>{{ dados_relatorio.proximos_passos|linebreaksbr }}</p>
+
+</body>
+</html>
