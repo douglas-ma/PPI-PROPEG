@@ -18,10 +18,12 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from projetos_institucionais import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('projetos_institucionais.urls')),
+    path('', views.request_home, name='home'),
+    path('projetos/', include('projetos_institucionais.urls')),
     path('login/', include('login.urls')),
 ]
 

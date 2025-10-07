@@ -5,35 +5,117 @@
     <meta charset="UTF-8">
     <title>Relatório do Projeto: {{ projeto.titulo }}</title>
     <style>
-        /* Você pode copiar os estilos básicos do seu 'projeto_pdf.html' aqui */
-        body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; }
-        h1 { font-size: 16pt; text-align: center; margin-bottom: 2cm; }
-        h2 { font-size: 14pt; border-bottom: 1px solid #ddd; padding-bottom: 3px; margin-top: 1.5cm; }
-        p { text-align: justify; }
-        .info-header { background-color: #f2f2f2; padding: 10px; border: 1px solid #ccc; margin-bottom: 1cm;}
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 1.5;
+        }
+        .header {
+            text-align: center;
+            font-size: 11pt;
+            font-weight: bold;
+            line-height: 1.2;
+            margin-bottom: 1cm;
+        }
+        .main-title {
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid black;
+            padding: 5px;
+            margin-bottom: 1cm;
+        }
+        .info-block {
+            border: 1px solid black;
+            padding: 15px;
+        }
+        .info-block p {
+            margin: 0 0 10px 0;
+        }
+        .section-title {
+            font-size: 13pt;
+            font-weight: bold;
+            margin-top: 1.5cm;
+            margin-bottom: 0.5cm;
+        }
+        .content {
+            text-align: justify;
+        }
+        .footer-info {
+            margin-top: 2cm;
+            line-height: 1.2;
+        }
     </style>
 </head>
 <body>
-    <h1>Relatório de Atividades - {{ dados_relatorio.tipo_relatorio|capfirst }}</h1>
 
-    <div class="info-header">
-        <p><strong>Projeto:</strong> {{ projeto.titulo }}</p>
-        <p><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
-        <p><strong>Tipo de Relatório:</strong> {{ dados_relatorio.tipo_relatorio|capfirst }}</p>
-        <p><strong>Data de Emissão:</strong> {{ data_geracao|date:"d/m/Y" }}</p>
+    <div class="header">
+        <p>UNIVERSIDADE FEDERAL DO ACRE<br>
+        PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO<br>
+        DIRETORIA DE PESQUISA</p>
     </div>
 
-    <h2>1. Resumo das Atividades Realizadas no Período</h2>
-    <p>{{ dados_relatorio.resumo_atividades|linebreaksbr }}</p>
+    <div class="main-title">
+        RELATÓRIO DO PROJETO INSTITUCIONAL DE PESQUISA
+    </div>
 
-    <h2>2. Resultados Alcançados</h2>
-    <p>{{ dados_relatorio.resultados_alcancados|linebreaksbr }}</p>
+    <div class="info-block">
+        <p><strong>ETAPA:</strong> ({{ dados_relatorio.tipo_relatorio|upper }})</p>
+        <p><strong>MODALIDADE:</strong> (PROJETO INSTITUCIONAL)</p>
+        <p><strong>CENTRO:</strong> ({{ projeto.centro_lotacao.nome|upper }})</p>
+        <p><strong>UNIDADE INTEGRADORA:</strong> {{ projeto.curso.nome|default:"Não especificada" }}</p>
+        <p><strong>Título do Projeto de Pesquisa:</strong> {{ projeto.titulo }}</p>
+    </div>
 
-    <h2>3. Dificuldades Encontradas</h2>
-    <p>{{ dados_relatorio.dificuldades|default:"Nenhuma dificuldade informada."|linebreaksbr }}</p>
+    <div class="footer-info">
+        <p><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
+        
+        <p><strong>Período do relatório:</strong> de {{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</p>
+    </div>
 
-    <h2>4. Próximos Passos e Planejamento Futuro</h2>
-    <p>{{ dados_relatorio.proximos_passos|linebreaksbr }}</p>
+    <div style="page-break-before: always;">
+        <h2 class="section-title">Resumo</h2>
+        <div class="content">
+            <p>{{ dados_relatorio.resumo_atividades|linebreaksbr }}</p>
+        </div>
 
+        <h2 class="section-title">Introdução</h2>
+        <div class="content">
+            <p>{{ projeto.introducao|linebreaksbr }}</p>
+        </div>
+
+        <h2 class="section-title">Objetivos (Geral e Específicos)</h2>
+        <div class="content">
+            <p>{{ projeto.objetivos|linebreaksbr }}</p>
+        </div>
+        
+        <h2 class="section-title">Metodologia</h2>
+        <div class="content">
+            <p>{{ projeto.metodologia|linebreaksbr }}</p>
+        </div>
+
+        <h2 class="section-title">Resultados e Discussão</h2>
+        <div class="content">
+            <p>{{ dados_relatorio.resultados_alcancados|linebreaksbr }}</p>
+        </div>
+        
+        <h2 class="section-title">Dificuldades Encontradas</h2>
+        <div class="content">
+            <p>{{ dados_relatorio.dificuldades|default:"Nenhuma dificuldade informada."|linebreaksbr }}</p>
+        </div>
+
+        <h2 class="section-title">Próximos Passos e Planejamento Futuro / Conclusões</h2>
+        <div class="content">
+            <p>{{ dados_relatorio.proximos_passos|linebreaksbr }}</p>
+        </div>
+
+        <h2 class="section-title">Referências</h2>
+        <div class="content">
+            <p>{{ projeto.referencias|default:"Nenhuma referência informada."|linebreaksbr }}</p>
+        </div>
+    </div>
 </body>
 </html>

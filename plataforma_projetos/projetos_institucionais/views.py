@@ -176,7 +176,6 @@ class ProjetoCreateWizard(SessionWizardView):
 
         if anexos_a_salvar:
             anexos_nomes = self.storage.extra_data.get('anexos_gerais_nomes', [])
-            
             for file_content, file_name in zip(anexos_a_salvar, anexos_nomes):
                 django_file = ContentFile(file_content, name=file_name)
                 
