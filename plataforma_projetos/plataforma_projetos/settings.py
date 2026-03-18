@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'django.contrib.sites',
+    'django_select2',
 ]
 
 AUTH_USER_MODEL = 'projetos_institucionais.Usuario'

@@ -1,5 +1,7 @@
 # Django e servidor
 Django==5.1.7
+django-select2==8.4.1
+django-appconf==1.1.0
 gunicorn==23.0.0
 asgiref==3.8.1
 sqlparse==0.5.3
