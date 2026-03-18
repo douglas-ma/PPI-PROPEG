@@ -11,5 +11,19 @@ python manage.py collectstatic --no-input
 # Aplica as migrations
 python manage.py migrate
 
-# Cria superusuário padrão se não existir (opcional)
-# python manage.py createsuperuser --no-input || true
+# Adicione o super user se ele não existir
+python manage.py shell -c "
+from projetos_institucionais.models import Usuario
+if not Usuario.objects.filter(cpf='$ADMIN_CPF').exists():
+    u = Usuario.objects.create_superuser(
+        username='$ADMIN_CPF',
+        cpf='$ADMIN_CPF',
+        email='$ADMIN_EMAIL',
+        password='$ADMIN_PASSWORD',
+        perfil='gestor',
+        status='ativo',
+    )
+    print('Superusuário criado com sucesso.')
+else:
+    print('Superusuário já existe.')
+"
