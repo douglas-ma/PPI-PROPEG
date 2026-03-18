@@ -1,0 +1,174 @@
+{% extends "base2.html" %}
+{% load static %}
+
+{% block title %}Criar Projeto{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4 d-flex justify-content-center">
+<div style="max-width: 560px; width: 100%;">
+
+  <div class="text-center mb-4">
+    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 mb-3"
+         style="width:64px; height:64px;">
+      <i class="bi bi-file-earmark-text text-warning" style="font-size:1.8rem;"></i>
+    </div>
+    <h4 class="mb-1">Você tem rascunho{{ total_rascunhos|pluralize }} salvo{{ total_rascunhos|pluralize }}</h4>
+    <p class="text-muted">
+      {% if total_rascunhos == 1 %}
+        Encontramos um projeto que você começou e não finalizou.
+      {% else %}
+        Encontramos <strong>{{ total_rascunhos }}</strong> projetos que você começou e não finalizou.
+      {% endif %}
+    </p>
+  </div>
+
+  {% if total_rascunhos == 1 %}
+  {# ── Caso único rascunho: mostra o card com detalhes ── #}
+  <div class="card border-0 shadow-sm mb-4" style="border-left: 4px solid #ffc107 !important;">
+    <div class="card-body">
+      <div class="d-flex align-items-start gap-3">
+        <div class="d-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10 flex-shrink-0"
+             style="width:42px; height:42px;">
+          <i class="bi bi-file-earmark-text text-warning"></i>
+        </div>
+        <div class="flex-grow-1">
+          <p class="fw-semibold mb-1">
+            {{ rascunho_recente.titulo|default:"(sem título ainda)" }}
+          </p>
+          <div class="d-flex gap-3 flex-wrap">
+            {% if rascunho_recente.centro_lotacao %}
+            <small class="text-muted">
+              <i class="bi bi-building me-1"></i>{{ rascunho_recente.centro_lotacao }}
+            </small>
+            {% endif %}
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i>
+              Progresso:
+              {% if rascunho_recente.resumo %}
+                Etapa 2 ou mais
+              {% elif rascunho_recente.titulo %}
+                Etapa 1 iniciada
+              {% else %}
+                Não iniciado
+              {% endif %}
+            </small>
+          </div>
+        </div>
+        <span class="badge bg-warning text-dark flex-shrink-0">Rascunho</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex flex-column gap-2">
+    {# Continuar rascunho #}
+    <a href="{% url 'projeto_editar' pk=rascunho_recente.pk %}"
+       class="btn btn-warning btn-lg w-100">
+      <i class="bi bi-arrow-right-circle me-2"></i>Continuar de onde parei
+    </a>
+
+    {# Criar novo #}
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="acao" value="novo">
+      <button type="button" class="btn btn-outline-secondary w-100"
+              data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
+        <i class="bi bi-plus-lg me-2"></i>Criar um projeto novo do zero
+      </button>
+    </form>
+
+    {# Cancelar #}
+    <a href="{% url 'projeto_dashboard' %}" class="btn btn-link text-muted w-100">
+      <i class="bi bi-arrow-left me-1"></i>Voltar para Meus Projetos
+    </a>
+  </div>
+
+  {% else %}
+  {# ── Caso múltiplos rascunhos: mostra o mais recente + aviso ── #}
+  <div class="card border-0 shadow-sm mb-3" style="border-left: 4px solid #ffc107 !important;">
+    <div class="card-body">
+      <p class="small text-muted fw-semibold mb-2 text-uppercase">
+        <i class="bi bi-clock-history me-1"></i>Rascunho mais recente
+      </p>
+      <p class="fw-semibold mb-1">
+        {{ rascunho_recente.titulo|default:"(sem título ainda)" }}
+      </p>
+      {% if rascunho_recente.centro_lotacao %}
+      <small class="text-muted">
+        <i class="bi bi-building me-1"></i>{{ rascunho_recente.centro_lotacao }}
+      </small>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="alert alert-info border-0 shadow-sm d-flex gap-2 align-items-start mb-4">
+    <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+    <div class="small">
+      Você tem <strong>{{ total_rascunhos }} rascunhos</strong> no total. Para continuar um rascunho específico,
+      acesse a <a href="{% url 'projeto_dashboard' %}?tab=rascunhos" class="alert-link">aba de Rascunhos</a>
+      em Meus Projetos.
+    </div>
+  </div>
+
+  <div class="d-flex flex-column gap-2">
+    {# Continuar o mais recente #}
+    <a href="{% url 'projeto_editar' pk=rascunho_recente.pk %}"
+       class="btn btn-warning btn-lg w-100">
+      <i class="bi bi-arrow-right-circle me-2"></i>Continuar o rascunho mais recente
+    </a>
+
+    {# Ver todos os rascunhos #}
+    <a href="{% url 'projeto_dashboard' %}?tab=rascunhos"
+       class="btn btn-outline-primary w-100">
+      <i class="bi bi-list-ul me-2"></i>Ver todos os {{ total_rascunhos }} rascunhos
+    </a>
+
+    {# Criar novo #}
+    <button type="button" class="btn btn-outline-secondary w-100"
+            data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
+      <i class="bi bi-plus-lg me-2"></i>Criar um projeto novo do zero
+    </button>
+
+    {# Cancelar #}
+    <a href="{% url 'projeto_dashboard' %}" class="btn btn-link text-muted w-100">
+      <i class="bi bi-arrow-left me-1"></i>Voltar para Meus Projetos
+    </a>
+  </div>
+
+  {% endif %}
+
+</div>
+</div>
+
+{# Modal confirmação de novo projeto #}
+<div class="modal fade" id="modalNovoProjeto" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body text-center p-4">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-danger bg-opacity-10 mb-3"
+             style="width:56px; height:56px;">
+          <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:1.5rem;"></i>
+        </div>
+        <h5 class="mb-2">Criar projeto novo?</h5>
+        <p class="text-muted small mb-4">
+          Seus rascunho{{ total_rascunhos|pluralize }} existente{{ total_rascunhos|pluralize }}
+          continuará{{ total_rascunhos|pluralize:"ão,á" }} salvo{{ total_rascunhos|pluralize }} e
+          poderá{{ total_rascunhos|pluralize:"ão,á" }} ser acessado{{ total_rascunhos|pluralize }}
+          na aba de Rascunhos. Deseja continuar?
+        </p>
+        <div class="d-flex justify-content-center gap-3">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-arrow-left me-1"></i>Cancelar
+          </button>
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="acao" value="novo">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-plus-lg me-1"></i>Sim, criar novo
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

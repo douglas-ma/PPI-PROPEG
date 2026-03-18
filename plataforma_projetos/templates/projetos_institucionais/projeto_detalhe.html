@@ -1,252 +1,401 @@
 {% extends "base2.html" %}
+{% load static %}
 
-{% block title %}Detalhes Projeto{% endblock %}
+{% block title %}{{ projeto.titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div>
-            <h2 class="mb-0">{{ projeto.titulo }}</h2>
-            <span class="badge fs-6
-                {% if projeto.status == 'reprovado' %}
-                    bg-danger
-                {% elif projeto.status == 'em_andamento' %}
-                    bg-success
-                {% elif projeto.status == 'submetido' or projeto.status == 'aguardando_conselho' %}
-                    bg-warning text-dark
-                {% elif projeto.status == 'encerrado' %}
-                    bg-dark
-                {% else %}
-                    bg-primary
-                {% endif %}">
-                {{ projeto.get_status_display }}</span>
-        </div>
-        <div>
-            {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
-                <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-warning me-2">
-                    <i class="bi bi-pencil-square"></i> Editar e Ressubmeter Projeto
-                </a>
-            {% endif %}
-            {% if user.perfil == 'gestor' and projeto.status == 'submetido' %}
-                <form action="{% url 'encaminhar_para_conselho' projeto.pk %}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja encaminhar este projeto para o conselho?');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-info me-2">
-                        <i class="bi bi-send-fill"></i> Encaminhar ao Conselho
-                    </button>
-                </form>
-            {% endif %}
-            {% if user == projeto.coordenador and projeto.status == 'aprovado' %}
-                <form action="{% url 'iniciar_projeto' projeto.pk %}" method="post" class="d-inline" onsubmit="return confirm('Tem certeza que deseja iniciar este projeto? Esta ação notificará toda a equipe.');">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-success me-2">
-                        <i class="bi bi-play-circle-fill"></i> Iniciar Projeto
-                    </button>
-                </form>
-            {% endif %}
-            {% if user.perfil == 'gestor' %}
-            <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary">Voltar ao Painel do Gestor</a>
-            {% elif user.perfil == 'coordenador' %}
-            <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary">Voltar aos Meus Projetos</a>
-            {% endif %}
-        </div>
+<div class="container-fluid py-4 px-4">
+
+  {# Cabeçalho #}
+  <div class="d-flex align-items-start justify-content-between mb-4 flex-wrap gap-3">
+    <div class="flex-grow-1">
+      <div class="d-flex align-items-center gap-2 mb-1">
+        {% if user.perfil == 'gestor' %}
+          <a href="{% url 'gestor_dashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+        {% elif user.perfil == 'coordenador' %}
+          <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+        {% else %}
+          <a href="{% url 'aluno_meus_projetos' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i></a>
+        {% endif %}
+        <h4 class="mb-0">{{ projeto.titulo }}</h4>
+      </div>
+      <div class="ps-5 d-flex align-items-center gap-2 flex-wrap">
+        {% if projeto.status == 'em_andamento' %}<span class="badge bg-success">Em Andamento</span>
+        {% elif projeto.status == 'submetido' %}<span class="badge bg-primary">Submetido</span>
+        {% elif projeto.status == 'aprovado' %}<span class="badge bg-success">Aprovado</span>
+        {% elif projeto.status == 'reprovado' %}<span class="badge bg-danger">Reprovado</span>
+        {% elif projeto.status == 'aguardando_conselho' %}<span class="badge bg-warning text-dark">Ag. Conselho</span>
+        {% elif projeto.status == 'aguardando_encerramento' %}<span class="badge bg-warning text-dark">Ag. Encerramento</span>
+        {% elif projeto.status == 'encerrado' %}<span class="badge bg-secondary">Encerrado</span>
+        {% elif projeto.status == 'rascunho' %}<span class="badge bg-warning text-dark">Rascunho</span>
+        {% endif %}
+        {% if projeto.centro_lotacao %}<span class="text-muted small"><i class="bi bi-building me-1"></i>{{ projeto.centro_lotacao }}</span>{% endif %}
+      </div>
     </div>
-    <hr>
-
-    <div class="row g-4">
-        <div class="col-lg-8">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Detalhes do Projeto</strong></div>
-                <div class="card-body">
-                    <h5>Resumo</h5>
-                    <p class="text-muted">{{ projeto.resumo|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Palavras-chave</h5>
-                    <p class="text-muted">{{ projeto.palavras_chave }}</p>
-                    <hr>
-                    <h5>Introdução</h5>
-                    <p class="text-muted">{{ projeto.introducao|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Objetivos</h5>
-                    <p class="text-muted">{{ projeto.objetivos|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Metodologia</h5>
-                    <p class="text-muted">{{ projeto.metodologia|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Resultados e/ou Impactos Esperados</h5>
-                    <p class="text-muted">{{ projeto.resultados|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Parcerias</h5>
-                    <p class="text-muted">{{ projeto.parcerias|default:"Nenhuma parceria informada."|linebreaksbr }}</p>
-                    <hr>
-                    <h5>Referências</h5>
-                    <p class="text-muted">{{ projeto.referencias|linebreaksbr }}</p>
-                </div>
-            </div>
-            
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Equipe do Projeto</strong></div>
-                <ul class="list-group list-group-flush">
-                    {% for membro_equipe in projeto.equipe.all %}
-                    <li class="list-group-item">
-                        <p class="mb-1"><strong>Membro:</strong> {{ membro_equipe.membro.get_full_name }} ({{ membro_equipe.membro.get_perfil_display }})</p>
-                        <small class="text-muted">
-                            <strong>CPF:</strong> {{ membro_equipe.membro.cpf }} |
-                            <strong>Curso:</strong> {{ membro_equipe.membro.curso.nome|default:"Não informado" }} |
-                            <strong>Carga Horária:</strong> {{ membro_equipe.carga_horaria_semanal }}h/semana
-                        </small>
-                    </li>
-                    {% empty %}
-                    <li class="list-group-item text-muted">Nenhum membro na equipe.</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Vínculo com ODS</strong></div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for ods in projeto.ods.all %}
-                        <div class="col-4 mb-2">
-                            <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid"
-                                title="{{ ods.titulo }}">
-                        </div>
-                        {% empty %}
-                        <p class="text-muted">Nenhum ODS vinculado.</p>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Anexos</strong></div>
-                <div class="card-body">
-                    {% if comprovante %}
-                    <div class="alert alert-success">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h5 class="alert-heading mb-0">Projeto Aprovado</h5>
-                            </div>
-                            <div>
-                                <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-success btn-sm">
-                                    <i class="bi bi-file-earmark-check-fill"></i> Baixar
-                                </a>
-                                <a href="{% url 'deletar_anexo' comprovante.pk %}" class="btn btn-danger btn-sm">
-                                    <i class="bi bi-trash-fill"></i> Excluir
-                                </a>
-                            </div>
-                        </div>
-                        <hr>
-                        <p class="mb-0">O comprovante de aprovação foi anexado pelo gestor.</p>
-                    </div>
-                    {% endif %}
-
-                    <h6>Documentos do Projeto:</h6>
-                    <ul class="list-group list-group-flush">
-                        {% for anexo in outros_anexos %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                {{ anexo.get_tipo_anexo_display }}
-                                {% if anexo.descricao %}
-                                <small class="text-muted d-block">{{ anexo.descricao }}</small>
-                                {% endif %}
-                                <small class="text-secondary d-block mt-1">
-                                    <i class="bi bi-clock"></i> Enviado em {{ anexo.data_upload|date:"d/m/Y" }} às {{ anexo.data_upload|time:"H:i" }}
-                                </small>
-                            </div>
-                            <a href="{{ anexo.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                Ver Arquivo
-                            </a>
-                        </li>
-                        {% empty %}
-                        <li class="list-group-item text-muted">Nenhum outro anexo foi submetido.</li>
-                        {% endfor %}
-                    </ul>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="col-lg-4">
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Informações Gerais</strong></div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Coordenador:</strong><br>{{ projeto.coordenador.get_full_name }}
-                    </li>
-                    <li class="list-group-item"><strong>Email:</strong><br>{{ projeto.coordenador.email }}</li>
-                    {% if projeto.edital %}
-                    <li class="list-group-item">
-                        <strong>Edital Vinculado:</strong><br>
-                        {{ projeto.edital.titulo }}
-                    </li>
-                    {% endif %}
-                    <li class="list-group-item"><strong>Vigência:</strong><br>{{ projeto.data_inicio|date:"d/m/Y" }} a
-                        {{ projeto.data_fim|date:"d/m/Y" }}</li>
-                    {% if relatorio_submissao %}
-                    <li class="list-group-item">
-                        <strong>Última Submissão:</strong><br>
-                        {{ relatorio_submissao.data_upload|date:"d/m/Y" }} às {{ relatorio_submissao.data_upload|time:"H:i" }}
-                        <br>
-                        <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
-                            Ver Relatório de Submissão
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Vínculo Institucional</strong></div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Centro de Lotação:</strong><br>{{ projeto.centro_lotacao }}</li>
-                    <li class="list-group-item"><strong>Curso:</strong><br>{{ projeto.curso.nome|default:"Não informado" }}</li>
-                    <li class="list-group-item"><strong>Programa de Pós-Graduação:</strong><br>{{ projeto.programa_pos.nome|default:"Não participa" }}</li>
-                    <li class="list-group-item"><strong>Grupos de Pesquisa:</strong><br>
-                        {% for grupo in projeto.grupos_pesquisa.all %}
-                        <span class="badge bg-secondary">{{ grupo.nome }}</span>
-                        {% empty %}
-                        Nenhum
-                        {% endfor %}
-                    </li>
-                </ul>
-            </div>
-
-            <div class="card shadow-sm mb-4">
-                <div class="card-header"><strong>Financiamento e Ética</strong></div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item"><strong>Agência Financiadora:</strong><br>{{ projeto.agencia_financiadora.nome|default:"N/A" }}</li>
-                    <li class="list-group-item"><strong>Valor do Fomento:</strong><br>R$ {{ projeto.valor_fomento|default:"0,00" }}</li>
-                    <li class="list-group-item"><strong>Envolve Aspectos Éticos:</strong><br>{% if projeto.etica_obrigatoria %}Sim ({{ projeto.tipo_etica.nome }}){% else %}Não{% endif %}</li>
-                </ul>
-            </div>
-            <div class="card mt-4">
-                <div class="card-header">
-                    <h5 class="mb-0">
-                        <i class="bi bi-journal-text"></i> Relatórios de Atividades Enviados
-                    </h5>
-                </div>
-                <ul class="list-group list-group-flush">
-                    {% for relatorio in relatorios_enviados %}
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong class="d-block">{{ relatorio.get_tipo_display }}</strong>
-                                <small class="text-secondary d-block mt-1">
-                                    <i class="bi bi-clock"></i> Enviado em {{ relatorio.data_envio|date:"d/m/Y" }} às {{ relatorio.data_envio|time:"H:i" }} por {{ relatorio.responsavel.get_full_name }}
-                                </small>
-                            </div>
-                            <div>
-                                <a href="{{ relatorio.anexo_pdf.url }}" class="btn btn-sm btn-outline-danger" target="_blank" title="Baixar PDF">
-                                    <i class="bi bi-file-earmark-pdf-fill"></i> Baixar PDF
-                                </a>
-                            </div>
-                        </li>
-                    {% empty %}
-                        <li class="list-group-item">
-                            <p class="text-muted mb-0">Nenhum relatório de atividades foi enviado para este projeto ainda.</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+    {# Ações conforme perfil e status #}
+    <div class="d-flex flex-wrap gap-2">
+      {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
+        <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-warning btn-sm">
+          <i class="bi bi-pencil-square me-1"></i>Editar e Ressubmeter
+        </a>
+      {% endif %}
+      {% if user == projeto.coordenador and projeto.status == 'aprovado' %}
+        <form action="{% url 'iniciar_projeto' projeto.pk %}" method="post" class="d-inline"
+              onsubmit="return confirm('Iniciar o projeto? Toda a equipe será notificada.')">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success btn-sm">
+            <i class="bi bi-play-circle-fill me-1"></i>Iniciar Projeto
+          </button>
+        </form>
+      {% endif %}
+      {% if user.perfil == 'gestor' %}
+        {% if projeto.status == 'submetido' %}
+          <form action="{% url 'encaminhar_para_conselho' projeto.pk %}" method="post" class="d-inline"
+                onsubmit="return confirm('Encaminhar para o Conselho?')">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-warning btn-sm">
+              <i class="bi bi-arrow-right-circle me-1"></i>Encaminhar ao Conselho
+            </button>
+          </form>
+        {% endif %}
+        {% if projeto.status in "submetido,aguardando_conselho" %}
+          <a href="{% url 'aprovar_projeto' projeto.pk %}" class="btn btn-success btn-sm"
+             onclick="return confirm('Aprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')">
+            <i class="bi bi-check-lg me-1"></i>Aprovar
+          </a>
+          <a href="{% url 'reprovar_projeto' projeto.pk %}" class="btn btn-danger btn-sm"
+             onclick="return confirm('Reprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')">
+            <i class="bi bi-x-lg me-1"></i>Reprovar
+          </a>
+        {% endif %}
+        {% if projeto.status == 'aguardando_conselho' %}
+          <a href="{% url 'anexar_ata_conselho' pk=projeto.pk %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-paperclip me-1"></i>Anexar Ata do Conselho
+          </a>
+        {% endif %}
+        {% if projeto.status == 'aguardando_encerramento' %}
+          <a href="{% url 'encerrar_projeto' projeto.pk %}" class="btn btn-success btn-sm"
+             onclick="return confirm('Encerrar o projeto?')">
+            <i class="bi bi-check-circle me-1"></i>Encerrar Projeto
+          </a>
+        {% endif %}
+        {% if relatorio_submissao %}
+          <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-outline-danger btn-sm">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Relatório de Submissão
+          </a>
+        {% endif %}
+      {% endif %}
     </div>
+  </div>
+
+  {% if visao_completa %}
+  {# ════════════════════════════════════ VISÃO COMPLETA ════════════════════════════════════ #}
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+
+      {# Conteúdo textual #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+          <ul class="nav nav-tabs card-header-tabs" id="tab-conteudo">
+            <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-resumo">Resumo</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-intro">Introdução</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-obj">Objetivos</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-met">Metodologia</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-res">Resultados</a></li>
+            {% if projeto.referencias %}<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ref">Referências</a></li>{% endif %}
+          </ul>
+        </div>
+        <div class="card-body tab-content">
+          <div class="tab-pane fade show active" id="tab-resumo">
+            {% if projeto.palavras_chave %}<p class="small text-muted mb-2"><i class="bi bi-tags me-1"></i>{{ projeto.palavras_chave }}</p>{% endif %}
+            <p>{{ projeto.resumo|default:"Não informado."|linebreaksbr }}</p>
+          </div>
+          <div class="tab-pane fade" id="tab-intro">
+            <p>{{ projeto.introducao|default:"Não informada."|linebreaksbr }}</p>
+          </div>
+          <div class="tab-pane fade" id="tab-obj">
+            <h6 class="fw-semibold mb-2">Objetivo Geral</h6>
+            <p>{{ projeto.objetivo_geral|default:"Não informado." }}</p>
+            <h6 class="fw-semibold mt-3 mb-2">Objetivos Específicos</h6>
+            <p>{{ projeto.objetivos_especificos|default:"Não informados."|linebreaksbr }}</p>
+          </div>
+          <div class="tab-pane fade" id="tab-met">
+            <p>{{ projeto.metodologia|default:"Não informada."|linebreaksbr }}</p>
+          </div>
+          <div class="tab-pane fade" id="tab-res">
+            <p>{{ projeto.resultados|default:"Não informados."|linebreaksbr }}</p>
+          </div>
+          {% if projeto.referencias %}
+          <div class="tab-pane fade" id="tab-ref">
+            <p>{{ projeto.referencias|linebreaksbr }}</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Equipe #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-people text-primary"></i>
+          <strong>Equipe de Trabalho</strong>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 small">
+            <thead class="table-light">
+              <tr><th>Nome</th><th>Perfil</th><th>Função</th><th class="text-center">CH Semanal</th><th class="text-center">CH Total</th></tr>
+            </thead>
+            <tbody>
+              {% for m in projeto.equipe.all %}
+              <tr>
+                <td class="fw-semibold">{{ m.membro.get_full_name }}</td>
+                <td class="text-muted">{{ m.membro.get_perfil_display }}</td>
+                <td>{{ m.get_funcao_display }}</td>
+                <td class="text-center">{{ m.carga_horaria_semanal }}h</td>
+                <td class="text-center">{{ m.carga_horaria_total }}h</td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-muted py-3">Nenhum membro na equipe.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# Anexos #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-paperclip text-primary"></i>
+          <strong>Anexos</strong>
+        </div>
+        <div class="card-body p-0">
+          {% if comprovante or ata_conselho or outros_anexos %}
+          <ul class="list-group list-group-flush">
+            {% if comprovante %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">Comprovante de Aprovação</span>
+                <div class="text-muted" style="font-size:.75rem;">{{ comprovante.data_upload|date:"d/m/Y" }}</div>
+              </div>
+              <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-success">
+                <i class="bi bi-download me-1"></i>Baixar
+              </a>
+            </li>
+            {% endif %}
+            {% if ata_conselho %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-file-earmark-text-fill text-warning fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">Ata de Aprovação do Conselho</span>
+                <div class="text-muted" style="font-size:.75rem;">{{ ata_conselho.data_upload|date:"d/m/Y" }}</div>
+              </div>
+              <a href="{{ ata_conselho.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-warning">
+                <i class="bi bi-download me-1"></i>Baixar
+              </a>
+            </li>
+            {% endif %}
+            {% for anx in outros_anexos %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-file-earmark text-secondary fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">{{ anx.get_tipo_anexo_display }}</span>
+                {% if anx.descricao %}<div class="text-muted" style="font-size:.75rem;">{{ anx.descricao }}</div>{% endif %}
+                <div class="text-muted" style="font-size:.75rem;">{{ anx.data_upload|date:"d/m/Y" }}</div>
+              </div>
+              <a href="{{ anx.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>Ver
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+          {% else %}
+          <div class="text-center py-3 text-muted small">Nenhum anexo enviado.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {# ODS #}
+      {% if projeto.ods.all %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-globe text-primary"></i>
+          <strong>Vínculo com ODS</strong>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for ods in projeto.ods.all %}
+            <div class="col-3 col-md-2">
+              <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid rounded" title="{{ ods.titulo }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>{# col-lg-8 #}
+
+    <div class="col-lg-4">
+
+      {# Info gerais #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle text-primary"></i>
+          <strong>Informações Gerais</strong>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
+            <li class="list-group-item"><span class="text-muted d-block">E-mail</span>{{ projeto.coordenador.email }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
+            {% if projeto.edital %}<li class="list-group-item"><span class="text-muted d-block">Edital</span>{{ projeto.edital.titulo_completo }}</li>{% endif %}
+            <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
+            {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
+            {% if projeto.programa_pos %}<li class="list-group-item"><span class="text-muted d-block">Programa de Pós-Graduação</span>{{ projeto.programa_pos }}</li>{% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {# Financiamento e Ética #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-cash-coin text-primary"></i>
+          <strong>Financiamento e Ética</strong>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Financiamento</span>
+              {% if projeto.agencia_financiadora %}{{ projeto.agencia_financiadora }} — R$ {{ projeto.valor_fomento }}{% else %}Não possui{% endif %}
+            </li>
+            <li class="list-group-item"><span class="text-muted d-block">Aspectos Éticos</span>
+              {% if projeto.etica_obrigatoria %}Sim{% if projeto.tipo_etica %} ({{ projeto.tipo_etica }}){% endif %}{% else %}Não{% endif %}
+            </li>
+            {% if projeto.grupos_pesquisa.all %}
+            <li class="list-group-item"><span class="text-muted d-block">Grupos de Pesquisa</span>
+              {% for g in projeto.grupos_pesquisa.all %}<span class="badge bg-secondary me-1 mb-1">{{ g.nome }}</span>{% endfor %}
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {# Relatório de submissão #}
+      {% if relatorio_submissao %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-file-earmark-pdf text-danger"></i>
+          <strong>Relatório de Submissão</strong>
+        </div>
+        <div class="card-body">
+          <p class="small text-muted mb-2">Enviado em {{ relatorio_submissao.data_upload|date:"d/m/Y" }}</p>
+          <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-outline-danger btn-sm w-100">
+            <i class="bi bi-download me-1"></i>Baixar PDF
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+      {# Relatórios de atividades #}
+      {% if relatorios_enviados %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-journal-text text-primary"></i>
+          <strong>Relatórios de Atividades</strong>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for rel in relatorios_enviados %}
+          <li class="list-group-item d-flex justify-content-between align-items-center small">
+            <div>
+              <span class="fw-semibold">{{ rel.get_tipo_display }}</span>
+              <div class="text-muted" style="font-size:.75rem;">{{ rel.data_envio|date:"d/m/Y" }} — {{ rel.responsavel.get_full_name|truncatechars:20 }}</div>
+            </div>
+            <a href="{{ rel.anexo_pdf.url }}" class="btn btn-sm btn-outline-danger" target="_blank">
+              <i class="bi bi-file-earmark-pdf"></i>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+    </div>{# col-lg-4 #}
+  </div>
+
+  {% else %}
+  {# ════════════════════════════════════ VISÃO SIMPLIFICADA ════════════════════════════════════ #}
+  <div class="row g-4 justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-info-circle text-primary"></i>
+          <strong>Sobre o Projeto</strong>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
+            <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
+            {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
+            {% if projeto.palavras_chave %}<li class="list-group-item"><span class="text-muted d-block">Palavras-chave</span>{{ projeto.palavras_chave }}</li>{% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {% if projeto.resumo %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3"><strong>Resumo</strong></div>
+        <div class="card-body"><p class="mb-0">{{ projeto.resumo|linebreaksbr }}</p></div>
+      </div>
+      {% endif %}
+
+      {% if projeto.objetivo_geral %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3"><strong>Objetivo Geral</strong></div>
+        <div class="card-body"><p class="mb-0">{{ projeto.objetivo_geral }}</p></div>
+      </div>
+      {% endif %}
+
+      {# Equipe simplificada — só nomes #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-people text-primary"></i>
+          <strong>Equipe</strong>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            {% for m in projeto.equipe.all %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ m.membro.get_full_name }}</span>
+              <span class="badge bg-light text-muted border">{{ m.get_funcao_display }}</span>
+            </li>
+            {% empty %}
+            <li class="list-group-item text-muted">Nenhum membro cadastrado.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      {# ODS #}
+      {% if projeto.ods.all %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3"><strong>ODS Relacionados</strong></div>
+        <div class="card-body">
+          <div class="row g-2">
+            {% for ods in projeto.ods.all %}
+            <div class="col-3 col-md-2">
+              <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid rounded" title="{{ ods.titulo }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

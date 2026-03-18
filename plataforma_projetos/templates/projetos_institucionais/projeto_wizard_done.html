@@ -1,10 +1,82 @@
 {% extends "base2.html" %}
+{% load static %}
 
-{% block title %}Projeto SUbmetido{% endblock %}
+{% block title %}Projeto Submetido{% endblock %}
 
 {% block content %}
-    <h1>Projeto Submetido com Sucesso!</h1>
-    <p>O projeto "{{ projeto.titulo }}" foi enviado para análise.</p>
-    <p>Você receberá uma notificação quando houver uma atualização.</p>
-    <a href="{% url 'projeto_dashboard' %}" class="btn btn-primary">Voltar para Meus Projetos</a>
+<div class="container-fluid py-5 px-4" style="max-width: 680px;">
+
+  {# Card principal #}
+  <div class="card border-0 shadow-sm text-center">
+    <div class="card-body p-5">
+
+      {# Ícone #}
+      <div class="mb-4">
+        <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10"
+             style="width:80px; height:80px;">
+          <i class="bi bi-check-circle-fill text-success" style="font-size:2.8rem;"></i>
+        </div>
+      </div>
+
+      <h3 class="fw-bold mb-2">Projeto Submetido com Sucesso!</h3>
+      <p class="text-muted mb-4">
+        O projeto <strong>"{{ projeto.titulo }}"</strong> foi enviado para análise.<br>
+        Você receberá uma notificação quando houver uma atualização de status.
+      </p>
+
+      {# Linha de status do fluxo #}
+      <div class="d-flex justify-content-center align-items-center gap-2 mb-4 flex-wrap">
+        <span class="badge bg-success px-3 py-2">
+          <i class="bi bi-check-lg me-1"></i>Submetido
+        </span>
+        <i class="bi bi-arrow-right text-muted"></i>
+        <span class="badge bg-light text-muted border px-3 py-2">Em análise</span>
+        <i class="bi bi-arrow-right text-muted"></i>
+        <span class="badge bg-light text-muted border px-3 py-2">Aprovado</span>
+        <i class="bi bi-arrow-right text-muted"></i>
+        <span class="badge bg-light text-muted border px-3 py-2">Em andamento</span>
+      </div>
+
+      {# Resumo do projeto #}
+      <div class="text-start bg-light rounded p-3 mb-4 small">
+        <div class="row g-2">
+          {% if projeto.centro_lotacao %}
+          <div class="col-sm-6">
+            <span class="text-muted">Centro de Lotação</span><br>
+            <strong>{{ projeto.centro_lotacao }}</strong>
+          </div>
+          {% endif %}
+          {% if projeto.data_inicio %}
+          <div class="col-sm-6">
+            <span class="text-muted">Vigência</span><br>
+            <strong>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</strong>
+          </div>
+          {% endif %}
+          {% if projeto.edital %}
+          <div class="col-sm-6">
+            <span class="text-muted">Edital Vinculado</span><br>
+            <strong>{{ projeto.edital }}</strong>
+          </div>
+          {% endif %}
+          <div class="col-sm-6">
+            <span class="text-muted">Membros na Equipe</span><br>
+            <strong>{{ projeto.equipe.count }} membro{{ projeto.equipe.count|pluralize }}</strong>
+          </div>
+        </div>
+      </div>
+
+      {# Botões #}
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-outline-primary">
+          <i class="bi bi-eye me-1"></i>Ver Projeto
+        </a>
+        <a href="{% url 'projeto_dashboard' %}" class="btn btn-primary">
+          <i class="bi bi-kanban me-1"></i>Meus Projetos
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
 {% endblock %}

@@ -21,7 +21,7 @@
         <div id="sidebar" class="d-flex flex-column">
             <div class="sidebar-header">
                 <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC" width="50">
-                <span class="fs-4 fw-bold">PROPEG</span>
+                <img src="{% static 'imagens/Logo-Propeg.png' %}" alt="Logo PROPEG" class="logo-propeg" style="height:50px; width:auto;">
             </div>
 
             <ul class="nav flex-column my-3">
@@ -149,7 +149,7 @@
                         <ul class="dropdown-menu dropdown-menu-end shadow-sm">
                             <li><a class="dropdown-item d-flex align-items-center" href="{% url 'perfil' %}"><i
                                         class="bi bi-person-circle me-2"></i>Meu Perfil</a></li>
-                            <li><a class="dropdown-item d-flex align-items-center" href="#"><i
+                            <li><a class="dropdown-item d-flex align-items-center" href="{% url 'ajuda' %}"><i
                                         class="bi bi-question-circle me-2"></i>Ajuda</a></li>
                             <li>
                                 <hr class="dropdown-divider">

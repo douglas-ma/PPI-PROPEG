@@ -1,121 +1,214 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Relatório do Projeto: {{ projeto.titulo }}</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 2cm;
-        }
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 12pt;
-            line-height: 1.5;
-        }
-        .header {
-            text-align: center;
-            font-size: 11pt;
-            font-weight: bold;
-            line-height: 1.2;
-            margin-bottom: 1cm;
-        }
-        .main-title {
-            text-align: center;
-            font-weight: bold;
-            border: 1px solid black;
-            padding: 5px;
-            margin-bottom: 1cm;
-        }
-        .info-block {
-            border: 1px solid black;
-            padding: 15px;
-        }
-        .info-block p {
-            margin: 0 0 10px 0;
-        }
-        .section-title {
-            font-size: 13pt;
-            font-weight: bold;
-            margin-top: 1.5cm;
-            margin-bottom: 0.5cm;
-        }
-        .content {
-            text-align: justify;
-        }
-        .footer-info {
-            margin-top: 2cm;
-            line-height: 1.2;
-        }
-    </style>
+<meta charset="UTF-8">
+<title>Relatório {{ dados.tipo_relatorio|capfirst }} – {{ projeto.titulo }}</title>
+<style>
+@page {
+    size: A4;
+    margin-top: 3cm; margin-right: 2cm; margin-bottom: 2cm; margin-left: 3cm;
+    @bottom-right { content: counter(page); font-family: 'Times New Roman', serif; font-size: 10pt; }
+}
+@page capa { @bottom-right { content: none; } }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 1.5; color: #000; text-align: justify; }
+
+.pg-capa {
+    page: capa; page-break-after: always;
+    display: flex; flex-direction: column; align-items: center;
+    min-height: 267mm; text-align: center;
+}
+.capa-logo   { width: 90px; margin-bottom: 0.4cm; }
+.capa-inst   { font-size: 12pt; font-weight: bold; text-transform: uppercase; line-height: 1.5; }
+.capa-tipo   { font-size: 14pt; font-weight: bold; text-transform: uppercase; margin: 4cm 0 0.5cm; line-height: 1.5; }
+.capa-titulo { font-size: 12pt; font-weight: bold; max-width: 14cm; margin: 0 auto 0.5cm; line-height: 1.5; }
+.capa-info   { margin-top: 1cm; font-size: 12pt; }
+.capa-info p { text-indent: 0; margin-bottom: 0.2cm; }
+.capa-local  { margin-top: auto; padding-top: 2cm; font-size: 12pt; }
+
+.pg-sumario  { page-break-after: always; }
+.titulo-pre  { font-size: 12pt; font-weight: bold; text-align: center; text-transform: uppercase; margin-bottom: 1cm; }
+.sumario-lista { list-style: none; }
+.sumario-lista li { font-size: 12pt; line-height: 2; }
+.sumario-lista a  { text-decoration: none; color: #000; text-transform: uppercase; }
+.sumario-lista a::after { content: leader('.') target-counter(attr(href), page); }
+
+.secao { page-break-before: always; }
+h2 { font-size: 12pt; font-weight: bold; text-transform: uppercase; margin-bottom: 1cm; }
+h3 { font-size: 12pt; font-weight: bold; margin: 0.8cm 0 0.5cm; }
+
+p { font-size: 12pt; line-height: 1.5; text-indent: 1.25cm; text-align: justify; margin: 0; }
+p.s { text-indent: 0; }
+p + p { margin-top: 0; }
+
+table { width: 100%; border-collapse: collapse; margin: 0 0 1cm; font-size: 10pt; line-height: 1.5; }
+caption { font-size: 10pt; text-align: left; font-weight: bold; margin-bottom: 4pt; caption-side: top; }
+th, td { border: 1px solid #000; padding: 4pt 6pt; vertical-align: top; text-align: left; }
+th { font-weight: bold; text-align: center; }
+.col-l { font-weight: bold; width: 42%; }
+</style>
 </head>
 <body>
+{% with coord=projeto.coordenador %}
 
-    <div class="header">
-        <p>UNIVERSIDADE FEDERAL DO ACRE<br>
-        PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO<br>
-        DIRETORIA DE PESQUISA</p>
-    </div>
+{# CAPA #}
+<div class="pg-capa">
+  <img class="capa-logo" src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC">
+  <p class="s capa-inst">Universidade Federal do Acre</p>
+  <p class="s capa-inst">Pró-Reitoria de Pesquisa e Pós-Graduação – PROPEG</p>
 
-    <div class="main-title">
-        RELATÓRIO DO PROJETO INSTITUCIONAL DE PESQUISA
-    </div>
+  <p class="s capa-tipo">
+    Relatório {% if dados.tipo_relatorio == 'final' %}Final{% else %}Parcial{% endif %} de Atividades
+  </p>
+  <p class="s capa-titulo">{{ projeto.titulo }}</p>
 
-    <div class="info-block">
-        <p><strong>ETAPA:</strong> ({{ dados_relatorio.tipo_relatorio|upper }})</p>
-        <p><strong>MODALIDADE:</strong> (PROJETO INSTITUCIONAL)</p>
-        <p><strong>CENTRO:</strong> ({{ projeto.centro_lotacao.nome|upper }})</p>
-        <p><strong>UNIDADE INTEGRADORA:</strong> {{ projeto.curso.nome|default:"Não especificada" }}</p>
-        <p><strong>Título do Projeto de Pesquisa:</strong> {{ projeto.titulo }}</p>
-    </div>
+  <div class="capa-info">
+    <p class="s"><strong>Coordenador(a):</strong> {{ coord.get_full_name }}</p>
+    {% if projeto.centro_lotacao %}<p class="s"><strong>Centro:</strong> {{ projeto.centro_lotacao }}</p>{% endif %}
+    <p class="s"><strong>Período Relatado:</strong>
+      {{ dados.periodo_inicio|date:"d/m/Y" }} a {{ dados.periodo_fim|date:"d/m/Y" }}
+    </p>
+    <p class="s"><strong>Data de Emissão:</strong> {{ data_geracao|date:"d/m/Y" }}</p>
+  </div>
 
-    <div class="footer-info">
-        <p><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
-        
-        <p><strong>Período do relatório:</strong> de {{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</p>
-    </div>
+  <div class="capa-local">
+    <p class="s">Rio Branco – AC</p>
+    <p class="s">{{ data_geracao|date:"Y" }}</p>
+  </div>
+</div>
 
-    <div style="page-break-before: always;">
-        <h2 class="section-title">Resumo</h2>
-        <div class="content">
-            <p>{{ dados_relatorio.resumo_atividades|linebreaksbr }}</p>
-        </div>
+{# SUMÁRIO #}
+<div class="pg-sumario">
+  <p class="titulo-pre">Sumário</p>
+  <ul class="sumario-lista">
+    <li><a href="#s0">Identificação do Projeto</a></li>
+    <li><a href="#s1">1 Objetivos</a></li>
+    <li><a href="#s2">2 Atividades Realizadas no Período</a></li>
+    <li><a href="#s3">3 Resultados Alcançados</a></li>
+    {% if dados.tipo_relatorio == 'final' %}
+    <li><a href="#s4">4 Metodologia Utilizada</a></li>
+    <li><a href="#s5">5 Impactos e Contribuições</a></li>
+    <li><a href="#s6">6 Produtos Gerados</a></li>
+    {% endif %}
+    <li><a href="#s7">{% if dados.tipo_relatorio == 'final' %}7{% else %}4{% endif %} Dificuldades Encontradas</a></li>
+    {% if dados.tipo_relatorio == 'parcial' %}
+    <li><a href="#s8">5 Próximas Etapas</a></li>
+    {% else %}
+    <li><a href="#s9">8 Considerações Finais</a></li>
+    {% endif %}
+  </ul>
+</div>
 
-        <h2 class="section-title">Introdução</h2>
-        <div class="content">
-            <p>{{ projeto.introducao|linebreaksbr }}</p>
-        </div>
+{# IDENTIFICAÇÃO #}
+<div class="secao" id="s0">
+  <h2>Identificação do Projeto</h2>
+  <table>
+    <caption>Quadro 1 – Dados de identificação</caption>
+    <tr><td class="col-l">Título</td><td>{{ projeto.titulo }}</td></tr>
+    <tr><td class="col-l">Coordenador(a)</td>
+        <td>{{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+          {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}</td></tr>
+    <tr><td class="col-l">Centro de Lotação</td><td>{{ projeto.centro_lotacao|default:"—" }}</td></tr>
+    {% if projeto.curso %}<tr><td class="col-l">Curso</td><td>{{ projeto.curso }}</td></tr>{% endif %}
+    <tr><td class="col-l">Vigência do Projeto</td>
+        <td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>
+    <tr><td class="col-l">Período Relatado</td>
+        <td>{{ dados.periodo_inicio|date:"d/m/Y" }} a {{ dados.periodo_fim|date:"d/m/Y" }}</td></tr>
+    <tr><td class="col-l">Tipo de Relatório</td>
+        <td>{% if dados.tipo_relatorio == 'final' %}Final{% else %}Parcial{% endif %}</td></tr>
+    <tr><td class="col-l">Data de Emissão</td><td>{{ data_geracao|date:"d/m/Y" }}</td></tr>
+  </table>
+</div>
 
-        <h2 class="section-title">Objetivos (Geral e Específicos)</h2>
-        <div class="content">
-            <p>{{ projeto.objetivos|linebreaksbr }}</p>
-        </div>
-        
-        <h2 class="section-title">Metodologia</h2>
-        <div class="content">
-            <p>{{ projeto.metodologia|linebreaksbr }}</p>
-        </div>
+{# 1 OBJETIVOS #}
+<div class="secao" id="s1">
+  <h2>1 Objetivos</h2>
+  <h3>1.1 Objetivo Geral</h3>
+  {% if dados.objetivo_geral %}
+    <p>{{ dados.objetivo_geral }}</p>
+  {% else %}<p>Não informado.</p>{% endif %}
+  <h3 style="margin-top:0.8cm;">1.2 Objetivos Específicos</h3>
+  {% if dados.objetivos_especificos %}
+    {% for l in dados.objetivos_especificos.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informados.</p>{% endif %}
+</div>
 
-        <h2 class="section-title">Resultados e Discussão</h2>
-        <div class="content">
-            <p>{{ dados_relatorio.resultados_alcancados|linebreaksbr }}</p>
-        </div>
-        
-        <h2 class="section-title">Dificuldades Encontradas</h2>
-        <div class="content">
-            <p>{{ dados_relatorio.dificuldades|default:"Nenhuma dificuldade informada."|linebreaksbr }}</p>
-        </div>
+{# 2 ATIVIDADES REALIZADAS #}
+<div class="secao" id="s2">
+  <h2>2 Atividades Realizadas no Período</h2>
+  {% if dados.atividades_realizadas %}
+    {% for l in dados.atividades_realizadas.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informadas.</p>{% endif %}
+</div>
 
-        <h2 class="section-title">Próximos Passos e Planejamento Futuro / Conclusões</h2>
-        <div class="content">
-            <p>{{ dados_relatorio.proximos_passos|linebreaksbr }}</p>
-        </div>
+{# 3 RESULTADOS ALCANÇADOS #}
+<div class="secao" id="s3">
+  <h2>3 Resultados Alcançados</h2>
+  {% if dados.resultados_alcancados %}
+    {% for l in dados.resultados_alcancados.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informados.</p>{% endif %}
+</div>
 
-        <h2 class="section-title">Referências</h2>
-        <div class="content">
-            <p>{{ projeto.referencias|default:"Nenhuma referência informada."|linebreaksbr }}</p>
-        </div>
-    </div>
+{% if dados.tipo_relatorio == 'final' %}
+
+{# 4 METODOLOGIA (só final) #}
+<div class="secao" id="s4">
+  <h2>4 Metodologia Utilizada</h2>
+  {% if dados.metodologia_utilizada %}
+    {% for l in dados.metodologia_utilizada.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informada.</p>{% endif %}
+</div>
+
+{# 5 IMPACTOS (só final) #}
+<div class="secao" id="s5">
+  <h2>5 Impactos e Contribuições Observadas</h2>
+  {% if dados.impactos_observados %}
+    {% for l in dados.impactos_observados.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informados.</p>{% endif %}
+</div>
+
+{# 6 PRODUTOS (só final) #}
+<div class="secao" id="s6">
+  <h2>6 Produtos Gerados</h2>
+  {% if dados.produtos_gerados %}
+    {% for l in dados.produtos_gerados.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Nenhum produto informado.</p>{% endif %}
+</div>
+
+{% endif %}
+
+{# 7/4 DIFICULDADES #}
+<div class="secao" id="s7">
+  <h2>{% if dados.tipo_relatorio == 'final' %}7{% else %}4{% endif %} Dificuldades Encontradas</h2>
+  {% if dados.dificuldades %}
+    {% for l in dados.dificuldades.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Nenhuma dificuldade relatada no período.</p>{% endif %}
+</div>
+
+{% if dados.tipo_relatorio == 'parcial' %}
+
+{# 5 PRÓXIMAS ETAPAS (só parcial) #}
+<div class="secao" id="s8">
+  <h2>5 Próximas Etapas Planejadas</h2>
+  {% if dados.proximas_etapas %}
+    {% for l in dados.proximas_etapas.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informadas.</p>{% endif %}
+</div>
+
+{% else %}
+
+{# 8 CONSIDERAÇÕES FINAIS (só final) #}
+<div class="secao" id="s9">
+  <h2>8 Considerações Finais</h2>
+  {% if dados.consideracoes_finais %}
+    {% for l in dados.consideracoes_finais.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informadas.</p>{% endif %}
+</div>
+
+{% endif %}
+
+{% endwith %}
 </body>
 </html>

@@ -1,124 +1,101 @@
-{% extends "base2.html" %}
+{% extends 'base2.html' %}
+{% load static %}
 
-{% block title %}Emitir Relatório de Projeto{% endblock %}
+{% block title %}Emitir Relatório{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Emitir Relatório de Atividades</h2>
-    </div>
-    <p class="lead">Selecione um projeto em andamento para criar e submeter um relatório de atividades (parcial ou final).</p>
+<div class="container-fluid py-4 px-4">
 
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h5 class="mb-0">Meus Projetos em Andamento</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th scope="col">Título do Projeto</th>
-                            <th scope="col" class="text-center">Vigência</th>
-                            <th scope="col" class="text-center">Prazo Final</th>
-                            <th scope="col" class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for projeto in projetos_no_prazo %}
-                        <tr>
-                            <td>
-                                <a href="{% url 'projeto_detalhe' projeto.pk %}" class="text-dark fw-bold text-decoration-none">
-                                    {{ projeto.titulo }}
-                                </a>
-                            </td>
-                            <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                {% if projeto.dias_restantes is not None %}
-                                    {% if projeto.dias_restantes > 0 %}
-                                        Faltam {{ projeto.dias_restantes }} dia{{ projeto.dias_restantes|pluralize }}
-                                    {% elif projeto.dias_restantes == 0 %}
-                                        Termina hoje
-                                    {% else %}
-                                        <span class="text-danger fw-bold">
-                                            Atrasado em {{ projeto.dias_atraso }} dia{{ projeto.dias_atraso|pluralize }}
-                                        </span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-muted">Não definida</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <a href="{% url 'relatorio_criar' projeto.pk %}" class="btn btn-primary">
-                                    <i class="bi bi-file-earmark-text-fill"></i> Emitir Relatório
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">Você não possui projetos em andamento no momento.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-0">Relatórios de Atividades</h4>
+      <small class="text-muted">Selecione um projeto para emitir um relatório parcial ou final</small>
     </div>
-    <br>
-    <div class="card shadow-sm border-danger">
-        <div class="card-header bg-danger text-white">
-            <h5 class="mb-0">Projetos com Relatório em Atraso</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th scope="col">Título do Projeto</th>
-                            <th scope="col">Vigência</th>
-                            <th scope="col" class="text-center">Prazo Final</th>
-                            <th scope="col" class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for projeto in projetos_atrasados %}
-                        <tr>
-                            <td>
-                                <a href="{% url 'projeto_detalhe' projeto.pk %}" class="text-dark fw-bold text-decoration-none">
-                                    {{ projeto.titulo }}
-                                </a>
-                            </td>
-                            <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                {% if projeto.dias_restantes is not None %}
-                                    {% if projeto.dias_restantes > 0 %}
-                                        Faltam {{ projeto.dias_restantes }} dia{{ projeto.dias_restantes|pluralize }}
-                                    {% elif projeto.dias_restantes == 0 %}
-                                        Termina hoje
-                                    {% else %}
-                                        <span class="text-danger fw-bold">
-                                            Atrasado em {{ projeto.dias_atraso }} dia{{ projeto.dias_atraso|pluralize }}
-                                        </span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-muted">Não definida</span>
-                                {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <a href="{% url 'relatorio_criar' projeto.pk %}" class="btn btn-primary">
-                                    <i class="bi bi-file-earmark-text-fill"></i> Emitir Relatório
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="3" class="text-center text-muted">Você não possui projetos em andamento no momento.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  </div>
+
+  {% if projetos_no_prazo %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+      <i class="bi bi-clock text-primary"></i>
+      <strong>Projetos no Prazo</strong>
+      <span class="badge bg-primary bg-opacity-10 text-primary ms-1">{{ projetos_no_prazo|length }}</span>
     </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Projeto</th><th>Vigência</th><th class="text-center">Prazo Restante</th><th class="text-end">Ação</th></tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_no_prazo %}
+          <tr>
+            <td>
+              <a href="{% url 'projeto_detalhe' p.pk %}" class="fw-semibold text-decoration-none small text-dark">{{ p.titulo }}</a>
+            </td>
+            <td class="small text-muted">{{ p.data_inicio|date:"d/m/Y" }} – {{ p.data_fim|date:"d/m/Y" }}</td>
+            <td class="text-center">
+              {% if p.dias_restantes == 0 %}
+                <span class="badge bg-warning text-dark">Termina hoje</span>
+              {% elif p.dias_restantes <= 15 %}
+                <span class="badge bg-warning text-dark">{{ p.dias_restantes }} dia{{ p.dias_restantes|pluralize }}</span>
+              {% else %}
+                <span class="badge bg-success bg-opacity-10 text-success">{{ p.dias_restantes }} dia{{ p.dias_restantes|pluralize }}</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'relatorio_criar' p.pk %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-file-earmark-text me-1"></i>Emitir Relatório
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if projetos_atrasados %}
+  <div class="card border-0 shadow-sm border-danger" style="border-left: 4px solid #dc3545 !important;">
+    <div class="card-header bg-danger bg-opacity-10 border-bottom py-3 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+      <strong class="text-danger">Relatórios em Atraso</strong>
+      <span class="badge bg-danger ms-1">{{ projetos_atrasados|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr><th>Projeto</th><th>Vigência</th><th class="text-center">Atraso</th><th>Ação</th></tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_atrasados %}
+          <tr>
+            <td>
+              <a href="{% url 'projeto_detalhe' p.pk %}" class="fw-semibold text-decoration-none small text-dark">{{ p.titulo }}</a>
+            </td>
+            <td class="small text-muted">{{ p.data_inicio|date:"d/m/Y" }} – {{ p.data_fim|date:"d/m/Y" }}</td>
+            <td class="text-center">
+              <span class="badge bg-danger">{{ p.dias_atraso }} dia{{ p.dias_atraso|pluralize }} de atraso</span>
+            </td>
+            <td class="text-end">
+              <a href="{% url 'relatorio_criar' p.pk %}" class="btn btn-danger btn-sm">
+                <i class="bi bi-file-earmark-text me-1"></i>Emitir Relatório
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if not projetos_no_prazo and not projetos_atrasados %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-check-circle display-4 text-success opacity-50 d-block mb-3"></i>
+    <p class="fw-semibold">Tudo em dia!</p>
+    <p class="small">Você não possui projetos pendentes de relatório no momento.</p>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

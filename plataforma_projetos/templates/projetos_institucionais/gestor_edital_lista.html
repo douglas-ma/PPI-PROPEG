@@ -1,50 +1,113 @@
 {% extends "base2.html" %}
-
+{% load static %}
 {% block title %}Gerenciar Editais{% endblock %}
-
 {% block content %}
-<div class="container-fluid mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>Gerenciar Editais</h2>
-        <a href="{% url 'gestor_criar_edital' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle-fill"></i> Novo Edital
-        </a>
-    </div>
+<div class="container-fluid py-4 px-4">
 
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Edital</th>
-                            <th class="text-center">Período de Submissão</th>
-                            <th class="text-center">Status</th>
-                            <th>Publicado por</th>
-                            <th class="text-end">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for edital in editais %}
-                        <tr>
-                            <td>{{ edital.titulo_completo }}</td> 
-                            <td class="text-center">{{ edital.data_inicio_submissoes|date:"d/m/Y" }} a {{ edital.data_fim_submissoes|date:"d/m/Y" }}</td>
-                            <td><span class="badge bg-{% if edital.get_status_display == 'Aberto' %}success{% elif edital.get_status_display == 'Fechado' %}danger{% else %}secondary{% endif %}">{{ edital.get_status_display }}</span></td>
-                            <td class="text-center">{{ edital.criado_por.get_full_name }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'gestor_editar_edital' edital.pk %}" class="btn btn-sm btn-secondary"><i class="bi bi-pencil"></i></a>
-                                <a href="{% url 'gestor_deletar_edital' edital.pk %}" class="btn btn-sm btn-danger"><i class="bi bi-trash"></i></a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="5" class="text-center text-muted">Nenhum edital cadastrado.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-0">Gerenciar Editais</h4>
+      <small class="text-muted">Crie, publique e gerencie os editais de submissão</small>
     </div>
+    <a href="{% url 'gestor_criar_edital' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Novo Edital
+    </a>
+  </div>
+
+  {# Cards de contadores #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="fs-3 fw-bold text-success">{{ abertos|length }}</div>
+        <small class="text-muted">Abertos</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="fs-3 fw-bold text-warning">{{ rascunhos|length }}</div>
+        <small class="text-muted">Rascunhos</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="fs-3 fw-bold text-secondary">{{ fechados|length }}</div>
+        <small class="text-muted">Fechados</small>
+      </div>
+    </div>
+  </div>
+
+  {% for grupo, label, badge_cls, lista_editais in grupos %}
+  {% if lista_editais %}
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong>{{ label }}</strong>
+      <span class="badge {{ badge_cls }}">{{ lista_editais|length }}</span>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Edital</th>
+            <th class="text-center">Submissões</th>
+            <th class="text-center">Adendos</th>
+            <th class="text-center">Anexos</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in lista_editais %}
+          <tr>
+            <td>
+              <a href="{% url 'gestor_detalhe_edital' pk=e.pk %}" class="fw-semibold text-decoration-none text-dark small">
+                {{ e.titulo_completo|truncatechars:70 }}
+              </a>
+              <div class="text-muted" style="font-size:.75rem;">{{ e.descricao|truncatechars:80 }}</div>
+            </td>
+            <td class="text-center small text-muted">
+              {{ e.data_inicio_submissoes|date:"d/m/Y" }}<br>{{ e.data_fim_submissoes|date:"d/m/Y" }}
+            </td>
+            <td class="text-center">
+              <span class="badge bg-light text-dark border">{{ e.adendos.count }}</span>
+            </td>
+            <td class="text-center">
+              <span class="badge bg-light text-dark border">{{ e.anexos.count }}</span>
+            </td>
+            <td class="text-center">
+              <a href="{% url 'gestor_detalhe_edital' pk=e.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'gestor_editar_edital' pk=e.pk %}" class="btn btn-sm btn-outline-secondary ms-1" title="Editar">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <form method="post" action="{% url 'gestor_toggle_edital' pk=e.pk %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="{% url 'gestor_listar_editais' %}">
+                <button type="submit" class="btn btn-sm ms-1
+                  {% if e.status == 'aberto' %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+                  title="{% if e.status == 'aberto' %}Fechar edital{% else %}Publicar/Reabrir{% endif %}"
+                  onclick="return confirm('{% if e.status == 'aberto' %}Fechar{% else %}Publicar/Reabrir{% endif %} este edital?')">
+                  <i class="bi bi-{% if e.status == 'aberto' %}pause-circle{% else %}play-circle{% endif %}"></i>
+                </button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if not abertos and not rascunhos and not fechados %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-file-earmark-plus display-4 opacity-25 d-block mb-3"></i>
+    <p>Nenhum edital cadastrado ainda.</p>
+    <a href="{% url 'gestor_criar_edital' %}" class="btn btn-primary btn-sm mt-1">
+      <i class="bi bi-plus-lg me-1"></i>Criar Primeiro Edital
+    </a>
+  </div>
+  {% endif %}
+
 </div>
 {% endblock %}

@@ -1,24 +1,517 @@
-{% extends 'base.html' %}
-    <!-- {% block mascaras %}
-        $("#id_cpf").mask("999.999.999-99");
-    {% endblock %} -->
-{% block title %}Plataforma de Projetos{% endblock %}
-{% block content %}
-<main class="home-main-section">
-    <div class="container text-center text-lg-start d-lg-flex align-items-center justify-content-between">
-        <div class="shape d-none d-lg-block"></div>
-            <div class="content text-center">
-                <h2 class="fw-bold">PPI</h2>
-                <h3 class="fw-semibold mb-3">Cadastro de Projetos</h3>
-                <p class="text-muted mb-4">
-                        Realize seu login ou registre-se na plataforma para <br>
-                        explorar projetos de extensão ou cadastrá-los.
-                </p>
-            <div>
-                <a href="{% url 'login' %}" class="btn btn-outline-primary me-2">Fazer Login</a>
-                <a href="{% url 'registrar' %}" class="btn btn-outline-primary">Registrar-se</a>
-            </div>
-        </div>
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PROPEG – Plataforma de Projetos Institucionais</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="icon" href="{% static 'imagens/favicon.ico' %}" type="image/x-icon">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      font-family: 'Arial', sans-serif;
+      background: #f0f4f8;
+    }
+
+    /* Lado esquerdo */
+    .lado-logo {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      padding: 3rem 4rem;
+      gap: 0;
+    }
+
+    .lado-logo img {
+      width: min(620px, 92%);
+      margin-bottom: 1rem;
+    }
+
+    .lado-logo .subtitulo {
+      text-align: center;
+      color: #555;
+      font-size: .93rem;
+      max-width: 460px;
+      line-height: 1.65;
+    }
+
+    .lado-logo .badges {
+      display: flex;
+      gap: .55rem;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 1.2rem;
+    }
+
+    .badge-info {
+      background: #e8f0fe;
+      color: #1a56db;
+      border-radius: 20px;
+      padding: .35rem .9rem;
+      font-size: .78rem;
+      font-weight: 600;
+    }
+
+    /* Lado direito */
+    .lado-form {
+      width: 460px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 2.5rem;
+      background: #f0f4f8;
+      overflow: hidden;
+    }
+
+    /* Wrapper deslizante */
+    .paineis-wrapper {
+      width: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .paineis-track {
+      display: flex;
+      width: 300%;
+      transition: transform .45s cubic-bezier(.77,0,.18,1);
+    }
+
+    .paineis-track.mostrar-registro {
+      transform: translateX(-33.333%);
+    }
+
+    .paineis-track.mostrar-senha {
+      transform: translateX(-66.666%);
+    }
+
+    .painel {
+      width: 33.333%;
+      flex-shrink: 0;
+    }
+
+    .form-card {
+      width: 100%;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+
+    .form-card h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: .3rem;
+    }
+
+    .form-card .subtexto {
+      color: #888;
+      font-size: .88rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .form-card .form-label {
+      font-size: .85rem;
+      color: #555;
+      margin-bottom: .3rem;
+    }
+
+    .form-card .form-control,
+    .form-card .form-select {
+      background: #f5f7fb;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: .6rem 1rem;
+      font-size: .9rem;
+      transition: border-color .2s;
+    }
+
+    .form-card .form-control:focus,
+    .form-card .form-select:focus {
+      border-color: #1a56db;
+      background: #fff;
+      box-shadow: none;
+    }
+
+    .btn-entrar, .btn-cadastrar {
+      background: #1a56db;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .7rem;
+      font-weight: 600;
+      font-size: .95rem;
+      width: 100%;
+      transition: background .2s;
+      cursor: pointer;
+    }
+
+    .btn-entrar:hover, .btn-cadastrar:hover { background: #1447b8; }
+
+    .link-secondary {
+      font-size: .83rem;
+      color: #888;
+      text-decoration: none;
+    }
+
+    .link-secondary:hover { color: #1a56db; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: .8rem;
+      color: #bbb;
+      font-size: .8rem;
+      margin: 1rem 0;
+    }
+
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e8e8e8;
+    }
+
+    .btn-alternar {
+      width: 100%;
+      border: 1.5px solid #1a56db;
+      color: #1a56db;
+      border-radius: 8px;
+      padding: .65rem;
+      font-weight: 600;
+      font-size: .92rem;
+      background: transparent;
+      transition: all .2s;
+      cursor: pointer;
+    }
+
+    .btn-alternar:hover { background: #1a56db; color: #fff; }
+
+    .btn-voltar {
+      background: none;
+      border: none;
+      color: #888;
+      font-size: .85rem;
+      cursor: pointer;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      margin-bottom: 1rem;
+    }
+
+    .btn-voltar:hover { color: #1a56db; }
+
+    @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .lado-logo {
+        align-items: center;
+        padding: 2.5rem 1.5rem 1.5rem;
+      }
+      .lado-logo img { width: min(320px, 85%); margin-bottom: .8rem; }
+      .lado-logo .subtitulo { text-align: center; margin-left: 0; }
+      .lado-logo .badges { justify-content: center; margin-left: 0; }
+      .lado-form { width: 100%; padding: 1.5rem 1.2rem 2.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Lado esquerdo: logo -->
+  <div class="lado-logo">
+    <img src="{% static 'imagens/Logo-Propeg.png' %}" alt="Logo PROPEG">
+
+    <p class="subtitulo">
+      Plataforma de gerenciamento de projetos institucionais da
+      Pró-Reitoria de Pesquisa e Pós-Graduação da UFAC.
+    </p>
+
+    <div class="badges">
+      <span class="badge-info"><i class="bi bi-folder2-open me-1"></i>Projetos</span>
+      <span class="badge-info"><i class="bi bi-people me-1"></i>Equipes</span>
+      <span class="badge-info"><i class="bi bi-file-earmark-text me-1"></i>Relatórios</span>
+      <span class="badge-info"><i class="bi bi-file-earmark-plus me-1"></i>Editais</span>
     </div>
-</main>
-{% endblock %}
+  </div>
+
+  <!-- Lado direito: login + registro -->
+  <div class="lado-form">
+
+    <!-- Botão de consulta pública — canto superior direito -->
+    <div style="width:100%;display:flex;justify-content:flex-end;margin-bottom:1.2rem;">
+      <a href="{% url 'consulta_publica' %}"
+         style="display:inline-flex;align-items:center;gap:.4rem;background:#1a56db;color:#fff;border-radius:8px;padding:.55rem 1.1rem;font-size:.83rem;font-weight:600;text-decoration:none;box-shadow:0 2px 8px rgba(26,86,219,.25);transition:background .2s;"
+         onmouseover="this.style.background='#1447b8'" onmouseout="this.style.background='#1a56db'">
+        <i class="bi bi-search"></i>Consulta Pública de Projetos
+      </a>
+    </div>
+    <div class="paineis-wrapper">
+      <div class="paineis-track {% if mostrar_registro %}mostrar-registro{% elif mostrar_senha %}mostrar-senha{% endif %}" id="paineis-track">
+
+        {# ── Painel de Login ── #}
+        <div class="painel pe-2">
+          <div class="form-card">
+            <h2>Bem-vindo!</h2>
+            <p class="subtexto">Faça login para acessar a plataforma.</p>
+
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible fade show py-2 mb-3" role="alert" style="font-size:.85rem;">
+                  {{ message }}
+                  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'login' %}">
+              {% csrf_token %}
+
+              <div class="mb-3">
+                <label for="cpf" class="form-label">CPF</label>
+                <input type="text" id="cpf" name="cpf" class="form-control"
+                       placeholder="000.000.000-00" maxlength="14" required>
+              </div>
+
+              <div class="mb-1">
+                <label for="senha" class="form-label">Senha</label>
+                <div class="input-group">
+                  <input type="password" id="senha" name="senha" class="form-control"
+                         placeholder="Digite sua senha" required
+                         style="border-right:none;">
+                  <button class="btn" type="button" id="toggleSenha"
+                          style="background:#f5f7fb;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;">
+                    <i class="bi bi-eye-fill text-secondary"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-center mt-2 mb-3">
+                <div class="form-check mb-0">
+                  <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                  <label class="form-check-label" for="remember" style="font-size:.83rem;color:#666;">Lembrar-me</label>
+                </div>
+                <a href="#" class="link-secondary" id="btn-ir-senha">Esqueceu a senha?</a>
+              </div>
+
+              <button type="submit" class="btn-entrar">Entrar</button>
+            </form>
+
+            <div class="divider">ou</div>
+
+            <button type="button" class="btn-alternar" id="btn-ir-registro">
+              <i class="bi bi-person-plus me-1"></i>Criar uma conta
+            </button>
+          </div>
+        </div>
+
+        {# ── Painel de Registro ── #}
+        <div class="painel ps-2">
+          <div class="form-card">
+            <button type="button" class="btn-voltar" id="btn-voltar-login">
+              <i class="bi bi-arrow-left"></i> Voltar ao login
+            </button>
+
+            <h2>Criar Conta</h2>
+            <p class="subtexto">Preencha os dados para se registrar.</p>
+
+            {% if form_registro.errors %}
+              <div class="alert alert-danger py-2 mb-3" style="font-size:.82rem;">
+                <strong>Corrija os erros abaixo:</strong>
+                <ul class="mb-0 mt-1 ps-3">
+                  {% for error in form_registro.non_field_errors %}
+                    <li>{{ error }}</li>
+                  {% endfor %}
+                  {% for field in form_registro %}
+                    {% for error in field.errors %}
+                      <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                  {% endfor %}
+                </ul>
+              </div>
+            {% endif %}
+
+            <form method="post" action="{% url 'registrar' %}" novalidate>
+              {% csrf_token %}
+
+              <div class="row mb-2 g-2">
+                <div class="col">
+                  <label class="form-label">Nome</label>
+                  {{ form_registro.first_name }}
+                </div>
+                <div class="col">
+                  <label class="form-label">Sobrenome</label>
+                  {{ form_registro.last_name }}
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">CPF</label>
+                {{ form_registro.cpf }}
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">E-mail</label>
+                {{ form_registro.email }}
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Senha</label>
+                <div class="input-group">
+                  {{ form_registro.password }}
+                  <button class="btn" type="button" id="toggleSenhaReg"
+                          style="background:#f5f7fb;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;">
+                    <i class="bi bi-eye-fill text-secondary"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-2">
+                <label class="form-label">Confirme a Senha</label>
+                <div class="input-group">
+                  {{ form_registro.password2 }}
+                  <button class="btn" type="button" id="toggleSenhaReg2"
+                          style="background:#f5f7fb;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;">
+                    <i class="bi bi-eye-fill text-secondary"></i>
+                  </button>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label">{{ form_registro.perfil.label }}</label>
+                {{ form_registro.perfil }}
+              </div>
+
+              <button type="submit" class="btn-cadastrar">
+                <i class="bi bi-check-circle me-1"></i>Confirmar Cadastro
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {# ── Painel Esqueci Senha ── #}
+        <div class="painel ps-2">
+          <div class="form-card">
+            <button type="button" class="btn-voltar" id="btn-voltar-do-senha">
+              <i class="bi bi-arrow-left"></i> Voltar ao login
+            </button>
+
+            <h2>Recuperar Senha</h2>
+            <p class="subtexto">Informe seu CPF e enviaremos um link de redefinição para o seu e-mail.</p>
+
+            {% if messages %}
+              {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible fade show py-2 mb-3" role="alert" style="font-size:.85rem;">
+                  {{ message }}
+                  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                </div>
+              {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'esqueceu_senha' %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="cpf-senha" class="form-label">CPF cadastrado</label>
+                <input type="text" id="cpf-senha" name="cpf" class="form-control"
+                       placeholder="000.000.000-00" maxlength="14" required>
+              </div>
+              <button type="submit" class="btn-entrar">
+                <i class="bi bi-envelope me-1"></i>Enviar link de recuperação
+              </button>
+            </form>
+
+            <div class="divider">ou</div>
+
+            <button type="button" class="btn-alternar" id="btn-ir-registro-do-senha">
+              <i class="bi bi-person-plus me-1"></i>Criar uma conta
+            </button>
+          </div>
+        </div>
+
+      </div>{# fim paineis-track #}
+    </div>{# fim paineis-wrapper #}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    var track = document.getElementById('paineis-track');
+
+    // Ir para registro
+    document.getElementById('btn-ir-registro').addEventListener('click', function () {
+      track.classList.remove('mostrar-senha');
+      track.classList.add('mostrar-registro');
+    });
+
+    // Voltar para login a partir do registro
+    document.getElementById('btn-voltar-login').addEventListener('click', function () {
+      track.classList.remove('mostrar-registro');
+      track.classList.remove('mostrar-senha');
+    });
+
+    // Ir para esqueci senha
+    document.getElementById('btn-ir-senha').addEventListener('click', function (e) {
+      e.preventDefault();
+      track.classList.remove('mostrar-registro');
+      track.classList.add('mostrar-senha');
+    });
+
+    // Voltar para login a partir de esqueci senha
+    document.getElementById('btn-voltar-do-senha').addEventListener('click', function () {
+      track.classList.remove('mostrar-senha');
+      track.classList.remove('mostrar-registro');
+    });
+
+    // Ir para registro a partir de esqueci senha
+    document.getElementById('btn-ir-registro-do-senha').addEventListener('click', function () {
+      track.classList.remove('mostrar-senha');
+      track.classList.add('mostrar-registro');
+    });
+
+    // Toggle senha login
+    document.getElementById('toggleSenha').addEventListener('click', function () {
+      var input = document.getElementById('senha');
+      var icon  = this.querySelector('i');
+      input.type = input.type === 'password' ? 'text' : 'password';
+      icon.classList.toggle('bi-eye-fill');
+      icon.classList.toggle('bi-eye-slash-fill');
+    });
+
+    // Toggle senha registro
+    function toggleInputSenha(btnId, inputName) {
+      document.getElementById(btnId).addEventListener('click', function () {
+        var input = document.querySelector('[name="' + inputName + '"]');
+        var icon  = this.querySelector('i');
+        input.type = input.type === 'password' ? 'text' : 'password';
+        icon.classList.toggle('bi-eye-fill');
+        icon.classList.toggle('bi-eye-slash-fill');
+      });
+    }
+    toggleInputSenha('toggleSenhaReg',  'password');
+    toggleInputSenha('toggleSenhaReg2', 'password2');
+
+    // Máscara CPF (ambos os painéis)
+    function mascaraCPF(el) {
+      el.addEventListener('input', function () {
+        var v = this.value.replace(/\D/g, '').substring(0, 11);
+        v = v.replace(/^(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3');
+        v = v.replace(/\.(\d{3})(\d)/, '.$1-$2');
+        this.value = v;
+      });
+    }
+    mascaraCPF(document.getElementById('cpf'));
+    mascaraCPF(document.getElementById('cpf-senha'));
+    var cpfReg = document.querySelector('[name="cpf"]');
+    if (cpfReg && cpfReg !== document.getElementById('cpf') && cpfReg !== document.getElementById('cpf-senha')) mascaraCPF(cpfReg);
+  </script>
+</body>
+</html>

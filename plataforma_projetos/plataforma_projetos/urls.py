@@ -18,14 +18,19 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from projetos_institucionais import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', views.request_home, name='home'),
     path('projetos/', include('projetos_institucionais.urls')),
     path('login/', include('login.urls')),
+    path('', include('login.urls')),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Handlers de erro personalizados
+handler400 = 'projetos_institucionais.views.handler400'
+handler403 = 'projetos_institucionais.views.handler403'
+handler404 = 'projetos_institucionais.views.handler404'
+handler500 = 'projetos_institucionais.views.handler500'

@@ -1,44 +1,147 @@
 {% extends "base2.html" %}
-{% load crispy_forms_tags %}
-
+{% load static %}
 {% block title %}{% if edital %}Editar Edital{% else %}Novo Edital{% endif %}{% endblock %}
-
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2>{% if edital %}Editar Edital{% else %}Cadastrar Novo Edital{% endif %}</h2>
-    <hr>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="card mb-4">
-            <div class="card-header">Informações Principais</div>
-            <div class="card-body">
-                {{ form|crispy }}
-            </div>
-        </div>
+<div class="container-fluid py-4 px-4" style="max-width:800px;">
 
-        <div class="card">
-            <div class="card-header">Outros Anexos</div>
-            <div class="card-body">
-                {{ formset.management_form }}
-                {% for anexo_form in formset %}
-                    <div class="row align-items-center mb-3">
-                        <div class="col-md-5">{{ anexo_form.descricao|as_crispy_field }}</div>
-                        <div class="col-md-5">{{ anexo_form.arquivo|as_crispy_field }}</div>
-                        <div class="col-md-2">
-                            {% if anexo_form.instance.pk %}
-                                {{ anexo_form.DELETE|as_crispy_field }}
-                            {% endif %}
-                        </div>
-                    </div>
-                    <hr>
-                {% endfor %}
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'gestor_listar_editais' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <h4 class="mb-0">{% if edital %}Editar Edital{% else %}Novo Edital{% endif %}</h4>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    {# Identificação #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-file-earmark text-primary me-2"></i>Identificação</strong></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Tipo/Origem <span class="text-danger">*</span></label>
+            <input type="text" name="{{ form.tipo.html_name }}" value="{{ form.tipo.value|default:'' }}"
+                   class="form-control {% if form.tipo.errors %}is-invalid{% endif %}" placeholder="Ex: PROPEG, PROEX">
+            {% if form.tipo.errors %}<div class="invalid-feedback">{{ form.tipo.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Número <span class="text-danger">*</span></label>
+            <input type="number" name="{{ form.numero.html_name }}" value="{{ form.numero.value|default:'' }}"
+                   class="form-control {% if form.numero.errors %}is-invalid{% endif %}" min="1">
+            {% if form.numero.errors %}<div class="invalid-feedback">{{ form.numero.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Ano <span class="text-danger">*</span></label>
+            <input type="number" name="{{ form.ano.html_name }}" value="{{ form.ano.value|default:'' }}"
+                   class="form-control {% if form.ano.errors %}is-invalid{% endif %}" min="2000">
+            {% if form.ano.errors %}<div class="invalid-feedback">{{ form.ano.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Título Descritivo <span class="text-danger">*</span></label>
+            <input type="text" name="{{ form.titulo.html_name }}" value="{{ form.titulo.value|default:'' }}"
+                   class="form-control {% if form.titulo.errors %}is-invalid{% endif %}"
+                   placeholder="Ex: Pesquisa Docente — Bolsas Institucionais">
+            {% if form.titulo.errors %}<div class="invalid-feedback">{{ form.titulo.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Descrição Resumida <span class="text-danger">*</span></label>
+            <textarea name="{{ form.descricao.html_name }}"
+                      class="form-control {% if form.descricao.errors %}is-invalid{% endif %}"
+                      rows="3" placeholder="Objetivos e instruções gerais do edital">{{ form.descricao.value|default:'' }}</textarea>
+            {% if form.descricao.errors %}<div class="invalid-feedback">{{ form.descricao.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Datas e documento #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-calendar text-primary me-2"></i>Período e Documento</strong></div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Início das Submissões <span class="text-danger">*</span></label>
+            <input type="date" name="{{ form.data_inicio_submissoes.html_name }}"
+                   value="{{ form.data_inicio_submissoes.value|date:'Y-m-d'|default:'' }}"
+                   class="form-control {% if form.data_inicio_submissoes.errors %}is-invalid{% endif %}">
+            {% if form.data_inicio_submissoes.errors %}<div class="invalid-feedback">{{ form.data_inicio_submissoes.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Fim das Submissões <span class="text-danger">*</span></label>
+            <input type="date" name="{{ form.data_fim_submissoes.html_name }}"
+                   value="{{ form.data_fim_submissoes.value|date:'Y-m-d'|default:'' }}"
+                   class="form-control {% if form.data_fim_submissoes.errors %}is-invalid{% endif %}">
+            {% if form.data_fim_submissoes.errors %}<div class="invalid-feedback">{{ form.data_fim_submissoes.errors }}</div>{% endif %}
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold">Documento Principal (PDF)</label>
+            {% if edital and edital.documento_principal %}
+            <div class="mb-2">
+              <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Ver documento atual
+              </a>
+              <small class="text-muted ms-2">Envie um novo arquivo para substituir.</small>
             </div>
+            {% endif %}
+            <input type="file" name="{{ form.documento_principal.html_name }}"
+                   class="form-control {% if form.documento_principal.errors %}is-invalid{% endif %}"
+                   accept=".pdf">
+            {% if form.documento_principal.errors %}<div class="invalid-feedback">{{ form.documento_principal.errors }}</div>{% endif %}
+          </div>
         </div>
-        
-        <div class="mt-4 d-flex justify-content-end">
-            <a href="{% url 'gestor_listar_editais' %}" class="btn btn-secondary me-2">Cancelar</a>
-            <button type="submit" class="btn btn-success">Salvar Edital</button>
+      </div>
+    </div>
+
+    {# Anexos adicionais #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-paperclip text-primary me-2"></i>Anexos Adicionais</strong></div>
+      <div class="card-body">
+        {{ formset.management_form }}
+        {% for f in formset %}
+        <div class="row g-2 mb-2 align-items-center">
+          {{ f.id }}
+          <div class="col-md-5">
+            <input type="text" name="{{ f.descricao.html_name }}"
+                   value="{{ f.descricao.value|default:'' }}"
+                   class="form-control form-control-sm" placeholder="Descrição do anexo">
+          </div>
+          <div class="col-md-5">
+            <input type="file" name="{{ f.arquivo.html_name }}" class="form-control form-control-sm">
+            {% if f.instance.pk and f.instance.arquivo %}
+            <small class="text-muted">Atual: <a href="{{ f.instance.arquivo.url }}" target="_blank">{{ f.instance.descricao }}</a></small>
+            {% endif %}
+          </div>
+          <div class="col-md-2">
+            {% if f.instance.pk %}
+            <div class="form-check">
+              <input type="checkbox" name="{{ f.DELETE.html_name }}" class="form-check-input" id="del_{{ f.prefix }}">
+              <label class="form-check-label text-danger small" for="del_{{ f.prefix }}">Remover</label>
+            </div>
+            {% endif %}
+          </div>
         </div>
-    </form>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'gestor_listar_editais' %}" class="btn btn-outline-secondary">Cancelar</a>
+      <div class="d-flex gap-2">
+        <button type="submit" name="acao" value="rascunho" class="btn btn-outline-secondary">
+          <i class="bi bi-floppy me-1"></i>Salvar como Rascunho
+        </button>
+        <button type="submit" name="acao" value="publicar" class="btn btn-success">
+          <i class="bi bi-check-circle me-1"></i>
+          {% if edital and edital.status == 'aberto' %}Salvar Alterações{% else %}Publicar Edital{% endif %}
+        </button>
+      </div>
+    </div>
+
+  </form>
 </div>
 {% endblock %}

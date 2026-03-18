@@ -1,79 +1,313 @@
 {% extends 'base2.html' %}
-
 {% load static %}
-{% load crispy_forms_tags %}
 
 {% block title %}Meus Projetos{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/meusprojetos.css' %}">
-<div class="container-fluid mt-4">
-    <div class="dashboard-header">
-        <h2>Meus Projetos</h2>
-        <!-- <div class="input-group" style="max-width: 300px;">
-            <input class="form-control" type="search" name="q" placeholder="Buscar por título ou palavra-chave..." value="{{ query }}">
-            <input type="hidden" name="tab" value="{{ active_tab }}">
-            <button class="btn btn-outline-secondary" type="submit">
-                <i class="bi bi-search"></i>
-            </button>
-        </div> -->
+<div class="container-fluid py-4 px-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-0">Meus Projetos</h4>
+      <small class="text-muted">Gerencie seus projetos e rascunhos</small>
     </div>
+    <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Novo Projeto
+    </a>
+  </div>
 
-    <ul class="nav nav-tabs dashboard-tabs mb-4">
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'visao_geral' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=visao_geral">Visão Geral</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'em_andamento' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=em_andamento">Projetos em Andamento</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'em_revisao' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=em_revisao">Projetos em Revisão</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'avaliados' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=avaliados">Projetos Avaliados</a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {% if active_tab == 'finalizados' %}active{% endif %}" href="{% url 'projeto_dashboard' %}?tab=finalizados">Projetos Finalizados</a>
-        </li>    
-    </ul>
+  {# Abas #}
+  <ul class="nav nav-tabs mb-4 border-bottom">
+    {% for tab, label, badge_val, badge_class in tabs %}
+    <li class="nav-item">
+      <a class="nav-link {% if active_tab == tab %}active fw-semibold{% else %}text-muted{% endif %}"
+         href="{% url 'projeto_dashboard' %}?tab={{ tab }}">
+        {{ label }}
+        {% if badge_val > 0 %}
+          <span class="badge {{ badge_class }} ms-1">{{ badge_val }}</span>
+        {% endif %}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
 
-    {% if active_tab == 'visao_geral' %}
-    <div class="dashboard-container">
-        <div class="coluna-projetos">
-            <h5>Em Andamento</h5>
-            {% for projeto in projetos_em_andamento %}
-                {% include 'projetos_institucionais/partials/projeto_card.html' %}
-            {% empty %}
-                <p>Nenhum projeto em andamento.</p>
-            {% endfor %}
+  {# Barra de busca e filtros — aparece em todas as abas exceto visão geral #}
+  {% if active_tab != 'visao_geral' %}
+  <form method="get" class="card border-0 shadow-sm mb-4">
+    <input type="hidden" name="tab" value="{{ active_tab }}">
+    <div class="card-body py-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label small text-muted mb-1">Buscar por título</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="q" value="{{ q }}"
+                   class="form-control border-start-0"
+                   placeholder="Palavra-chave no título…">
+          </div>
         </div>
-
-        <div class="coluna-projetos">
-            <h5>Projetos em Revisão</h5>
-            {% for projeto in projetos_em_revisao %}
-                {% include 'projetos_institucionais/partials/projeto_card.html' %}
-            {% empty %}
-                <p>Nenhum projeto em revisão.</p>
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-1">Centro de Lotação</label>
+          <select name="centro" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            {% for c in centros_disponiveis %}
+            <option value="{{ c }}" {% if filtro_centro == c %}selected{% endif %}>{{ c }}</option>
             {% endfor %}
+          </select>
         </div>
-        
-        <div class="coluna-projetos">
-            <h5>Projetos Rejeitados</h5>
-            {% for projeto in projetos_rejeitados %}
-                {% include 'projetos_institucionais/partials/projeto_card.html' %}
-            {% empty %}
-                <p>Nenhum projeto rejeitado.</p>
-            {% endfor %}
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Data de Início</label>
+          <input type="date" name="data_inicio" value="{{ filtro_data_inicio }}" class="form-control form-control-sm">
         </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Data de Fim</label>
+          <input type="date" name="data_fim" value="{{ filtro_data_fim }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-funnel me-1"></i>Filtrar
+          </button>
+          {% if q or filtro_centro or filtro_data_inicio %}
+          <a href="{% url 'projeto_dashboard' %}?tab={{ active_tab }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
     </div>
-    {% else %}
-        {% include 'projetos_institucionais/partials/_projeto_table.html' %}
+  </form>
+  {% endif %}
+
+  {# ── Visão Geral ── #}
+  {% if active_tab == 'visao_geral' %}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="display-6 fw-bold text-primary">{{ projetos_em_andamento|length }}</div>
+        <small class="text-muted">Em Andamento</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="display-6 fw-bold text-warning">{{ projetos_em_revisao|length }}</div>
+        <small class="text-muted">Em Revisão</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="display-6 fw-bold text-danger">{{ projetos_rejeitados|length }}</div>
+        <small class="text-muted">Rejeitados</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="display-6 fw-bold text-secondary">{{ count_rascunhos }}</div>
+        <small class="text-muted">Rascunhos</small>
+      </div>
+    </div>
+  </div>
+
+  {% for titulo, lista, cor, icone in visao_geral_cols %}
+  {% if lista %}
+  <h6 class="text-muted text-uppercase small fw-bold mb-2 mt-4">
+    <i class="bi {{ icone }} me-1"></i>{{ titulo }}
+  </h6>
+  <div class="row g-3 mb-2">
+    {% for p in lista %}
+    <div class="col-md-6 col-lg-4">
+      <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid {{ cor }} !important;">
+        <div class="card-body d-flex flex-column" style="min-height: 140px;">
+          <a href="{% url 'projeto_detalhe' pk=p.pk %}"
+             class="fw-semibold text-decoration-none text-dark small mb-3 flex-grow-1">
+            {{ p.titulo|truncatechars:60 }}
+          </a>
+          <div>
+            {% if p.centro_lotacao %}
+            <p class="text-muted small mb-1">
+              <i class="bi bi-building me-1"></i>{{ p.centro_lotacao }}
+            </p>
+            {% endif %}
+            {% if p.data_inicio %}
+            <p class="text-muted small mb-2">
+              <i class="bi bi-calendar me-1"></i>{{ p.data_inicio|date:"d/m/Y" }} – {{ p.data_fim|date:"d/m/Y" }}
+            </p>
+            {% endif %}
+            <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-eye me-1"></i>Ver detalhes
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {# ── Rascunhos ── #}
+  {% elif active_tab == 'rascunhos' %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0 small">Projetos salvos como rascunho. Continue de onde parou a qualquer momento.</p>
+  </div>
+  {% if rascunhos %}
+  <div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Título</th>
+            <th>Progresso</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in rascunhos %}
+          <tr>
+            <td>
+              <span class="fw-semibold small">{{ r.titulo|default:"(sem título)" }}</span>
+              <span class="badge bg-warning text-dark ms-2 small">Rascunho</span>
+            </td>
+            <td class="small text-muted">
+              {% if r.metodologia %}Etapa 2+{% elif r.titulo %}Etapa 1+{% else %}Não iniciado{% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'projeto_editar' pk=r.pk %}" class="btn btn-sm btn-primary">
+                <i class="bi bi-pencil me-1"></i>Continuar
+              </a>
+              <button type="button" class="btn btn-sm btn-outline-danger ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalExcluirRascunho"
+                      data-pk="{{ r.pk }}" data-titulo="{{ r.titulo|default:'(sem título)' }}">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-file-earmark-plus display-4 opacity-25 d-block mb-3"></i>
+    <p>Você não tem nenhum rascunho salvo.</p>
+    <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Criar Novo Projeto</a>
+  </div>
+  {% endif %}
+
+  {# ── Demais abas tabulares ── #}
+  {% else %}
+  {% if page_obj %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-folder2 text-primary me-2"></i>{{ table_title }}</strong>
+      <small class="text-muted">{{ page_obj.paginator.count }} projeto{{ page_obj.paginator.count|pluralize }}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Título</th>
+            <th>Centro</th>
+            <th>Vigência</th>
+            <th>Status</th>
+            <th class="text-end">Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in page_obj %}
+          <tr>
+            <td class="fw-semibold small">{{ p.titulo|truncatechars:50 }}</td>
+            <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
+            <td class="small text-muted">
+              {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
+              {% elif p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+              {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
+              {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
+              {% elif p.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span>
+              {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
+              {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+              {% endif %}
+            </td>
+            <td class="text-end">
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-eye me-1"></i>Ver
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">Nenhum projeto nesta categoria.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="card-footer bg-white d-flex justify-content-center py-3">
+      <nav><ul class="pagination pagination-sm mb-0">
+        {% if page_obj.has_previous %}
+        <li class="page-item"><a class="page-link" href="?tab={{ active_tab }}&page={{ page_obj.previous_page_number }}&q={{ q }}&centro={{ filtro_centro }}&data_inicio={{ filtro_data_inicio }}&data_fim={{ filtro_data_fim }}"><i class="bi bi-chevron-left"></i></a></li>
+        {% endif %}
+        {% for n in page_obj.paginator.page_range %}
+          {% if page_obj.number == n %}<li class="page-item active"><span class="page-link">{{ n }}</span></li>
+          {% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}<li class="page-item"><a class="page-link" href="?tab={{ active_tab }}&page={{ n }}&q={{ q }}&centro={{ filtro_centro }}&data_inicio={{ filtro_data_inicio }}&data_fim={{ filtro_data_fim }}">{{ n }}</a></li>{% endif %}
+        {% endfor %}
+        {% if page_obj.has_next %}
+        <li class="page-item"><a class="page-link" href="?tab={{ active_tab }}&page={{ page_obj.next_page_number }}&q={{ q }}&centro={{ filtro_centro }}&data_inicio={{ filtro_data_inicio }}&data_fim={{ filtro_data_fim }}"><i class="bi bi-chevron-right"></i></a></li>
+        {% endif %}
+      </ul></nav>
+    </div>
     {% endif %}
+  </div>
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-folder2-open display-4 opacity-25 d-block mb-3"></i>
+    <p>Nenhum projeto nesta categoria.</p>
+  </div>
+  {% endif %}
+  {% endif %}
+
 </div>
 
+{# Modal excluir rascunho #}
+<div class="modal fade" id="modalExcluirRascunho" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body text-center p-4">
+        <i class="bi bi-exclamation-triangle-fill text-danger mb-3" style="font-size:2.5rem;"></i>
+        <h5 class="mb-2">Excluir Rascunho</h5>
+        <p class="text-muted mb-1">Tem certeza que deseja excluir o rascunho</p>
+        <p class="fw-semibold mb-3" id="modalExcluirTitulo"></p>
+        <p class="text-danger small mb-4">Esta ação não pode ser desfeita.</p>
+        <form method="post" id="formExcluirRascunho">
+          {% csrf_token %}
+          <div class="d-flex justify-content-center gap-3">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-arrow-left me-1"></i>Cancelar
+            </button>
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-trash me-1"></i>Sim, excluir
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% for projeto in todos_os_projetos %}
-    {% include 'projetos_institucionais/partials/modals.html' with projeto=projeto AnexoForm=AnexoForm %}
+  {% include 'projetos_institucionais/partials/modals.html' with projeto=projeto AnexoForm=AnexoForm %}
 {% endfor %}
 
+<script>
+var modalExcluir = document.getElementById('modalExcluirRascunho');
+if (modalExcluir) {
+  modalExcluir.addEventListener('show.bs.modal', function(e) {
+    var btn = e.relatedTarget;
+    document.getElementById('modalExcluirTitulo').textContent = '"' + btn.getAttribute('data-titulo') + '"';
+    document.getElementById('formExcluirRascunho').action = '/projetos/projetos/' + btn.getAttribute('data-pk') + '/deletar/';
+  });
+}
+</script>
 {% endblock %}

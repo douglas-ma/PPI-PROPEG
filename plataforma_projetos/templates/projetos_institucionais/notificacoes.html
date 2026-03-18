@@ -1,23 +1,281 @@
 {% extends "base2.html" %}
-{% block title %}Minhas Notificações{% endblock %}
+{% load static %}
+
+{% block title %}Notificações{% endblock %}
+
 {% block content %}
-<div class="container-fluid">
-    <h2 class="mb-3">Minhas Notificações</h2>
-    <hr>
-    <div class="list-group">
-        {% for notificacao in notificacoes %}
-            <div class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between">
-                    <p class="mb-1">{{ notificacao.mensagem|linebreaksbr }}</p>
-                    <small>{{ notificacao.data_criacao|timesince }} atrás</small>
-                </div>
-                {% if notificacao.link %}
-                <a href="{{ notificacao.link }}" class="btn btn-sm btn-outline-primary mt-2">Ver Detalhes</a>
-                {% endif %}
-            </div>
-        {% empty %}
-            <p class="text-muted">Você não tem nenhuma notificação.</p>
-        {% endfor %}
+<div class="container-fluid py-4 px-4" style="max-width:860px;">
+
+  {# Cabeçalho #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0">Notificações</h4>
+      <small class="text-muted">
+        {% if total == 0 %}Nenhuma notificação encontrada
+        {% elif total == 1 %}1 notificação
+        {% else %}{{ total }} notificações{% endif %}
+      </small>
     </div>
+    {% if page_obj.paginator.count > 0 %}
+    <form method="post" action="{% url 'excluir_notificacoes_massa' %}" id="form-massa">
+      {% csrf_token %}
+      <input type="hidden" name="excluir_todas" value="1">
+      <button type="button" class="btn btn-outline-danger btn-sm" id="btn-excluir-todas"
+              onclick="confirmarExcluirTodas()">
+        <i class="bi bi-trash me-1"></i>Excluir Todas
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {# Busca e filtros #}
+  <form method="get" class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label small text-muted mb-1">Buscar por conteúdo</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="q" value="{{ q }}"
+                   class="form-control border-start-0"
+                   placeholder="Palavra-chave na mensagem…">
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-1">A partir de</label>
+          <input type="date" name="data_de" value="{{ data_de }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small text-muted mb-1">Até</label>
+          <input type="date" name="data_ate" value="{{ data_ate }}" class="form-control form-control-sm">
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-primary btn-sm w-100">
+            <i class="bi bi-funnel"></i>
+          </button>
+          {% if q or data_de or data_ate %}
+          <a href="{% url 'lista_notificacoes' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-x"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </form>
+
+  {% if page_obj.object_list %}
+
+  {# Barra de seleção em massa #}
+  <form method="post" action="{% url 'excluir_notificacoes_massa' %}" id="form-selecao">
+    {% csrf_token %}
+
+    <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+      <div class="d-flex align-items-center gap-2">
+        <div class="form-check mb-0">
+          <input type="checkbox" class="form-check-input" id="selecionar-tudo">
+          <label class="form-check-label small text-muted" for="selecionar-tudo">
+            Selecionar esta página
+          </label>
+        </div>
+        <span class="text-muted small" id="contador-selecionados" style="display:none;">
+          — <span id="num-selecionados">0</span> selecionada(s)
+        </span>
+      </div>
+      <button type="submit" class="btn btn-danger btn-sm d-none" id="btn-excluir-selecionados">
+        <i class="bi bi-trash me-1"></i>Excluir selecionadas
+      </button>
+    </div>
+
+    {# Lista de notificações #}
+    <div class="d-flex flex-column gap-2">
+      {% for notif in page_obj %}
+      <div class="card border-0 shadow-sm notif-card {% if not notif.lida %}border-start border-primary border-3{% endif %}"
+           style="transition: background .15s;">
+        <div class="card-body py-3 px-3">
+          <div class="d-flex align-items-start gap-3">
+
+            {# Checkbox #}
+            <div class="form-check mt-1 flex-shrink-0">
+              <input type="checkbox" class="form-check-input notif-check"
+                     name="ids" value="{{ notif.pk }}">
+            </div>
+
+            {# Ícone #}
+            <div class="flex-shrink-0 mt-1">
+              <div class="d-flex align-items-center justify-content-center rounded-circle
+                          {% if not notif.lida %}bg-primary{% else %}bg-light{% endif %}"
+                   style="width:36px;height:36px;">
+                <i class="bi bi-bell{% if not notif.lida %}-fill text-white{% else %} text-secondary{% endif %}"></i>
+              </div>
+            </div>
+
+            {# Conteúdo #}
+            <div class="flex-grow-1 min-w-0">
+              <p class="mb-1 {% if not notif.lida %}fw-semibold{% endif %}" style="font-size:.92rem;word-break:break-word;">
+                {{ notif.mensagem }}
+              </p>
+              <div class="d-flex align-items-center gap-3 flex-wrap">
+                <small class="text-muted">
+                  <i class="bi bi-clock me-1"></i>{{ notif.data_criacao|date:"d/m/Y" }} às {{ notif.data_criacao|date:"H:i" }}
+                </small>
+                {% if not notif.lida %}
+                <span class="badge bg-primary bg-opacity-10 text-primary" style="font-size:.7rem;">Nova</span>
+                {% endif %}
+              </div>
+              {% if notif.link %}
+              <a href="{{ notif.link }}" class="btn btn-link btn-sm p-0 mt-1 text-primary"
+                 style="font-size:.85rem;">
+                <i class="bi bi-arrow-right me-1"></i>Ver detalhes
+              </a>
+              {% endif %}
+            </div>
+
+            {# Botão excluir individual #}
+            <div class="flex-shrink-0">
+              <form method="post" action="{% url 'excluir_notificacao' pk=notif.pk %}"
+                    class="d-inline" onsubmit="return confirmarExcluir()">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-link text-danger p-1"
+                        title="Excluir esta notificação" style="font-size:1rem;">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+  </form>{# form-selecao #}
+
+  {# Paginação #}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="mt-4" aria-label="Páginas de notificações">
+    <ul class="pagination pagination-sm justify-content-center mb-0">
+
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page=1{% if q %}&q={{ q }}{% endif %}{% if data_de %}&data_de={{ data_de }}{% endif %}{% if data_ate %}&data_ate={{ data_ate }}{% endif %}">
+          <i class="bi bi-chevron-double-left"></i>
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if data_de %}&data_de={{ data_de }}{% endif %}{% if data_ate %}&data_ate={{ data_ate }}{% endif %}">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if page_obj.number == num %}
+        <li class="page-item active">
+          <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+        <li class="page-item">
+          <a class="page-link" href="?page={{ num }}{% if q %}&q={{ q }}{% endif %}{% if data_de %}&data_de={{ data_de }}{% endif %}{% if data_ate %}&data_ate={{ data_ate }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if data_de %}&data_de={{ data_de }}{% endif %}{% if data_ate %}&data_ate={{ data_ate }}{% endif %}">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if q %}&q={{ q }}{% endif %}{% if data_de %}&data_de={{ data_de }}{% endif %}{% if data_ate %}&data_ate={{ data_ate }}{% endif %}">
+          <i class="bi bi-chevron-double-right"></i>
+        </a>
+      </li>
+      {% endif %}
+
+    </ul>
+    <p class="text-center text-muted small mt-2">
+      Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+      &middot; {{ total }} notificação{{ total|pluralize }}
+    </p>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  {# Estado vazio #}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-bell-slash display-4 d-block mb-3 opacity-25"></i>
+    {% if q or data_de or data_ate %}
+      <p>Nenhuma notificação encontrada com os filtros aplicados.</p>
+      <a href="{% url 'lista_notificacoes' %}" class="btn btn-outline-secondary btn-sm mt-1">
+        <i class="bi bi-x me-1"></i>Limpar filtros
+      </a>
+    {% else %}
+      <p>Você não tem nenhuma notificação.</p>
+    {% endif %}
+  </div>
+  {% endif %}
+
 </div>
+
+<script>
+// ── Seleção em massa ──────────────────────────────────────────────────────────
+var checkAll  = document.getElementById('selecionar-tudo');
+var checks    = document.querySelectorAll('.notif-check');
+var btnExcl   = document.getElementById('btn-excluir-selecionados');
+var contador  = document.getElementById('contador-selecionados');
+var numSel    = document.getElementById('num-selecionados');
+
+function atualizarBarra() {
+  var selecionados = document.querySelectorAll('.notif-check:checked').length;
+  if (selecionados > 0) {
+    btnExcl.classList.remove('d-none');
+    contador.style.display = '';
+    numSel.textContent = selecionados;
+  } else {
+    btnExcl.classList.add('d-none');
+    contador.style.display = 'none';
+  }
+  checkAll.indeterminate = selecionados > 0 && selecionados < checks.length;
+  checkAll.checked = selecionados === checks.length && checks.length > 0;
+}
+
+if (checkAll) {
+  checkAll.addEventListener('change', function () {
+    checks.forEach(function (c) { c.checked = checkAll.checked; });
+    atualizarBarra();
+  });
+}
+
+checks.forEach(function (c) {
+  c.addEventListener('change', atualizarBarra);
+  // Clique no card seleciona o checkbox
+  c.closest('.notif-card').addEventListener('click', function (e) {
+    if (e.target.tagName === 'A' || e.target.tagName === 'BUTTON' ||
+        e.target.tagName === 'INPUT' || e.target.closest('form')) return;
+    c.checked = !c.checked;
+    atualizarBarra();
+  });
+});
+
+// ── Confirmações ──────────────────────────────────────────────────────────────
+function confirmarExcluir() {
+  return confirm('Excluir esta notificação?');
+}
+
+function confirmarExcluirTodas() {
+  if (confirm('Excluir TODAS as notificações? Esta ação não pode ser desfeita.')) {
+    document.getElementById('form-massa').submit();
+  }
+}
+
+// ── Confirmação antes de excluir em massa via checkboxes ──────────────────────
+document.getElementById('form-selecao') && document.getElementById('form-selecao')
+  .addEventListener('submit', function (e) {
+    var n = document.querySelectorAll('.notif-check:checked').length;
+    if (!confirm('Excluir ' + n + ' notificação(ões) selecionada(s)?')) {
+      e.preventDefault();
+    }
+  });
+</script>
 {% endblock %}

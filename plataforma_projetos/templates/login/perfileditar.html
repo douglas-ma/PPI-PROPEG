@@ -1,32 +1,320 @@
 {% extends "base2.html" %}
-{% load crispy_forms_tags %}
 
 {% block title %}Editar Perfil{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h2 class="mb-3">Editar Perfil</h2>
-    <hr>
-    
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <form method="post">
-                {% csrf_token %}
-                
-                <h5 class="mb-3">Informações Pessoais e Institucionais</h5>
-                {{ user_form|crispy }}
-                
-                <hr class="my-4">
-                
-                <h5 class="mb-3">Endereço</h5>
-                {{ endereco_form|crispy }}
-                
-                <div class="mt-4">
-                    <a href="{% url 'perfil' %}" class="btn btn-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-primary float-end">Salvar Alterações</button>
-                </div>
-            </form>
-        </div>
+<div class="container-fluid py-4 px-4" style="max-width:900px;">
+
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'perfil' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h4 class="mb-0">Editar Perfil</h4>
+      <small class="text-muted">Atualize suas informações cadastrais</small>
     </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if user_form.non_field_errors %}
+      <div class="alert alert-danger">{{ user_form.non_field_errors }}</div>
+    {% endif %}
+
+    {% if user_form.errors %}
+    <div class="alert alert-danger py-2 mb-3">
+      <strong>Corrija os erros abaixo antes de salvar:</strong>
+      <ul class="mb-0 mt-1 ps-3 small">
+        {% for field in user_form %}{% for error in field.errors %}
+          <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+        {% endfor %}{% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    {# ── Identificação (comum) ───────────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-person-circle text-primary"></i>
+        <strong>Identificação</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+            <input type="text" name="{{ user_form.first_name.html_name }}"
+                   value="{{ user_form.first_name.value|default:'' }}"
+                   class="form-control {% if user_form.first_name.errors %}is-invalid{% endif %}"
+                   placeholder="Primeiro nome">
+            {% if user_form.first_name.errors %}<div class="invalid-feedback">{{ user_form.first_name.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Sobrenome <span class="text-danger">*</span></label>
+            <input type="text" name="{{ user_form.last_name.html_name }}"
+                   value="{{ user_form.last_name.value|default:'' }}"
+                   class="form-control {% if user_form.last_name.errors %}is-invalid{% endif %}"
+                   placeholder="Sobrenome">
+            {% if user_form.last_name.errors %}<div class="invalid-feedback">{{ user_form.last_name.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">RG</label>
+            <input type="text" name="{{ user_form.rg.html_name }}"
+                   value="{{ user_form.rg.value|default:'' }}"
+                   class="form-control {% if user_form.rg.errors %}is-invalid{% endif %}"
+                   placeholder="Ex: 0000000-0">
+            {% if user_form.rg.errors %}<div class="invalid-feedback">{{ user_form.rg.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Data de Nascimento</label>
+            <input type="date" name="{{ user_form.data_nascimento.html_name }}"
+                   value="{{ user_form.data_nascimento.value|date:'Y-m-d'|default:'' }}"
+                   class="form-control {% if user_form.data_nascimento.errors %}is-invalid{% endif %}">
+            {% if user_form.data_nascimento.errors %}<div class="invalid-feedback">{{ user_form.data_nascimento.errors }}</div>{% endif %}
+          </div>
+
+          {# Campos exclusivos do coordenador #}
+          {% if request.user.perfil == 'coordenador' %}
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">SIAPE</label>
+            <input type="text" name="{{ user_form.siape.html_name }}"
+                   value="{{ user_form.siape.value|default:'' }}"
+                   class="form-control {% if user_form.siape.errors %}is-invalid{% endif %}"
+                   placeholder="Número SIAPE">
+            {% if user_form.siape.errors %}<div class="invalid-feedback">{{ user_form.siape.errors }}</div>{% endif %}
+          </div>
+          {% endif %}
+
+          {# Campo exclusivo do aluno #}
+          {% if request.user.perfil == 'aluno' %}
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Nº de Matrícula</label>
+            <input type="text" name="{{ user_form.matricula.html_name }}"
+                   value="{{ user_form.matricula.value|default:'' }}"
+                   class="form-control {% if user_form.matricula.errors %}is-invalid{% endif %}"
+                   placeholder="Número de matrícula">
+            {% if user_form.matricula.errors %}<div class="invalid-feedback">{{ user_form.matricula.errors }}</div>{% endif %}
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Currículo e CNPq (somente coordenador) ──────────────────────── #}
+    {% if request.user.perfil == 'coordenador' %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-mortarboard text-primary"></i>
+        <strong>Currículo e CNPq</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Nº Currículo Lattes</label>
+            <input type="text" name="{{ user_form.lattes.html_name }}"
+                   value="{{ user_form.lattes.value|default:'' }}"
+                   class="form-control {% if user_form.lattes.errors %}is-invalid{% endif %}"
+                   placeholder="Ex: 1234567890123456">
+            <div class="form-text">Número de 16 dígitos do seu currículo na Plataforma Lattes.</div>
+            {% if user_form.lattes.errors %}<div class="invalid-feedback">{{ user_form.lattes.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Grande Área CNPq</label>
+            {{ user_form.cnpq_area }}
+            {% if user_form.cnpq_area.errors %}<div class="invalid-feedback d-block">{{ user_form.cnpq_area.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Contato ─────────────────────────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-envelope text-primary"></i>
+        <strong>Contato</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">E-mail <span class="text-danger">*</span></label>
+            <input type="email" name="{{ user_form.email.html_name }}"
+                   value="{{ user_form.email.value|default:'' }}"
+                   class="form-control {% if user_form.email.errors %}is-invalid{% endif %}"
+                   placeholder="seu@email.com">
+            {% if user_form.email.errors %}<div class="invalid-feedback">{{ user_form.email.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Telefone</label>
+            <input type="text" name="{{ user_form.telefone.html_name }}"
+                   id="campo-telefone"
+                   value="{{ user_form.telefone.value|default:'' }}"
+                   class="form-control {% if user_form.telefone.errors %}is-invalid{% endif %}"
+                   placeholder="(00) 00000-0000" maxlength="15">
+            {% if user_form.telefone.errors %}<div class="invalid-feedback">{{ user_form.telefone.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Institucional: coordenador ───────────────────────────────────── #}
+    {% if request.user.perfil == 'coordenador' and user_form.titulacao %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-building text-primary"></i>
+        <strong>Informações Institucionais</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Titulação</label>
+            <select name="{{ user_form.titulacao.html_name }}"
+                    class="form-select {% if user_form.titulacao.errors %}is-invalid{% endif %}">
+              <option value="">Selecione a titulação</option>
+              {% for val, label in user_form.fields.titulacao.choices %}
+                {% if val %}
+                  <option value="{{ val }}" {% if user_form.titulacao.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            {% if user_form.titulacao.errors %}<div class="invalid-feedback">{{ user_form.titulacao.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Regime de Trabalho</label>
+            <input type="text" name="{{ user_form.regime_trabalho.html_name }}"
+                   value="{{ user_form.regime_trabalho.value|default:'' }}"
+                   class="form-control {% if user_form.regime_trabalho.errors %}is-invalid{% endif %}"
+                   placeholder="Ex: 20h, 40h, DE">
+            {% if user_form.regime_trabalho.errors %}<div class="invalid-feedback">{{ user_form.regime_trabalho.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Institucional: aluno ────────────────────────────────────────── #}
+    {% if request.user.perfil == 'aluno' %}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-building text-primary"></i>
+        <strong>Informações Institucionais</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-12">
+            <label class="form-label fw-semibold">Curso de Graduação</label>
+            <select name="{{ user_form.curso.html_name }}"
+                    class="form-select {% if user_form.curso.errors %}is-invalid{% endif %}">
+              <option value="">Selecione o curso</option>
+              {% for val, label in user_form.fields.curso.choices %}
+                {% if val %}
+                  <option value="{{ val }}" {% if user_form.curso.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+            {% if user_form.curso.errors %}<div class="invalid-feedback">{{ user_form.curso.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ── Endereço ────────────────────────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-geo-alt text-primary"></i>
+        <strong>Endereço</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold">Rua / Logradouro</label>
+            <input type="text" name="{{ endereco_form.rua.html_name }}"
+                   value="{{ endereco_form.rua.value|default:'' }}"
+                   class="form-control {% if endereco_form.rua.errors %}is-invalid{% endif %}">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">Número</label>
+            <input type="text" name="{{ endereco_form.numero.html_name }}"
+                   value="{{ endereco_form.numero.value|default:'' }}"
+                   class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Complemento</label>
+            <input type="text" name="{{ endereco_form.complemento.html_name }}"
+                   value="{{ endereco_form.complemento.value|default:'' }}"
+                   class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Bairro</label>
+            <input type="text" name="{{ endereco_form.bairro.html_name }}"
+                   value="{{ endereco_form.bairro.value|default:'' }}"
+                   class="form-control">
+          </div>
+          <div class="col-md-4">
+            <label class="form-label fw-semibold">Cidade</label>
+            <input type="text" name="{{ endereco_form.cidade.html_name }}"
+                   value="{{ endereco_form.cidade.value|default:'' }}"
+                   class="form-control">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">UF</label>
+            <input type="text" name="{{ endereco_form.estado.html_name }}"
+                   value="{{ endereco_form.estado.value|default:'' }}"
+                   class="form-control" maxlength="2">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label fw-semibold">CEP</label>
+            <input type="text" name="{{ endereco_form.cep.html_name }}"
+                   id="campo-cep"
+                   value="{{ endereco_form.cep.value|default:'' }}"
+                   class="form-control" placeholder="00000-000" maxlength="9">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex justify-content-between">
+      <a href="{% url 'perfil' %}" class="btn btn-outline-secondary">Cancelar</a>
+      <button type="submit" class="btn btn-primary">
+        <i class="bi bi-floppy me-1"></i>Salvar Alterações
+      </button>
+    </div>
+
+  </form>
 </div>
+
+<script>
+(function () {
+  var campo = document.getElementById('campo-telefone');
+  if (!campo) return;
+  function mask(v) {
+    v = v.replace(/\D/g,'').substring(0,11);
+    if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+    else if (v.length > 6) v = v.replace(/^(\d{2})(\d{4})(\d*)/,'($1) $2-$3');
+    else if (v.length > 2) v = v.replace(/^(\d{2})(\d*)/,'($1) $2');
+    return v;
+  }
+  if (campo.value) campo.value = mask(campo.value);
+  campo.addEventListener('input', function () {
+    var pos = this.selectionStart, ant = this.value.length;
+    this.value = mask(this.value);
+    try { this.setSelectionRange(pos + (this.value.length - ant), pos + (this.value.length - ant)); } catch(e){}
+  });
+  campo.closest('form').addEventListener('submit', function () {
+    campo.value = campo.value.replace(/\D/g,'');
+  });
+})();
+
+(function () {
+  var cep = document.getElementById('campo-cep');
+  if (!cep) return;
+  cep.addEventListener('input', function () {
+    var v = this.value.replace(/\D/g,'').substring(0,8);
+    if (v.length > 5) v = v.replace(/^(\d{5})(\d)/,'$1-$2');
+    this.value = v;
+  });
+})();
+</script>
 {% endblock %}

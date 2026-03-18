@@ -1,60 +1,191 @@
 {% extends "base2.html" %}
+{% load static %}
 
 {% block title %}Meu Perfil{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h2 class="mb-0">Meu Perfil</h2>
-            <a href="{% url 'perfil_editar' %}" class="btn btn-primary">
-                <i class="bi bi-pencil-square"></i> Editar Perfil
-            </a>
-        </div>
-        <hr>
+<div class="container-fluid py-4 px-4" style="max-width:900px;">
 
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header"><strong>Informações Pessoais</strong></div>
-                    <div class="card-body">
-                        <p><strong>Nome Completo:</strong> {{ usuario.get_full_name }}</p>
-                        <p><strong>CPF:</strong> {{ usuario.cpf }}</p>
-                        <p><strong>Email:</strong> {{ usuario.email }}</p>
-                        <p><strong>Telefone:</strong> {{ usuario.telefone|default:"Não informado" }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header"><strong>Informações Institucionais</strong></div>
-                    <div class="card-body">
-                        <p><strong>Perfil:</strong> {{ usuario.get_perfil_display }}</p>
-                        {% if usuario.perfil == 'coordenador' %}
-                            <p><strong>Titulação:</strong> {{ usuario.titulacao|default:"Não informada" }}</p>
-                            <p><strong>Centro de Lotação:</strong> {{ usuario.centro_lotacao|default:"Não informado" }}</p>
-                            <p><strong>Regime de Trabalho:</strong> {{ usuario.regime_trabalho|default:"Não informado" }}</p>
-                        {% elif usuario.perfil == 'aluno' %}
-                            <p><strong>Curso:</strong> {{ usuario.curso|default:"Não informado" }}</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            <div class="col-12">
-                <div class="card shadow-sm">
-                    <div class="card-header"><strong>Endereço</strong></div>
-                    <div class="card-body">
-                        {% if usuario.endereco %}
-                            <p>{{ usuario.endereco.rua }}, {{ usuario.endereco.numero }}{% if usuario.endereco.complemento %} - {{ usuario.endereco.complemento }}{% endif %}</p>
-                            <p>{{ usuario.endereco.bairro }} - {{ usuario.endereco.cidade }}/{{ usuario.endereco.estado }}</p>
-                            <p>CEP: {{ usuario.endereco.cep }}</p>
-                        {% else %}
-                            <p class="text-muted">Nenhum endereço cadastrado. Por favor, edite seu perfil para adicioná-lo.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h4 class="mb-0">Meu Perfil</h4>
+      <small class="text-muted">Suas informações cadastradas na plataforma</small>
     </div>
+    <a href="{% url 'perfil_editar' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-pencil-square me-1"></i>Editar Perfil
+    </a>
+  </div>
+
+  <div class="row g-4">
+
+    {# ── Identificação ────────────────────────────────────────────────── #}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-person-circle text-primary"></i>
+          <strong>Identificação</strong>
+        </div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Nome Completo</span>
+              <span class="fw-semibold">{{ usuario.get_full_name|default:"—" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">CPF</span>
+              <span class="fw-semibold">{{ usuario.cpf|default:"—" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">RG</span>
+              <span class="fw-semibold">{{ usuario.rg|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Data de Nascimento</span>
+              <span class="fw-semibold">{{ usuario.data_nascimento|date:"d/m/Y"|default:"Não informada" }}</span>
+            </div>
+
+            {% if usuario.perfil == 'coordenador' %}
+            <div class="col-md-3">
+              <span class="text-muted small d-block">SIAPE</span>
+              <span class="fw-semibold">{{ usuario.siape|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Nº Currículo Lattes</span>
+              <span class="fw-semibold">{{ usuario.lattes|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Grande Área CNPq</span>
+              <span class="fw-semibold">{{ usuario.get_cnpq_area_display|default:"Não informada" }}</span>
+            </div>
+            {% endif %}
+
+            {% if usuario.perfil == 'aluno' %}
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Nº de Matrícula</span>
+              <span class="fw-semibold">{{ usuario.matricula|default:"Não informada" }}</span>
+            </div>
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Contato ──────────────────────────────────────────────────────── #}
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-envelope text-primary"></i>
+          <strong>Contato</strong>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="text-muted small d-block">E-mail</span>
+            <span class="fw-semibold">{{ usuario.email|default:"—" }}</span>
+          </div>
+          <div>
+            <span class="text-muted small d-block">Telefone</span>
+            <span class="fw-semibold" id="telefone-display">{{ usuario.telefone|default:"Não informado" }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Institucional ────────────────────────────────────────────────── #}
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-building text-primary"></i>
+          <strong>Informações Institucionais</strong>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="text-muted small d-block">Perfil</span>
+            <span class="badge bg-primary bg-opacity-10 text-primary">{{ usuario.get_perfil_display }}</span>
+          </div>
+
+          {% if usuario.perfil == 'coordenador' %}
+          <div class="mb-3">
+            <span class="text-muted small d-block">Titulação</span>
+            <span class="fw-semibold">{{ usuario.titulacao|default:"Não informada" }}</span>
+          </div>
+          <div>
+            <span class="text-muted small d-block">Regime de Trabalho</span>
+            <span class="fw-semibold">{{ usuario.regime_trabalho|default:"Não informado" }}</span>
+          </div>
+          {% endif %}
+
+          {% if usuario.perfil == 'aluno' %}
+          <div>
+            <span class="text-muted small d-block">Curso de Graduação</span>
+            <span class="fw-semibold">{{ usuario.curso|default:"Não informado" }}</span>
+          </div>
+          {% endif %}
+
+        </div>
+      </div>
+    </div>
+
+    {# ── Endereço ─────────────────────────────────────────────────────── #}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-geo-alt text-primary"></i>
+            <strong>Endereço</strong>
+          </div>
+          <a href="{% url 'perfil_endereco' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Editar
+          </a>
+        </div>
+        <div class="card-body">
+          {% if usuario.endereco %}
+          <div class="row g-3">
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Logradouro</span>
+              <span class="fw-semibold">
+                {{ usuario.endereco.rua }}, {{ usuario.endereco.numero }}
+                {% if usuario.endereco.complemento %} – {{ usuario.endereco.complemento }}{% endif %}
+              </span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Bairro</span>
+              <span class="fw-semibold">{{ usuario.endereco.bairro }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">CEP</span>
+              <span class="fw-semibold">{{ usuario.endereco.cep }}</span>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Cidade / Estado</span>
+              <span class="fw-semibold">{{ usuario.endereco.cidade }} / {{ usuario.endereco.estado }}</span>
+            </div>
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted">
+            <i class="bi bi-geo-alt display-6 d-block mb-2 opacity-25"></i>
+            <p class="mb-2 small">Nenhum endereço cadastrado.</p>
+            <a href="{% url 'perfil_endereco' %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-plus-lg me-1"></i>Adicionar Endereço
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
+
+<script>
+(function () {
+  var el = document.getElementById('telefone-display');
+  if (!el) return;
+  var raw = el.textContent.replace(/\D/g, '');
+  if (raw.length === 11)
+    el.textContent = '(' + raw.slice(0,2) + ') ' + raw.slice(2,7) + '-' + raw.slice(7);
+  else if (raw.length === 10)
+    el.textContent = '(' + raw.slice(0,2) + ') ' + raw.slice(2,6) + '-' + raw.slice(6);
+})();
+</script>
 {% endblock %}

@@ -1,0 +1,786 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block title %}Ajuda — PROPEG{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4">
+
+  {# Cabeçalho #}
+  <div class="mb-4">
+    <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+      <div>
+        <h4 class="mb-1"><i class="bi bi-question-circle text-primary me-2"></i>Central de Ajuda</h4>
+        <p class="text-muted mb-0">Guia completo da Plataforma de Projetos Institucionais — PROPEG/UFAC</p>
+      </div>
+    </div>
+    {# Busca principal #}
+    <div class="mt-3 position-relative" style="max-width:540px;">
+      <div class="input-group">
+        <span class="input-group-text bg-white border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input type="text" id="ajuda-busca-principal"
+               class="form-control border-start-0 border-end-0"
+               placeholder="Buscar em toda a ajuda… ex: relatório, edital, senha">
+        <button class="btn btn-outline-secondary border-start-0" id="ajuda-busca-limpar"
+                style="display:none;" type="button" title="Limpar busca">
+          <i class="bi bi-x"></i>
+        </button>
+      </div>
+      {# Resultados da busca — dropdown #}
+      <div id="ajuda-resultados"
+           class="position-absolute w-100 bg-white border rounded shadow-sm mt-1"
+           style="display:none;z-index:1050;max-height:340px;overflow-y:auto;">
+        <div id="ajuda-resultados-lista"></div>
+        <div id="ajuda-sem-resultado" class="text-center text-muted py-3 small" style="display:none;">
+          <i class="bi bi-search d-block mb-1 opacity-50 fs-5"></i>
+          Nenhum resultado encontrado.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+
+    {# ── Navegação lateral fixa ──────────────────────────────────────── #}
+    <div class="col-lg-3 d-none d-lg-block" style="align-self:flex-start;position:sticky;top:80px;">
+      <div class="card border-0 shadow-sm">
+        {# Cabeçalho fixo com busca #}
+        <div class="card-header bg-white border-bottom py-2 px-3">
+          <p class="small text-muted fw-semibold text-uppercase mb-2">Seções</p>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-light border-end-0"><i class="bi bi-search text-muted" style="font-size:.7rem;"></i></span>
+            <input type="text" id="ajuda-busca" class="form-control bg-light border-start-0"
+                   placeholder="Buscar seção…" style="font-size:.78rem;">
+          </div>
+        </div>
+        {# Lista rolável #}
+        <div style="max-height:calc(100vh - 220px);overflow-y:auto;overflow-x:hidden;" class="px-2 py-2">
+          <nav class="nav flex-column gap-0" id="ajuda-nav">
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#visao-geral" data-label="Visão Geral">Visão Geral</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#acesso" data-label="Acesso e Cadastro">Acesso e Cadastro</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#perfil" data-label="Meu Perfil">Meu Perfil</a>
+            <div class="border-top my-1 ajuda-sep" data-group="coordenador"></div>
+            <p class="small text-muted fw-semibold text-uppercase mb-1 px-2 mt-1 ajuda-group" data-group="coordenador">Coordenador</p>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-tela" data-label="Coordenador Tela Principal">Tela Principal</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-criar" data-label="Coordenador Criar Projeto">Criar Projeto</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-etapas" data-label="Coordenador Etapas do Projeto">Etapas do Projeto</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-meus" data-label="Coordenador Meus Projetos">Meus Projetos</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-relatorio" data-label="Coordenador Relatórios de Atividades">Relatórios de Atividades</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-editais" data-label="Coordenador Editais">Editais</a>
+            <div class="border-top my-1 ajuda-sep" data-group="aluno"></div>
+            <p class="small text-muted fw-semibold text-uppercase mb-1 px-2 mt-1 ajuda-group" data-group="aluno">Aluno</p>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#aluno-tela" data-label="Aluno Tela Principal">Tela Principal</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#aluno-projetos" data-label="Aluno Meus Projetos">Meus Projetos</a>
+            <div class="border-top my-1 ajuda-sep" data-group="gestor"></div>
+            <p class="small text-muted fw-semibold text-uppercase mb-1 px-2 mt-1 ajuda-group" data-group="gestor">Gestor</p>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-tela" data-label="Gestor Tela Principal">Tela Principal</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-painel" data-label="Gestor Painel do Gestor">Painel do Gestor</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-usuarios" data-label="Gestor Gerenciar Usuários">Gerenciar Usuários</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-historico" data-label="Gestor Histórico de Projetos">Histórico de Projetos</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-relatorios" data-label="Gestor Relatórios">Relatórios</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#gestor-editais" data-label="Gestor Editais">Editais</a>
+            <div class="border-top my-1"></div>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#consulta" data-label="Consulta Pública">Consulta Pública</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#notificacoes" data-label="Notificações">Notificações</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#fluxo-projeto" data-label="Fluxo de um Projeto">Fluxo de um Projeto</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#faq" data-label="Perguntas Frequentes FAQ">Perguntas Frequentes</a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    {# ── Conteúdo principal ─────────────────────────────────────────── #}
+    <div class="col-lg-9">
+      <div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="p-3 d-flex flex-column gap-0" id="ajuda-content">
+
+      {# ── Visão Geral ─────────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="visao-geral" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-grid text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Visão Geral da Plataforma</h5>
+        </div>
+        <div class="pb-3">
+          <p>A <strong>Plataforma de Projetos Institucionais PROPEG/UFAC</strong> é o sistema oficial para cadastro, acompanhamento e gestão de projetos de pesquisa e extensão da Universidade Federal do Acre.</p>
+          <p>A plataforma é organizada em <strong>três perfis de acesso</strong>, cada um com funcionalidades específicas:</p>
+          <div class="row g-3 mt-1">
+            <div class="col-md-4">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body text-center">
+                  <i class="bi bi-person-workspace text-primary fs-2 mb-2 d-block"></i>
+                  <h6 class="fw-bold">Coordenador</h6>
+                  <p class="small text-muted mb-0">Docentes que criam, submetem e gerenciam projetos. Responsáveis pela equipe e relatórios de atividades.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body text-center">
+                  <i class="bi bi-mortarboard text-success fs-2 mb-2 d-block"></i>
+                  <h6 class="fw-bold">Aluno</h6>
+                  <p class="small text-muted mb-0">Estudantes vinculados a projetos como bolsistas, voluntários ou pesquisadores. Acompanham os projetos que participam.</p>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-4">
+              <div class="card border-0 bg-light h-100">
+                <div class="card-body text-center">
+                  <i class="bi bi-shield-check text-warning fs-2 mb-2 d-block"></i>
+                  <h6 class="fw-bold">Gestor</h6>
+                  <p class="small text-muted mb-0">Equipe da PROPEG que avalia projetos, gerencia usuários, publica editais e acompanha todo o histórico institucional.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {# ── Acesso e Cadastro ────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="acesso" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-box-arrow-in-right text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Acesso e Cadastro</h5>
+        </div>
+        <div class="pb-3">
+          <h6 class="fw-semibold">Como fazer login</h6>
+          <ol class="small mb-3">
+            <li>Acesse a página inicial da plataforma.</li>
+            <li>Informe seu <strong>CPF</strong> (somente números ou com pontuação) e sua <strong>senha</strong>.</li>
+            <li>Marque <strong>"Lembrar-me"</strong> se quiser manter a sessão ativa por 30 dias.</li>
+            <li>Clique em <strong>Entrar</strong>.</li>
+          </ol>
+
+          <h6 class="fw-semibold">Como criar uma conta</h6>
+          <ol class="small mb-3">
+            <li>Na tela inicial, clique em <strong>"Criar uma conta"</strong>.</li>
+            <li>Preencha nome, sobrenome, CPF, e-mail, senha e selecione o <strong>perfil</strong> (Coordenador ou Aluno).</li>
+            <li>Clique em <strong>"Confirmar Cadastro"</strong>. O acesso é liberado imediatamente.</li>
+          </ol>
+
+          <h6 class="fw-semibold">Esqueci minha senha</h6>
+          <ol class="small mb-3">
+            <li>Na tela de login, clique em <strong>"Esqueceu a senha?"</strong>.</li>
+            <li>Informe seu CPF cadastrado.</li>
+            <li>Você receberá um e-mail com um link para redefinir a senha (válido por 24 horas).</li>
+            <li>Clique no link, defina a nova senha e faça login normalmente.</li>
+          </ol>
+
+          <div class="alert alert-info d-flex gap-2 py-2">
+            <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+            <span class="small">O perfil <strong>Gestor</strong> é criado somente pela equipe administrativa da PROPEG. Caso precise de acesso como gestor, entre em contato diretamente com a secretaria.</span>
+          </div>
+        </div>
+      </section>
+
+      {# ── Meu Perfil ───────────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="perfil" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-person-circle text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Meu Perfil</h5>
+        </div>
+        <div class="pb-3">
+          <p class="small">Acesse seu perfil clicando no ícone de usuário no canto superior direito da barra lateral ou no menu de navegação.</p>
+          <h6 class="fw-semibold">O que você pode atualizar</h6>
+          <ul class="small mb-3">
+            <li><strong>Coordenador:</strong> nome, e-mail, telefone, RG, data de nascimento, SIAPE, Lattes, área CNPq, titulação e regime de trabalho.</li>
+            <li><strong>Aluno:</strong> nome, e-mail, telefone, RG, data de nascimento, matrícula e curso de graduação.</li>
+            <li><strong>Gestor:</strong> nome, e-mail, telefone, RG e data de nascimento.</li>
+            <li><strong>Todos os perfis:</strong> endereço completo.</li>
+          </ul>
+          <div class="alert alert-warning d-flex gap-2 py-2">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+            <span class="small">O CPF não pode ser alterado após o cadastro. Em caso de erro, entre em contato com a PROPEG.</span>
+          </div>
+        </div>
+      </section>
+
+
+      {# ══════════ COORDENADOR ══════════ #}
+      <div class="d-flex align-items-center gap-2 mb-2 mt-2 pt-2 border-top">
+        <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10" style="width:32px;height:32px;">
+          <i class="bi bi-person-workspace text-primary"></i>
+        </div>
+        <h5 class="mb-0 fw-semibold text-primary">Área do Coordenador</h5>
+      </div>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-tela" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-house me-2 text-primary"></i>Tela Principal</h6></div>
+        <div class="small pb-3">
+          <p>A tela principal do coordenador exibe um painel com:</p>
+          <ul>
+            <li><strong>4 cards de métricas:</strong> projetos Em Andamento, Em Revisão, Aprovados e Rascunhos.</li>
+            <li><strong>Ações Rápidas:</strong> criar novo projeto, acessar meus projetos e editais abertos.</li>
+            <li><strong>Tabela de projetos recentes</strong> com título, coordenador e status.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-criar" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-plus-circle me-2 text-primary"></i>Criar um Novo Projeto</h6></div>
+        <div class="small pb-3">
+          <p>Para criar um projeto, clique em <strong>"Novo Projeto"</strong> na tela principal ou em Meus Projetos.</p>
+          <div class="alert alert-info d-flex gap-2 py-2 mb-3">
+            <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+            <span>Se você já tiver rascunhos salvos, o sistema perguntará se deseja <strong>continuar de onde parou</strong> ou criar um projeto novo.</span>
+          </div>
+          <h6 class="fw-semibold">Regras de rascunho</h6>
+          <ul>
+            <li>Ao iniciar, um rascunho vazio é criado automaticamente.</li>
+            <li>Você pode salvar a qualquer momento usando <strong>"Salvar Rascunho"</strong> sem sair da etapa.</li>
+            <li>Para sair sem perder o progresso, clique em <strong>"Sair (rascunho mantido)"</strong>.</li>
+            <li>Rascunhos ficam acessíveis na aba <strong>"Rascunhos"</strong> em Meus Projetos.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-etapas" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-list-ol me-2 text-primary"></i>Etapas do Formulário</h6></div>
+        <div class="small pb-3">
+          <p>O formulário de criação é dividido em <strong>5 etapas</strong>. Você pode navegar entre elas livremente após salvar:</p>
+
+          <div class="d-flex flex-column gap-2 mb-3">
+            {% for etapa in etapas_form %}
+            <div class="border rounded p-3">
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <span class="badge {{ etapa.badge }} rounded-circle flex-shrink-0"
+                      style="width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:.75rem;">{{ forloop.counter }}</span>
+                <strong>{{ etapa.titulo }}</strong>
+              </div>
+              <ul class="mb-0 ps-4">
+                {% for item in etapa.itens %}<li>{{ item }}</li>{% endfor %}
+              </ul>
+            </div>
+            {% endfor %}
+          </div>
+          <p class="mb-0 small">Ao clicar em <strong>"Confirmar e Submeter"</strong>, um relatório de submissão em PDF é gerado automaticamente e o projeto passa para status <span class="badge bg-primary">Submetido</span>.</p>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-meus" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-folder2 me-2 text-primary"></i>Meus Projetos</h6></div>
+        <div class="small pb-3">
+          <p>Acesse em <strong>Meus Projetos</strong> na barra lateral. A página possui abas:</p>
+          <ul>
+            <li><strong>Visão Geral:</strong> cards com resumo de todos os projetos por status.</li>
+            <li><strong>Rascunhos:</strong> projetos não submetidos. Clique em "Continuar" para retomar.</li>
+            <li><strong>Em Andamento:</strong> projetos aprovados e em execução.</li>
+            <li><strong>Em Revisão:</strong> projetos submetidos ou aguardando conselho.</li>
+            <li><strong>Aprovados/Rejeitados</strong> e <strong>Finalizados.</strong></li>
+          </ul>
+          <p>Em todas as abas (exceto Visão Geral) há uma <strong>barra de busca e filtros</strong> por título, centro de lotação, ano de início e quantidade de itens por página.</p>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-relatorio" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-file-text me-2 text-primary"></i>Relatórios de Atividades</h6></div>
+        <div class="small pb-3">
+          <p>Projetos em andamento precisam de relatórios periódicos. Para enviar um relatório:</p>
+          <ol>
+            <li>Acesse <strong>Relatórios</strong> na barra lateral.</li>
+            <li>Selecione o projeto para o qual deseja emitir o relatório.</li>
+            <li>Escolha o tipo: <strong>Parcial</strong> (durante a execução) ou <strong>Final</strong> (ao concluir).</li>
+            <li>Preencha os campos — os objetivos do projeto são pré-preenchidos automaticamente.</li>
+            <li>Clique em <strong>"Gerar e Enviar Relatório"</strong>. Um PDF é gerado e salvo no projeto.</li>
+          </ol>
+          <div class="alert alert-warning d-flex gap-2 py-2">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+            <span>Relatórios enviados ficam visíveis para o gestor. Não é possível excluir um relatório após o envio.</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-editais" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-file-earmark-plus me-2 text-primary"></i>Editais</h6></div>
+        <div class="small pb-3">
+          <p>Acesse <strong>Editais</strong> na barra lateral para ver os editais abertos pela PROPEG. Para cada edital você pode:</p>
+          <ul>
+            <li>Ver o período de submissão e a descrição.</li>
+            <li>Baixar o documento principal (PDF do edital).</li>
+            <li>Baixar adendos publicados pela PROPEG.</li>
+            <li>Vincular um projeto a um edital durante a criação (Etapa 1 → campo "Edital Vinculado").</li>
+          </ul>
+        </div>
+      </section>
+
+      {# ══════════ ALUNO ══════════ #}
+      <div class="d-flex align-items-center gap-2 mb-2 mt-2 pt-2 border-top">
+        <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-success bg-opacity-10" style="width:32px;height:32px;">
+          <i class="bi bi-mortarboard text-success"></i>
+        </div>
+        <h5 class="mb-0 fw-semibold text-success">Área do Aluno</h5>
+      </div>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="aluno-tela" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-house me-2 text-success"></i>Tela Principal</h6></div>
+        <div class="small pb-3">
+          <p>A tela principal do aluno exibe:</p>
+          <ul>
+            <li><strong>Card "Projetos Vinculados":</strong> total de projetos nos quais você participa.</li>
+            <li><strong>Card "Em Andamento":</strong> projetos ativos no momento.</li>
+            <li><strong>Atalhos rápidos</strong> para acessar Meus Projetos e o Perfil.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="aluno-projetos" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2 text-success"></i>Meus Projetos</h6></div>
+        <div class="small pb-3">
+          <p>Exibe todos os projetos aos quais você foi adicionado pela equipe do coordenador. Para cada projeto você pode ver:</p>
+          <ul>
+            <li>Título e coordenador responsável.</li>
+            <li>Sua <strong>função</strong> na equipe (bolsista, voluntário, pesquisador etc.).</li>
+            <li>Carga horária semanal e vigência.</li>
+            <li>Status atual do projeto.</li>
+          </ul>
+          <p>Clique em <strong>"Ver"</strong> para acessar os detalhes do projeto (visão simplificada com resumo, objetivo geral, equipe e ODS).</p>
+          <div class="alert alert-info d-flex gap-2 py-2">
+            <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+            <span>Alunos não podem criar ou editar projetos — apenas acompanhar os projetos nos quais foram incluídos pelo coordenador.</span>
+          </div>
+        </div>
+      </section>
+
+      {# ══════════ GESTOR ══════════ #}
+      <div class="d-flex align-items-center gap-2 mb-2 mt-2 pt-2 border-top">
+        <div class="flex-shrink-0 d-flex align-items-center justify-content-center rounded-circle bg-warning bg-opacity-10" style="width:32px;height:32px;">
+          <i class="bi bi-shield-check text-warning"></i>
+        </div>
+        <h5 class="mb-0 fw-semibold" style="color:#b45309;">Área do Gestor</h5>
+      </div>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-tela" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-house me-2 text-warning"></i>Tela Principal</h6></div>
+        <div class="small pb-3">
+          <p>A tela principal do gestor exibe 4 cards de acesso rápido:</p>
+          <ul>
+            <li><span class="badge bg-danger bg-opacity-10 text-danger">Cadastros Pendentes</span> — usuários que precisam de atenção.</li>
+            <li><span class="badge bg-primary bg-opacity-10 text-primary">Projetos Submetidos</span> — aguardando avaliação inicial.</li>
+            <li><span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span> — encaminhados para aprovação do conselho.</li>
+            <li><span class="badge bg-success bg-opacity-10 text-success">Para Encerramento</span> — relatório final enviado, aguardando encerramento.</li>
+          </ul>
+          <p>Abaixo dos cards há um <strong>Resumo Geral</strong> com estatísticas e uma tabela de projetos recentes.</p>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-painel" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-kanban me-2 text-warning"></i>Painel do Gestor</h6></div>
+        <div class="small pb-3">
+          <p>O Painel do Gestor é a central de avaliação de projetos. Está organizado em <strong>3 abas</strong>:</p>
+
+          <div class="mb-3">
+            <h6 class="fw-semibold"><span class="badge bg-primary me-2">Submetidos</span>Projetos Submetidos</h6>
+            <p>Projetos enviados pelos coordenadores que aguardam análise inicial. Ações disponíveis:</p>
+            <ul>
+              <li><strong>Ver:</strong> acessar o detalhe completo do projeto.</li>
+              <li><strong>Conselho:</strong> encaminhar o projeto para análise do conselho do centro.</li>
+              <li><strong>Aprovar:</strong> aprovar o projeto diretamente (confirmação obrigatória).</li>
+              <li><strong>Reprovar:</strong> reprovar o projeto (confirmação obrigatória). O coordenador pode corrigir e ressubmeter.</li>
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <h6 class="fw-semibold"><span class="badge bg-warning text-dark me-2">Ag. Conselho</span>Aguardando Conselho</h6>
+            <p>Projetos encaminhados ao conselho do centro. Ações disponíveis:</p>
+            <ul>
+              <li><strong>Ata:</strong> anexar a ata de aprovação do conselho (PDF).</li>
+              <li><strong>Aprovar / Reprovar:</strong> registrar o resultado da deliberação.</li>
+            </ul>
+          </div>
+
+          <div class="mb-0">
+            <h6 class="fw-semibold"><span class="badge bg-success me-2">Ag. Encerramento</span>Aguardando Encerramento</h6>
+            <p>Projetos com relatório final enviado pelo coordenador, aguardando encerramento formal.</p>
+            <ul class="mb-0">
+              <li><strong>Encerrar:</strong> confirmar o encerramento do projeto. O status passa para <span class="badge bg-secondary">Encerrado</span>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-usuarios" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-people me-2 text-warning"></i>Gerenciar Usuários</h6></div>
+        <div class="small pb-3">
+          <p>Acesse em <strong>Usuários</strong> na barra lateral. A página exibe 6 cards de contadores (Total, Ativos, Inativos, Coordenadores, Alunos, Gestores) e uma tabela com filtros.</p>
+          <h6 class="fw-semibold">Filtros disponíveis</h6>
+          <ul>
+            <li>Busca por nome, CPF ou e-mail.</li>
+            <li>Filtro por perfil (Coordenador, Aluno, Gestor).</li>
+            <li>Filtro por status (Ativo / Inativo).</li>
+            <li>Ordenação por Nome, E-mail, Perfil ou Data de cadastro.</li>
+            <li>Tamanho da página (5, 7, 10, 15 ou 20).</li>
+          </ul>
+          <h6 class="fw-semibold">Ações disponíveis por usuário</h6>
+          <ul>
+            <li><strong>Ver detalhes:</strong> exibe todas as informações do usuário conforme o perfil, além de projetos coordenados (coordenador) ou participações (aluno).</li>
+            <li><strong>Ativar / Inativar:</strong> botão de toggle — usuários inativos não conseguem fazer login. O usuário é notificado por e-mail.</li>
+          </ul>
+          <div class="alert alert-warning d-flex gap-2 py-2">
+            <i class="bi bi-exclamation-triangle-fill flex-shrink-0 mt-1"></i>
+            <span>Usuários não são excluídos — apenas inativados. Isso preserva o histórico de projetos e relatórios.</span>
+          </div>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-historico" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-folder-symlink me-2 text-warning"></i>Histórico de Projetos</h6></div>
+        <div class="small pb-3">
+          <p>Visão completa de todos os projetos submetidos (exceto rascunhos), com filtros avançados de <strong>seleção múltipla</strong>:</p>
+          <ul>
+            <li><strong>Status:</strong> selecione um ou mais status simultaneamente.</li>
+            <li><strong>Centro de Lotação:</strong> filtre por um ou mais centros.</li>
+            <li><strong>Curso:</strong> filtre por um ou mais cursos.</li>
+            <li><strong>Ano:</strong> select único por ano de início.</li>
+            <li><strong>Busca:</strong> por título ou coordenador.</li>
+          </ul>
+          <p>Após aplicar os filtros, clique em <strong>"Gerar Relatório PDF"</strong> para exportar a tabela atual em PDF (A4 paisagem, com logos e filtros ativos identificados no documento).</p>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-relatorios" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-file-text me-2 text-warning"></i>Relatórios</h6></div>
+        <div class="small pb-3">
+          <p>Consulte todos os relatórios de atividades enviados pelos coordenadores. Filtros disponíveis:</p>
+          <ul>
+            <li>Busca por projeto ou coordenador.</li>
+            <li>Tipo (Parcial / Final).</li>
+            <li>Ano do projeto e status do projeto.</li>
+            <li>Tamanho da página configurável.</li>
+          </ul>
+          <p>Clique em <strong>"PDF"</strong> para baixar o relatório de atividades enviado pelo coordenador.</p>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="gestor-editais" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-file-earmark-plus me-2 text-warning"></i>Editais</h6></div>
+        <div class="small pb-3">
+          <p>O gestor é responsável pela criação e gestão dos editais de submissão. O painel de editais possui:</p>
+          <h6 class="fw-semibold">Criar um edital</h6>
+          <ol>
+            <li>Clique em <strong>"Novo Edital"</strong>.</li>
+            <li>Preencha tipo/origem (ex: PROPEG), número, ano, título descritivo e datas de submissão.</li>
+            <li>Faça upload do documento principal (PDF).</li>
+            <li>Adicione anexos opcionais (quadros, modelos etc.).</li>
+            <li>Clique em <strong>"Salvar como Rascunho"</strong> para salvar sem publicar, ou <strong>"Publicar Edital"</strong> para disponibilizar imediatamente aos coordenadores.</li>
+          </ol>
+          <h6 class="fw-semibold">Gerenciar um edital existente</h6>
+          <ul>
+            <li><strong>Abrir / Fechar:</strong> botão de toggle para controlar se o edital está visível para coordenadores.</li>
+            <li><strong>Adendos:</strong> publique esclarecimentos ou modificações com título, descrição e arquivo opcional. Adendos ficam visíveis para coordenadores na página de editais abertos.</li>
+            <li><strong>Projetos vinculados:</strong> veja quais projetos foram submetidos vinculados a este edital.</li>
+          </ul>
+        </div>
+      </section>
+
+
+      {# ── Consulta Pública ─────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="consulta" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-search text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Consulta Pública de Projetos</h5>
+        </div>
+        <div class="small pb-3">
+          <p>A consulta pública é uma área <strong>aberta a qualquer pessoa</strong>, sem necessidade de login. Acesse pelo botão <strong>"Consulta Pública de Projetos"</strong> na tela de login.</p>
+          <ul>
+            <li>Exibe apenas projetos com status Aprovado, Em Andamento ou Encerrado.</li>
+            <li>Filtros por status, centro de lotação e curso.</li>
+            <li>Campo de busca por título, resumo ou coordenador.</li>
+            <li>Botão <strong>"Gerar Relatório PDF"</strong> que exporta os resultados filtrados.</li>
+            <li>Clique em qualquer card de projeto para ver a visão pública detalhada (resumo, objetivo geral, equipe e ODS).</li>
+          </ul>
+        </div>
+      </section>
+
+      {# ── Notificações ─────────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="notificacoes" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-bell text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Notificações</h5>
+        </div>
+        <div class="small pb-3">
+          <p>O sino no canto superior da barra lateral exibe o número de notificações não lidas. Clique nele para abrir a central de notificações.</p>
+          <h6 class="fw-semibold">Quando você recebe notificações</h6>
+          <ul>
+            <li>Quando um projeto seu é <strong>aprovado ou reprovado</strong> pelo gestor.</li>
+            <li>Quando um projeto é <strong>iniciado</strong> (notificação para todos os membros da equipe).</li>
+            <li>Quando sua conta é <strong>ativada ou inativada</strong> pelo gestor.</li>
+          </ul>
+          <h6 class="fw-semibold">Gerenciar notificações</h6>
+          <ul>
+            <li>Filtre por texto ou data usando a barra de busca.</li>
+            <li>Marque múltiplas notificações com o checkbox e use <strong>"Excluir selecionadas"</strong>.</li>
+            <li>Além das notificações na plataforma, as mesmas informações são enviadas por <strong>e-mail</strong> para o endereço cadastrado.</li>
+          </ul>
+        </div>
+      </section>
+
+      {# ── Fluxo Completo de um Projeto ─────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="fluxo-projeto" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-diagram-3 text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Fluxo Completo de um Projeto</h5>
+        </div>
+        <div class="pb-3">
+          <div class="d-flex flex-column gap-0">
+            {% for item in fluxo %}
+            <div class="d-flex gap-3">
+              <div class="d-flex flex-column align-items-center">
+                <div class="d-flex align-items-center justify-content-center rounded-circle flex-shrink-0"
+                     style="width:36px;height:36px;background:{{ item.cor }};color:#fff;font-weight:700;font-size:.85rem;">
+                  {{ forloop.counter }}
+                </div>
+                {% if not forloop.last %}
+                <div style="width:2px;height:32px;background:#e5e7eb;"></div>
+                {% endif %}
+              </div>
+              <div class="pb-3 flex-grow-1">
+                <div class="fw-semibold small">{{ item.titulo }}</div>
+                <div class="text-muted" style="font-size:.8rem;">{{ item.desc }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+
+      {# ── FAQ ──────────────────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="faq" class="mb-0">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-chat-left-question text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Perguntas Frequentes</h5>
+        </div>
+        <div>
+          <div class="accordion accordion-flush" id="faqAcc">
+
+            {% for faq in faqs %}
+            <div class="accordion-item">
+              <h2 class="accordion-header">
+                <button class="accordion-button collapsed small fw-semibold" type="button"
+                        data-bs-toggle="collapse" data-bs-target="#faq{{ forloop.counter }}">
+                  {{ faq.pergunta }}
+                </button>
+              </h2>
+              <div id="faq{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#faqAcc">
+                <div class="accordion-body small text-muted">{{ faq.resposta }}</div>
+              </div>
+            </div>
+            {% endfor %}
+
+          </div>
+        </div>
+      </section>
+
+      {# Contato #}
+      <div class="card border-0 shadow-sm bg-primary bg-opacity-10 mb-4">
+        <div class="card-body d-flex align-items-center gap-3">
+          <i class="bi bi-envelope-fill text-primary fs-3 flex-shrink-0"></i>
+          <div>
+            <p class="fw-semibold mb-1">Ainda tem dúvidas?</p>
+            <p class="small text-muted mb-0">Entre em contato com a equipe da PROPEG pelo e-mail institucional ou compareça pessoalmente à secretaria da Pró-Reitoria de Pesquisa e Pós-Graduação da UFAC.</p>
+          </div>
+        </div>
+      </div>
+
+      </div></div></div>{# fim wrapper #}
+    </div>{# fim col-lg-9 #}
+  </div>{# fim row #}
+</div>
+
+<style>
+#ajuda-nav .nav-link { color: #555; }
+#ajuda-nav .nav-link:hover { background: #f0f4f8; color: #1a56db; }
+#ajuda-nav .nav-link.active { background: #e8f0fe; color: #1a56db; font-weight: 600; }
+</style>
+
+
+<script>
+(function () {
+  // ── Scroll spy com IntersectionObserver ──────────────────────────────────
+  var links = Array.from(document.querySelectorAll('#ajuda-nav .ajuda-item'));
+  if (!links.length) return;
+
+  var linkMap = {};
+  links.forEach(function (l) {
+    var id = l.getAttribute('href').slice(1);
+    linkMap[id] = l;
+  });
+
+  var currentId = null;
+  var sidebarScroll = document.querySelector('[style*="overflow-y:auto"]');
+
+  function setActive(id) {
+    if (id === currentId) return;
+    currentId = id;
+    links.forEach(function (l) { l.classList.remove('active'); });
+    var active = linkMap[id];
+    if (!active) return;
+    active.classList.add('active');
+
+    // Faz o item ativo aparecer dentro da sidebar sem precisar rolar manualmente
+    if (sidebarScroll) {
+      var itemTop    = active.offsetTop;
+      var itemBottom = itemTop + active.offsetHeight;
+      var scrollTop  = sidebarScroll.scrollTop;
+      var scrollBottom = scrollTop + sidebarScroll.clientHeight;
+      if (itemTop < scrollTop + 32) {
+        sidebarScroll.scrollTo({ top: itemTop - 32, behavior: 'smooth' });
+      } else if (itemBottom > scrollBottom - 32) {
+        sidebarScroll.scrollTo({ top: itemBottom - sidebarScroll.clientHeight + 32, behavior: 'smooth' });
+      }
+    }
+  }
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) setActive(entry.target.id);
+    });
+  }, { rootMargin: '-10% 0px -80% 0px', threshold: 0 });
+
+  Object.keys(linkMap).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+
+  var firstId = Object.keys(linkMap)[0];
+  if (firstId) setActive(firstId);
+
+  // ── Busca na sidebar ──────────────────────────────────────────────────────
+  var input = document.getElementById('ajuda-busca');
+  if (!input) return;
+
+  input.addEventListener('input', function () {
+    var q = this.value.trim().toLowerCase();
+    var items  = document.querySelectorAll('#ajuda-nav .ajuda-item');
+    var groups = document.querySelectorAll('#ajuda-nav .ajuda-group, #ajuda-nav .ajuda-sep');
+
+    if (!q) {
+      // Sem busca: mostra tudo
+      items.forEach(function (i)  { i.style.display = ''; });
+      groups.forEach(function (g) { g.style.display = ''; });
+      return;
+    }
+
+    // Filtra itens
+    var visibleGroups = new Set();
+    items.forEach(function (item) {
+      var label = (item.dataset.label || item.textContent).toLowerCase();
+      var show  = label.includes(q);
+      item.style.display = show ? '' : 'none';
+      if (show && item.dataset.label) {
+        // Determina grupo pelo data-label prefix (ex: "Coordenador ...")
+        var prefix = item.dataset.label.split(' ')[0].toLowerCase();
+        visibleGroups.add(prefix);
+      }
+    });
+
+    // Mostra/oculta grupos e separadores
+    groups.forEach(function (g) {
+      var group = (g.dataset.group || '').toLowerCase();
+      g.style.display = (!group || visibleGroups.has(group)) ? '' : 'none';
+    });
+  });
+
+  // Limpa busca e navega ao clicar num item
+  links.forEach(function (l) {
+    l.addEventListener('click', function () {
+      input.value = '';
+      input.dispatchEvent(new Event('input'));
+    });
+  });
+  // ── Busca principal na página ─────────────────────────────────────────────
+  var mainInput  = document.getElementById('ajuda-busca-principal');
+  var mainClear  = document.getElementById('ajuda-busca-limpar');
+  var resultados = document.getElementById('ajuda-resultados');
+  var listaRes   = document.getElementById('ajuda-resultados-lista');
+  var semRes     = document.getElementById('ajuda-sem-resultado');
+
+  if (!mainInput) return;
+
+  // Índice: coleta todas as sections com id e extrai texto do conteúdo
+  var indice = [];
+  document.querySelectorAll('section[id]').forEach(function (sec) {
+    var tituloEl = sec.querySelector('h5, h6, strong');
+    var titulo   = tituloEl ? tituloEl.textContent.trim() : sec.id;
+    // Extrai texto relevante (sem HTML) limitado a 200 chars
+    var texto    = sec.textContent.replace(/\s+/g, ' ').trim().slice(0, 300);
+    indice.push({ id: sec.id, titulo: titulo, texto: texto });
+  });
+
+  function highlight(str, q) {
+    var re = new RegExp('(' + q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    return str.replace(re, '<mark class="bg-warning bg-opacity-50 px-0 rounded">$1</mark>');
+  }
+
+  function buscar(q) {
+    listaRes.innerHTML = '';
+    if (!q) {
+      resultados.style.display = 'none';
+      mainClear.style.display  = 'none';
+      return;
+    }
+    mainClear.style.display = '';
+    var ql      = q.toLowerCase();
+    var matches = indice.filter(function (item) {
+      return item.titulo.toLowerCase().includes(ql) || item.texto.toLowerCase().includes(ql);
+    });
+
+    resultados.style.display = '';
+    semRes.style.display     = matches.length ? 'none' : '';
+
+    matches.slice(0, 8).forEach(function (item) {
+      // Trecho do texto ao redor da ocorrência
+      var idx    = item.texto.toLowerCase().indexOf(ql);
+      var start  = Math.max(0, idx - 60);
+      var trecho = (start > 0 ? '…' : '') + item.texto.slice(start, start + 140) + '…';
+
+      var div = document.createElement('a');
+      div.href          = '#' + item.id;
+      div.className     = 'd-block px-3 py-2 text-decoration-none border-bottom ajuda-res-item';
+      div.style.cssText = 'color:inherit;transition:background .1s;';
+      div.innerHTML     =
+        '<div class="fw-semibold small">' + highlight(item.titulo, q) + '</div>' +
+        '<div class="text-muted" style="font-size:.75rem;line-height:1.4;">' +
+        highlight(trecho, q) + '</div>';
+
+      div.addEventListener('click', function () {
+        mainInput.value           = '';
+        mainClear.style.display   = 'none';
+        resultados.style.display  = 'none';
+      });
+      div.addEventListener('mouseenter', function () { this.style.background = '#f0f4f8'; });
+      div.addEventListener('mouseleave', function () { this.style.background = ''; });
+      listaRes.appendChild(div);
+    });
+
+    if (matches.length > 8) {
+      var more = document.createElement('div');
+      more.className  = 'text-center text-muted py-2 small';
+      more.textContent = '+ ' + (matches.length - 8) + ' resultado(s) adicional(is). Refine a busca.';
+      listaRes.appendChild(more);
+    }
+  }
+
+  mainInput.addEventListener('input', function () { buscar(this.value.trim()); });
+  mainClear.addEventListener('click', function () {
+    mainInput.value = ''; buscar(''); mainInput.focus();
+  });
+
+  // Fecha ao clicar fora
+  document.addEventListener('click', function (e) {
+    if (!mainInput.contains(e.target) && !resultados.contains(e.target)) {
+      resultados.style.display = 'none';
+    }
+  });
+  mainInput.addEventListener('focus', function () {
+    if (this.value.trim()) buscar(this.value.trim());
+  });
+
+  // Navega com teclado
+  mainInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { mainInput.value = ''; buscar(''); }
+    if (e.key === 'ArrowDown') {
+      var first = listaRes.querySelector('.ajuda-res-item');
+      if (first) { e.preventDefault(); first.focus(); }
+    }
+  });
+})();
+</script>
+{% endblock %}

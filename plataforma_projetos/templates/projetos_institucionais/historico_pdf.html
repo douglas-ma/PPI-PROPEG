@@ -1,0 +1,141 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório – Histórico de Projetos</title>
+<style>
+@page {
+    size: A4 landscape;
+    margin-top: 2cm; margin-right: 1.5cm; margin-bottom: 2cm; margin-left: 1.5cm;
+    @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-family: 'Arial', sans-serif;
+        font-size: 9pt;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #000; }
+
+/* Cabeçalho */
+.cabecalho { text-align: center; margin-bottom: 0.8cm; }
+.cabecalho img { height: 48px; margin-bottom: 4pt; }
+.cabecalho h1 { font-size: 13pt; font-weight: bold; text-transform: uppercase; }
+.cabecalho p  { font-size: 9pt; color: #555; }
+
+/* Metadados */
+.meta { margin-bottom: 0.6cm; }
+.meta table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+.meta td { padding: 2pt 4pt; }
+.meta .label { font-weight: bold; width: 120pt; }
+.meta .filtros { background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; padding: 4pt 8pt; }
+
+/* Total */
+.total-box { text-align: right; margin-bottom: 0.4cm; font-size: 9pt; color: #333; }
+
+/* Tabela de dados */
+table.dados {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8.5pt;
+    margin-top: 0.3cm;
+}
+table.dados thead th {
+    background: #1a56db;
+    color: #fff;
+    padding: 5pt 6pt;
+    text-align: left;
+    font-weight: bold;
+    vertical-align: bottom;
+}
+table.dados tbody tr:nth-child(even) { background: #f8f9fa; }
+table.dados tbody td {
+    padding: 4pt 6pt;
+    border-bottom: 1px solid #e5e5e5;
+    vertical-align: top;
+}
+.badge {
+    display: inline-block;
+    padding: 1pt 5pt;
+    border-radius: 3pt;
+    font-size: 7.5pt;
+    font-weight: bold;
+}
+.b-andamento  { background: #d1fae5; color: #065f46; }
+.b-submetido  { background: #dbeafe; color: #1e40af; }
+.b-aprovado   { background: #d1fae5; color: #065f46; }
+.b-reprovado  { background: #fee2e2; color: #991b1b; }
+.b-conselho   { background: #fef9c3; color: #92400e; }
+.b-encerrado  { background: #f3f4f6; color: #374151; }
+.b-default    { background: #f3f4f6; color: #374151; }
+
+.rodape { margin-top: 0.6cm; font-size: 8pt; color: #888; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="cabecalho">
+  <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC">
+  <h1>Histórico de Projetos — PROPEG/UFAC</h1>
+  <p>Relatório gerado em {{ data_geracao|date:"d/m/Y" }}</p>
+</div>
+
+{% if filtros_ativos %}
+<div class="meta">
+  <div class="filtros">
+    <strong>Filtros aplicados: </strong>
+    {% for chave, valor in filtros_ativos.items %}
+      <strong>{{ chave }}:</strong> {{ valor }}{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="total-box">
+  <strong>Total de projetos neste relatório: {{ total }}</strong>
+</div>
+
+<table class="dados">
+  <thead>
+    <tr>
+      <th style="width:4%;">#</th>
+      <th style="width:28%;">Título</th>
+      <th style="width:16%;">Coordenador</th>
+      <th style="width:14%;">Centro de Lotação</th>
+      <th style="width:12%;">Curso</th>
+      <th style="width:8%;">Início</th>
+      <th style="width:8%;">Fim</th>
+      <th style="width:10%;">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in projetos %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td><strong>{{ p.titulo }}</strong></td>
+      <td>{{ p.coordenador.get_full_name }}</td>
+      <td>{{ p.centro_lotacao|default:"—" }}</td>
+      <td>{{ p.curso|default:"—" }}</td>
+      <td>{% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+      <td>{% if p.data_fim %}{{ p.data_fim|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+      <td>
+        {% if p.status == 'em_andamento' %}<span class="badge b-andamento">Em andamento</span>
+        {% elif p.status == 'submetido' %}<span class="badge b-submetido">Submetido</span>
+        {% elif p.status == 'aprovado' %}<span class="badge b-aprovado">Aprovado</span>
+        {% elif p.status == 'reprovado' %}<span class="badge b-reprovado">Reprovado</span>
+        {% elif p.status == 'aguardando_conselho' %}<span class="badge b-conselho">Ag. Conselho</span>
+        {% elif p.status == 'aguardando_encerramento' %}<span class="badge b-conselho">Ag. Encerramento</span>
+        {% elif p.status == 'encerrado' %}<span class="badge b-encerrado">Encerrado</span>
+        {% else %}<span class="badge b-default">{{ p.get_status_display }}</span>{% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" style="text-align:center;padding:12pt;color:#888;">Nenhum projeto encontrado.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="rodape">PROPEG/UFAC — Plataforma de Projetos Institucionais</p>
+
+</body>
+</html>

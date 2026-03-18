@@ -1,109 +1,297 @@
 {% extends "base2.html" %}
+{% load static %}
 
-{% block title %}Home{% endblock %}
+{% block title %}Início{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <h2 class="mb-3">{{ saudacao }}, {{ user.first_name|default:user.username }}!</h2>
-    <p class="lead">Bem-vindo(a) à Plataforma de Projetos da PROPEG.</p>
-    <hr>
+<div class="container-fluid py-4 px-4">
 
-    {% if user.perfil == 'gestor' %}
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="card text-center h-100 shadow-sm">
-                <div class="card-body">
-                    <h1 class="display-4 text-warning">{{ usuarios_pendentes }}</h1>
-                    <h5 class="card-title">Novos Cadastros Pendentes</h5>
-                    <p class="card-text">Usuários aguardando sua aprovação para acessar o sistema.</p>
-                    <a href="{% url 'gerenciar_usuarios' %}?is_active__exact=0" class="btn btn-warning">Verificar Cadastros</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card text-center h-100 shadow-sm">
-                <div class="card-body">
-                    <h1 class="display-4 text-primary">{{ projetos_pendentes }}</h1>
-                    <h5 class="card-title">Projetos para Avaliação</h5>
-                    <p class="card-text">Projetos submetidos por coordenadores que aguardam sua análise.</p>
-                    <a href="{% url 'gestor_dashboard' %}" class="btn btn-primary">Avaliar Projetos</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card text-center h-100 shadow-sm">
-                <div class="card-body">
-                    <h1 class="display-4 text-danger">{{ count_aguardando_encerramento }}</h1>
-                    <h5 class="card-title">Projetos para Encerramento</h5>
-                    <p class="card-text">Projetos com relatório final enviado que aguardam sua análise.</p>
-                    <a href="{% url 'gestor_dashboard' %}" class="btn btn-danger">Avaliar Projetos</a>
-                </div>
-            </div>
-        </div>
+  {# Boas-vindas #}
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-1">{{ saudacao }}, {{ user.first_name|default:user.username }}! <span style="font-size:1.2rem;">👋</span></h4>
+      <p class="text-muted mb-0 small">
+        {% if user.perfil == 'gestor' %}Painel de Gestão — PROPEG
+        {% elif user.perfil == 'coordenador' %}Área do Coordenador — Plataforma de Projetos PROPEG
+        {% else %}Área do Aluno — Plataforma de Projetos PROPEG{% endif %}
+      </p>
     </div>
-    {% endif %}
-
-
-    {% if user.perfil == 'coordenador' %}
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Seus Projetos</h5>
-                    <p><strong>{{ projetos_em_andamento }}</strong> em andamento.</p>
-                    <p><strong>{{ projetos_em_revisao }}</strong> aguardando avaliação.</p>
-                    <a href="{% url 'projeto_dashboard' %}" class="btn btn-primary mt-3">
-                        <i class="bi bi-kanban"></i> Ver Meus Projetos
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Acesso Rápido</h5>
-                    <p>Inicie o cadastro de uma nova proposta de projeto.</p>
-                    <a href="{% url 'projeto_criar' %}" class="btn btn-success mt-3">
-                        <i class="bi bi-plus-square"></i> Criar Novo Projeto
-                    </a>
-                </div>
-            </div>
-        </div>
+    <div class="d-flex gap-2">
+      {% if user.perfil == 'coordenador' %}
+        <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Novo Projeto</a>
+      {% elif user.perfil == 'gestor' %}
+        <a href="{% url 'gestor_dashboard' %}" class="btn btn-primary btn-sm"><i class="bi bi-speedometer2 me-1"></i>Painel do Gestor</a>
+      {% endif %}
+      <a href="{% url 'perfil' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person me-1"></i>Meu Perfil</a>
     </div>
-    {% endif %}
+  </div>
 
+  {% if user.perfil == 'gestor' %}
 
-    {% if user.perfil == 'aluno' %}
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Sua Participação</h5>
-                    <p>Atualmente, você está vinculado a <strong>{{ projetos_participando }}</strong> projeto(s).</p>
-                    <a href="{% url 'aluno_meus_projetos' %}" class="btn btn-primary mt-2">
-                        <i class="bi bi-folder2-open"></i> Ver Meus Projetos
-                    </a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="card h-100 shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">Seu Perfil</h5>
-                    {% if not endereco_preenchido %}
-                        <div class="alert alert-warning">
-                            <strong>Atenção!</strong> Parece que seu endereço não está cadastrado.
-                        </div>
-                    {% endif %}
-                    <p>Mantenha seus dados cadastrais sempre atualizados.</p>
-                    <a href="{% url 'perfil' %}" class="btn btn-secondary mt-2">
-                        <i class="bi bi-person-lines-fill"></i> Editar Meu Perfil
-                    </a>
-                </div>
-            </div>
-        </div>
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-danger">{{ usuarios_pendentes }}</div>
+        <small class="text-muted">Cadastros Pendentes</small>
+        <a href="{% url 'gerenciar_usuarios' %}" class="stretched-link"></a>
+      </div>
     </div>
-    {% endif %}
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-primary">{{ projetos_pendentes }}</div>
+        <small class="text-muted">Projetos Submetidos</small>
+        <a href="{% url 'gestor_dashboard' %}" class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-warning">{{ count_aguardando_conselho }}</div>
+        <small class="text-muted">Ag. Conselho</small>
+        <a href="{% url 'gestor_dashboard' %}" class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-md-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-success">{{ count_aguardando_encerramento }}</div>
+        <small class="text-muted">Para Encerramento</small>
+        <a href="{% url 'gestor_dashboard' %}" class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
 
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-bar-chart-fill text-primary me-2"></i>Resumo Geral</strong></div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">Total de Projetos <span class="badge bg-primary rounded-pill">{{ total_projetos }}</span></li>
+            <li class="list-group-item d-flex justify-content-between">Coordenadores Ativos <span class="badge bg-success rounded-pill">{{ total_coordenadores }}</span></li>
+          </ul>
+        </div>
+      </div>
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-lightning-fill text-warning me-2"></i>Acesso Rápido</strong></div>
+        <div class="card-body d-flex flex-column gap-2">
+          <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-people me-2"></i>Gerenciar Usuários</a>
+          <a href="{% url 'historico_projetos' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-folder-symlink me-2"></i>Histórico de Projetos</a>
+          <a href="{% url 'gestor_listar_editais' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-file-earmark-plus me-2"></i>Gerenciar Editais</a>
+          <a href="{% url 'gestor_relatorios' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-file-text me-2"></i>Relatórios</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-clock-history text-primary me-2"></i>Projetos Recentes</strong>
+          <a href="{% url 'historico_projetos' %}" class="btn btn-outline-primary btn-sm">Ver todos</a>
+        </div>
+        <div class="card-body p-0">
+          {% if projetos_recentes %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light"><tr><th>Projeto</th><th>Coordenador</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for p in projetos_recentes %}
+                <tr>
+                  <td><a href="{% url 'projeto_detalhe' pk=p.pk %}" class="text-decoration-none fw-semibold small">{{ p.titulo|truncatechars:45 }}</a></td>
+                  <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
+                  <td>
+                    {% if p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
+                    {% elif p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+                    {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
+                    {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
+                    {% elif p.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span>
+                    {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
+                    {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-4 text-muted"><i class="bi bi-folder2-open display-6 opacity-25 d-block mb-2"></i><p class="small">Nenhum projeto cadastrado ainda.</p></div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.perfil == 'coordenador' %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-primary">{{ projetos_em_andamento }}</div>
+        <small class="text-muted">Em Andamento</small>
+        <a href="{% url 'projeto_dashboard' %}?tab=em_andamento"
+           class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-warning">{{ projetos_em_revisao }}</div>
+        <small class="text-muted">Em Revisão</small>
+        <a href="{% url 'projeto_dashboard' %}?tab=em_revisao"
+           class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-success">{{ projetos_aprovados }}</div>
+        <small class="text-muted">Aprovados</small>
+        <a href="{% url 'projeto_dashboard' %}?tab=avaliados"
+           class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-lg-3">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-secondary">{{ projetos_rascunho }}</div>
+        <small class="text-muted">Rascunhos</small>
+        <a href="{% url 'projeto_dashboard' %}?tab=rascunhos"
+           class="stretched-link"></a>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-lightning-fill text-warning me-2"></i>Ações Rápidas</strong></div>
+        <div class="card-body d-flex flex-column gap-2">
+          <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm text-start"><i class="bi bi-plus-lg me-2"></i>Criar Novo Projeto</a>
+          <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-kanban me-2"></i>Meus Projetos</a>
+          <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-graph-up me-2"></i>Enviar Relatório</a>
+          <a href="{% url 'listar_editais_abertos' %}" class="btn btn-outline-secondary btn-sm text-start">
+            <i class="bi bi-file-earmark-text me-2"></i>Editais Abertos{% if editais_abertos > 0 %}<span class="badge bg-success ms-1">{{ editais_abertos }}</span>{% endif %}
+          </a>
+        </div>
+      </div>
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-bar-chart-fill text-primary me-2"></i>Meu Resumo</strong></div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between">Total de Projetos <span class="badge bg-primary rounded-pill">{{ total_projetos }}</span></li>
+            <li class="list-group-item d-flex justify-content-between">Encerrados <span class="badge bg-secondary rounded-pill">{{ projetos_encerrados }}</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-8">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-clock-history text-primary me-2"></i>Projetos Recentes</strong>
+          <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-primary btn-sm">Ver todos</a>
+        </div>
+        <div class="card-body p-0">
+          {% if projetos_recentes %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light"><tr><th>Projeto</th><th>Vigência</th><th>Status</th></tr></thead>
+              <tbody>
+                {% for p in projetos_recentes %}
+                <tr style="cursor:pointer;" onclick="location.href='{% url 'projeto_detalhe' pk=p.pk %}'">
+                  <td class="fw-semibold small">{{ p.titulo|truncatechars:40 }}</td>
+                  <td class="small text-muted">{% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+                  <td>
+                    {% if p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
+                    {% elif p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+                    {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
+                    {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
+                    {% elif p.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span>
+                    {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
+                    {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-folder2-open display-5 opacity-25 d-block mb-3"></i>
+            <p class="small mb-3">Você ainda não tem projetos criados.</p>
+            <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Criar meu primeiro projeto</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% elif user.perfil == 'aluno' %}
+
+  {% if not endereco_preenchido %}
+  <div class="alert alert-warning d-flex align-items-center gap-2 mb-4 shadow-sm border-0">
+    <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+    <div><strong>Perfil incompleto!</strong> Seu endereço não está cadastrado. <a href="{% url 'perfil_editar' %}" class="alert-link ms-1">Completar agora →</a></div>
+  </div>
+  {% endif %}
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-primary">{{ projetos_participando }}</div>
+        <small class="text-muted">Projetos Vinculados</small>
+        <a href="{% url 'aluno_meus_projetos' %}" class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3 h-100">
+        <div class="display-6 fw-bold text-success">{{ projetos_em_andamento }}</div>
+        <small class="text-muted">Em Andamento</small>
+        <a href="{% url 'aluno_meus_projetos' %}?status=em_andamento" class="stretched-link"></a>
+      </div>
+    </div>
+    <div class="col-12 col-md-4">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body d-flex flex-column justify-content-center gap-2">
+          <a href="{% url 'aluno_meus_projetos' %}" class="btn btn-outline-primary btn-sm text-start"><i class="bi bi-folder2-open me-2"></i>Meus Projetos</a>
+          <a href="{% url 'perfil' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-person-lines-fill me-2"></i>Meu Perfil</a>
+          <a href="{% url 'lista_notificacoes' %}" class="btn btn-outline-secondary btn-sm text-start"><i class="bi bi-bell me-2"></i>Notificações</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-people-fill text-primary me-2"></i>Projetos em que Participo</strong>
+      <a href="{% url 'aluno_meus_projetos' %}" class="btn btn-outline-primary btn-sm">Ver todos</a>
+    </div>
+    <div class="card-body p-0">
+      {% if participacoes_recentes %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light"><tr><th>Projeto</th><th>Coordenador</th><th>Função</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for part in participacoes_recentes %}
+            <tr>
+              <td class="fw-semibold small">{{ part.projeto.titulo|truncatechars:40 }}</td>
+              <td class="small text-muted">{{ part.projeto.coordenador.get_full_name|truncatechars:25 }}</td>
+              <td class="small">{{ part.get_funcao_display }}</td>
+              <td>
+                {% if part.projeto.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+                {% elif part.projeto.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                {% else %}<span class="badge bg-warning bg-opacity-10 text-warning">{{ part.projeto.get_status_display }}</span>{% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-people display-5 opacity-25 d-block mb-3"></i>
+        <p class="small">Você ainda não está vinculado a nenhum projeto.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {% endif %}
 </div>
 {% endblock %}

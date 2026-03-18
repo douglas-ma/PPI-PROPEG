@@ -1,0 +1,180 @@
+{% extends "base2.html" %}
+{% load static %}
+{% block title %}{{ edital.titulo_completo }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4" style="max-width:960px;">
+
+  <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+    <a href="{% url 'gestor_listar_editais' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+      <h4 class="mb-0">{{ edital.titulo_completo }}</h4>
+      <small class="text-muted">Criado por {{ edital.criado_por.get_full_name }} em {{ edital.data_criacao|date:"d/m/Y" }}</small>
+    </div>
+    <div class="d-flex gap-2">
+      {% if edital.status == 'aberto' %}
+        <span class="badge bg-success align-self-center">Aberto</span>
+      {% elif edital.status == 'rascunho' %}
+        <span class="badge bg-warning text-dark align-self-center">Rascunho</span>
+      {% else %}
+        <span class="badge bg-secondary align-self-center">Fechado</span>
+      {% endif %}
+      <a href="{% url 'gestor_editar_edital' pk=edital.pk %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-pencil me-1"></i>Editar
+      </a>
+      <form method="post" action="{% url 'gestor_toggle_edital' pk=edital.pk %}" class="d-inline">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'gestor_detalhe_edital' pk=edital.pk %}">
+        <button type="submit"
+                class="btn btn-sm {% if edital.status == 'aberto' %}btn-warning{% else %}btn-success{% endif %}"
+                onclick="return confirm('Confirmar alteração de status?')">
+          <i class="bi bi-{% if edital.status == 'aberto' %}pause-circle{% else %}play-circle{% endif %} me-1"></i>
+          {% if edital.status == 'aberto' %}Fechar Edital{% elif edital.status == 'rascunho' %}Publicar{% else %}Reabrir{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7">
+
+      {# Informações gerais #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3"><strong><i class="bi bi-info-circle text-primary me-2"></i>Informações Gerais</strong></div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Descrição</span>{{ edital.descricao }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Período de Submissões</span>
+              {{ edital.data_inicio_submissoes|date:"d/m/Y" }} até {{ edital.data_fim_submissoes|date:"d/m/Y" }}
+            </li>
+            {% if edital.documento_principal %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span><span class="text-muted d-block">Documento Principal</span>Edital completo em PDF</span>
+              <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Baixar
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {# Adendos #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-file-earmark-plus text-warning me-2"></i>Adendos</strong>
+          <span class="badge bg-warning text-dark">{{ edital.adendos.count }}</span>
+        </div>
+        {% if edital.adendos.all %}
+        <ul class="list-group list-group-flush">
+          {% for adendo in edital.adendos.all %}
+          <li class="list-group-item d-flex align-items-start gap-3">
+            <div class="flex-grow-1">
+              <span class="fw-semibold small">{{ adendo.titulo }}</span>
+              <div class="text-muted" style="font-size:.75rem;">{{ adendo.data_criacao|date:"d/m/Y" }} — {{ adendo.criado_por.get_full_name }}</div>
+              {% if adendo.descricao %}<p class="small text-muted mb-0 mt-1">{{ adendo.descricao }}</p>{% endif %}
+            </div>
+            <div class="d-flex gap-1">
+              {% if adendo.arquivo %}
+              <a href="{{ adendo.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-download"></i>
+              </a>
+              {% endif %}
+              <form method="post" action="{% url 'gestor_deletar_adendo' adendo_pk=adendo.pk %}" class="d-inline"
+                    onsubmit="return confirm('Remover este adendo?')">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-center text-muted small py-3">Nenhum adendo publicado.</div>
+        {% endif %}
+
+        {# Formulário de novo adendo #}
+        <div class="card-footer bg-white border-top py-3">
+          <p class="small fw-semibold text-muted mb-2">Publicar Novo Adendo</p>
+          <form method="post" action="{% url 'gestor_add_adendo' pk=edital.pk %}" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row g-2">
+              <div class="col-md-6">
+                <input type="text" name="titulo" class="form-control form-control-sm"
+                       placeholder="Título do adendo *" required>
+              </div>
+              <div class="col-md-6">
+                <input type="file" name="arquivo" class="form-control form-control-sm"
+                       accept=".pdf,.docx">
+              </div>
+              <div class="col-12">
+                <textarea name="descricao" class="form-control form-control-sm" rows="2"
+                          placeholder="Descrição / justificativa (opcional)"></textarea>
+              </div>
+              <div class="col-12">
+                <button type="submit" class="btn btn-warning btn-sm">
+                  <i class="bi bi-plus-lg me-1"></i>Publicar Adendo
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+    <div class="col-lg-5">
+
+      {# Anexos #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-paperclip text-primary me-2"></i>Anexos</strong>
+          <span class="badge bg-primary bg-opacity-10 text-primary">{{ edital.anexos.count }}</span>
+        </div>
+        {% if edital.anexos.all %}
+        <ul class="list-group list-group-flush">
+          {% for anx in edital.anexos.all %}
+          <li class="list-group-item d-flex align-items-center gap-2 small">
+            <i class="bi bi-file-earmark text-secondary"></i>
+            <span class="flex-grow-1">{{ anx.descricao }}</span>
+            <a href="{{ anx.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+              <i class="bi bi-download"></i>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-center text-muted small py-3">Nenhum anexo.</div>
+        {% endif %}
+      </div>
+
+      {# Projetos vinculados #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-folder2 text-primary me-2"></i>Projetos Vinculados</strong>
+          <span class="badge bg-primary bg-opacity-10 text-primary">{{ edital.projeto_set.count }}</span>
+        </div>
+        {% with projetos=edital.projeto_set.all %}
+        {% if projetos %}
+        <ul class="list-group list-group-flush small">
+          {% for p in projetos %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <span>{{ p.titulo|truncatechars:40 }}</span>
+            {% if p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+            {% elif p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
+            {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+            {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-center text-muted small py-3">Nenhum projeto vinculado.</div>
+        {% endif %}
+        {% endwith %}
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}

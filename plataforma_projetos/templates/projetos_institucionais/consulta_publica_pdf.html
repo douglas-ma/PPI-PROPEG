@@ -1,0 +1,107 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório – Consulta Pública de Projetos</title>
+<style>
+@page {
+    size: A4 landscape;
+    margin-top: 2cm; margin-right: 1.5cm; margin-bottom: 2cm; margin-left: 1.5cm;
+    @bottom-center {
+        content: "Página " counter(page) " de " counter(pages);
+        font-family: Arial, sans-serif; font-size: 9pt; color: #888;
+    }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 9pt; color: #111; }
+
+.cabecalho { display: flex; align-items: center; gap: 16pt; border-bottom: 2px solid #1a56db; padding-bottom: 10pt; margin-bottom: 12pt; }
+.cabecalho img.ufac   { height: 52pt; }
+.cabecalho img.propeg { height: 40pt; }
+.cabecalho .sep { width: 1pt; height: 44pt; background: #ccc; }
+.cabecalho .titulo-bloco h1 { font-size: 12pt; font-weight: bold; color: #1a1a2e; }
+.cabecalho .titulo-bloco p  { font-size: 8.5pt; color: #666; margin-top: 2pt; }
+
+.meta { margin-bottom: 8pt; font-size: 8.5pt; color: #555; }
+.filtros-box { background: #f5f7fb; border: 1px solid #dce3f0; border-radius: 4pt; padding: 4pt 8pt; margin-bottom: 6pt; font-size: 8.5pt; }
+.total-box { text-align: right; font-size: 8.5pt; margin-bottom: 6pt; color: #333; }
+
+table.dados { width: 100%; border-collapse: collapse; font-size: 8.5pt; }
+table.dados thead th {
+    background: #1a56db; color: #fff; padding: 5pt 6pt;
+    text-align: left; font-weight: bold;
+}
+table.dados tbody tr:nth-child(even) { background: #f8f9fa; }
+table.dados tbody td { padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; vertical-align: top; }
+
+.badge { display: inline-block; padding: 1pt 5pt; border-radius: 3pt; font-size: 7.5pt; font-weight: bold; }
+.b-andamento { background: #d1fae5; color: #065f46; }
+.b-aprovado  { background: #dbeafe; color: #1e40af; }
+.b-encerrado { background: #f3f4f6; color: #374151; }
+
+.rodape { margin-top: 10pt; font-size: 7.5pt; color: #aaa; text-align: right; }
+</style>
+</head>
+<body>
+
+<div class="cabecalho">
+  <img class="ufac"   src="{% static 'imagens/logo_ufac.png' %}"   alt="UFAC">
+  <div class="sep"></div>
+  <img class="propeg" src="{% static 'imagens/Logo-Propeg.png' %}" alt="PROPEG">
+  <div class="titulo-bloco">
+    <h1>Consulta Pública de Projetos Institucionais</h1>
+    <p>PROPEG — Pró-Reitoria de Pesquisa e Pós-Graduação · Universidade Federal do Acre</p>
+    <p>Relatório gerado em {{ data_geracao|date:"d/m/Y" }}</p>
+  </div>
+</div>
+
+{% if filtros_ativos %}
+<div class="filtros-box">
+  <strong>Filtros aplicados: </strong>
+  {% for chave, valor in filtros_ativos.items %}
+    <strong>{{ chave }}:</strong> {{ valor }}{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="total-box"><strong>Total de projetos: {{ total }}</strong></div>
+
+<table class="dados">
+  <thead>
+    <tr>
+      <th style="width:4%;">#</th>
+      <th style="width:28%;">Título</th>
+      <th style="width:16%;">Coordenador</th>
+      <th style="width:16%;">Centro de Lotação</th>
+      <th style="width:12%;">Curso</th>
+      <th style="width:8%;">Início</th>
+      <th style="width:8%;">Fim</th>
+      <th style="width:8%;">Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in projetos %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td><strong>{{ p.titulo }}</strong></td>
+      <td>{{ p.coordenador.get_full_name }}</td>
+      <td>{{ p.centro_lotacao|default:"—" }}</td>
+      <td>{{ p.curso|default:"—" }}</td>
+      <td>{% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+      <td>{% if p.data_fim %}{{ p.data_fim|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+      <td>
+        {% if p.status == 'em_andamento' %}<span class="badge b-andamento">Em andamento</span>
+        {% elif p.status == 'aprovado' %}<span class="badge b-aprovado">Aprovado</span>
+        {% else %}<span class="badge b-encerrado">Encerrado</span>{% endif %}
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" style="text-align:center;padding:12pt;color:#888;">Nenhum projeto encontrado.</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p class="rodape">PROPEG/UFAC — Plataforma de Projetos Institucionais</p>
+</body>
+</html>

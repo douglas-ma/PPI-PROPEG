@@ -1,212 +1,334 @@
 {% extends "base2.html" %}
+{% load static %}
 
 {% block title %}Painel do Gestor{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Painel do Gestor</h2>
-    </div>
-    <p>Abaixo estão os projetos que aguardam sua avaliação.</p>
-    <hr>
+<div class="container-fluid py-4 px-4">
 
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">Usuários com Cadastro Pendente</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Nome Completo</th>
-                            <th>Email</th>
-                            <th class="text-center">Data de Cadastro</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for usuario in usuarios_pendentes %}
-                        <tr>
-                            <td>{{ usuario.get_full_name }}</td>
-                            <td>{{ usuario.email }}</td>
-                            <td class="text-center">{{ usuario.date_joined|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'usuario_editar' usuario.pk %}" class="btn btn-sm btn-primary">Analisar Cadastro</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted">Nenhum usuário pendente.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  {# Cabeçalho #}
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-0">Painel do Gestor</h4>
+      <small class="text-muted">Gerencie projetos que aguardam avaliação ou encerramento</small>
     </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'historico_projetos' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-folder-symlink me-1"></i>Histórico de Projetos
+      </a>
+      <a href="{% url 'gestor_relatorios' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-file-text me-1"></i>Relatórios
+      </a>
+    </div>
+  </div>
 
-    <div class="card shadow-sm mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">Projetos Submetidos</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Título do Projeto</th>
-                            <th>Coordenador</th>
-                            <th class="text-center">Data de Submissão</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for projeto in projetos_pendentes %}
-                        <tr>
-                            <td>{{ projeto.titulo }}</td>
-                            <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td class="text-center">{{ projeto.data_inicio|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
-                                    title="Ver Detalhes">
-                                    <i class="bi bi-eye-fill"></i>
-                                </a>
-                                <a href="{% url 'anexar_comprovante' pk=projeto.pk %}" class="btn btn-sm btn-warning"
-                                    title="Anexar Comprovante">
-                                    <i class="bi bi-paperclip"></i>
-                                </a>
-                                <a href="{% url 'aprovar_projeto' pk=projeto.pk %}"
-                                    class="btn btn-sm btn-success btn-confirm-action" data-bs-toggle="modal"
-                                    data-bs-target="#confirmationModal" data-action-title="Aprovar Projeto"
-                                    data-projeto-titulo="{{ projeto.titulo }}">
-                                    <i class="bi bi-check-lg"></i> Aprovar
-                                </a>
-                                <a href="{% url 'reprovar_projeto' pk=projeto.pk %}"
-                                    class="btn btn-sm btn-danger btn-confirm-action" data-bs-toggle="modal"
-                                    data-bs-target="#confirmationModal" data-action-title="Reprovar Projeto"
-                                    data-projeto-titulo="{{ projeto.titulo }}">
-                                    <i class="bi bi-x-lg"></i> Reprovar
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center">Não há projetos pendentes de avaliação no momento.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  {# Cards de métricas #}
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3 h-100 {% if aba == 'submetidos' %}border-bottom border-primary border-3{% endif %}"
+           style="cursor:pointer;" onclick="location.href='?aba=submetidos'">
+        <div class="display-6 fw-bold text-primary">{{ count_submetidos }}</div>
+        <small class="text-muted">Submetidos</small>
+        <small class="text-muted" style="font-size:.7rem;">Aguardam avaliação inicial</small>
+      </div>
     </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3 h-100 {% if aba == 'conselho' %}border-bottom border-warning border-3{% endif %}"
+           style="cursor:pointer;" onclick="location.href='?aba=conselho'">
+        <div class="display-6 fw-bold text-warning">{{ count_conselho }}</div>
+        <small class="text-muted">Ag. Conselho</small>
+        <small class="text-muted" style="font-size:.7rem;">Aguardam aprovação do conselho</small>
+      </div>
+    </div>
+    <div class="col-6 col-md-4">
+      <div class="card border-0 shadow-sm text-center py-3 h-100 {% if aba == 'encerramento' %}border-bottom border-success border-3{% endif %}"
+           style="cursor:pointer;" onclick="location.href='?aba=encerramento'">
+        <div class="display-6 fw-bold text-success">{{ count_encerramento }}</div>
+        <small class="text-muted">Ag. Encerramento</small>
+        <small class="text-muted" style="font-size:.7rem;">Relatório final enviado</small>
+      </div>
+    </div>
+  </div>
 
-    <div class="card shadow-sm mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">Projetos Aguardando Aprovação do Conselho</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Título do Projeto</th>
-                            <th>Coordenador</th>
-                            <th class="text-center">Data de Submissão</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for projeto in projetos_aguardando_conselho %}
-                        <tr>
-                            <td>{{ projeto.titulo }}</td>
-                            <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td class="text-center">{{ projeto.anexos.first.data_upload|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info" title="Ver Detalhes">
-                                    <i class="bi bi-eye-fill"></i>
-                                </a>
-                                <a href="{% url 'anexar_comprovante' pk=projeto.pk %}" class="btn btn-sm btn-warning"
-                                    title="Anexar Comprovante">
-                                    <i class="bi bi-paperclip"></i>
-                                </a>
-                                <a href="{% url 'aprovar_projeto' pk=projeto.pk %}"
-                                    class="btn btn-sm btn-success btn-confirm-action" data-bs-toggle="modal"
-                                    data-bs-target="#confirmationModal" data-action-title="Aprovar Projeto"
-                                    data-projeto-titulo="{{ projeto.titulo }}">
-                                    <i class="bi bi-check-lg"></i> Aprovar
-                                </a>
-                                <a href="{% url 'reprovar_projeto' pk=projeto.pk %}"
-                                    class="btn btn-sm btn-danger btn-confirm-action" data-bs-toggle="modal"
-                                    data-bs-target="#confirmationModal" data-action-title="Reprovar Projeto"
-                                    data-projeto-titulo="{{ projeto.titulo }}">
-                                    <i class="bi bi-x-lg"></i> Reprovar
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">Nenhum projeto aguardando aprovação do conselho.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
+  {# Abas #}
+  <ul class="nav nav-tabs mb-4 border-bottom">
+    <li class="nav-item">
+      <a class="nav-link {% if aba == 'submetidos' %}active fw-semibold{% else %}text-muted{% endif %}"
+         href="?aba=submetidos">
+        Projetos Submetidos
+        {% if count_submetidos > 0 %}
+        <span class="badge bg-primary ms-1">{{ count_submetidos }}</span>
+        {% endif %}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if aba == 'conselho' %}active fw-semibold{% else %}text-muted{% endif %}"
+         href="?aba=conselho">
+        Ag. Conselho
+        {% if count_conselho > 0 %}
+        <span class="badge bg-warning text-dark ms-1">{{ count_conselho }}</span>
+        {% endif %}
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if aba == 'encerramento' %}active fw-semibold{% else %}text-muted{% endif %}"
+         href="?aba=encerramento">
+        Ag. Encerramento
+        {% if count_encerramento > 0 %}
+        <span class="badge bg-success ms-1">{{ count_encerramento }}</span>
+        {% endif %}
+      </a>
+    </li>
+  </ul>
 
-    <div class="card mt-4">
-        <div class="card-header">
-            <h5 class="mb-0">Projetos Aguardando Encerramento</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Título do Projeto</th>
-                            <th>Coordenador</th>
-                            <th class="text-center">Data de Término</th>
-                            <th class="text-center">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for projeto in projetos_aguardando_encerramento %}
-                        <tr>
-                            <td>{{ projeto.titulo }}</td>
-                            <td>{{ projeto.coordenador.get_full_name }}</td>
-                            <td class="text-center">{{ projeto.data_fim|date:"d/m/Y" }}</td>
-                            <td class="text-center">
-                                <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-sm btn-info"
-                                    title="Ver Detalhes">
-                                    <i class="bi bi-eye-fill"></i>
-                                </a>
-                                <a href="{% url 'encerrar_projeto' projeto.pk %}" class="btn btn-sm btn-success"><i class="bi bi-check-lg"></i> Encerrar Projeto</a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="4" class="text-center text-muted">Nenhum projeto aguardando encerramento.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
+  {# ── Aba: Projetos Submetidos ─────────────────────────────────────────── #}
+  {% if aba == 'submetidos' %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-inbox text-primary me-2"></i>Projetos Submetidos</strong>
+      <small class="text-muted">{{ count_submetidos }} projeto{{ count_submetidos|pluralize }}</small>
     </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Título</th>
+            <th>Coordenador</th>
+            <th>Centro</th>
+            <th class="text-center">Data de Início</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_pendentes %}
+          <tr>
+            <td>
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="fw-semibold text-decoration-none text-dark small">
+                {{ p.titulo|truncatechars:55 }}
+              </a>
+            </td>
+            <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
+            <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
+            <td class="text-center small text-muted">
+              {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
+                 class="btn btn-sm btn-outline-warning ms-1"
+                 title="Encaminhar para Conselho"
+                 onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para o Conselho?')">
+                <i class="bi bi-arrow-right-circle me-1"></i>Conselho
+              </a>
+              <button type="button" class="btn btn-sm btn-success ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                      data-titulo="{{ p.titulo }}"
+                      data-url="{% url 'aprovar_projeto' pk=p.pk %}"
+                      data-acao="Aprovar"
+                      data-cor="success">
+                <i class="bi bi-check-lg me-1"></i>Aprovar
+              </button>
+              <button type="button" class="btn btn-sm btn-danger ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                      data-titulo="{{ p.titulo }}"
+                      data-url="{% url 'reprovar_projeto' pk=p.pk %}"
+                      data-acao="Reprovar"
+                      data-cor="danger">
+                <i class="bi bi-x-lg me-1"></i>Reprovar
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">
+            <i class="bi bi-inbox display-6 opacity-25 d-block mb-2"></i>
+            Nenhum projeto submetido no momento.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Aba: Aguardando Conselho ─────────────────────────────────────────── #}
+  {% if aba == 'conselho' %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-hourglass-split text-warning me-2"></i>Aguardando Aprovação do Conselho</strong>
+      <small class="text-muted">{{ count_conselho }} projeto{{ count_conselho|pluralize }}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Título</th>
+            <th>Coordenador</th>
+            <th>Centro</th>
+            <th class="text-center">Data de Início</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_aguardando_conselho %}
+          <tr>
+            <td>
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="fw-semibold text-decoration-none text-dark small">
+                {{ p.titulo|truncatechars:55 }}
+              </a>
+            </td>
+            <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
+            <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
+            <td class="text-center small text-muted">
+              {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="{% url 'anexar_ata_conselho' pk=p.pk %}"
+                 class="btn btn-sm btn-outline-secondary ms-1" title="Anexar Ata do Conselho">
+                <i class="bi bi-paperclip me-1"></i>Ata
+              </a>
+              <button type="button" class="btn btn-sm btn-success ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                      data-titulo="{{ p.titulo }}"
+                      data-url="{% url 'aprovar_projeto' pk=p.pk %}"
+                      data-acao="Aprovar"
+                      data-cor="success">
+                <i class="bi bi-check-lg me-1"></i>Aprovar
+              </button>
+              <button type="button" class="btn btn-sm btn-danger ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                      data-titulo="{{ p.titulo }}"
+                      data-url="{% url 'reprovar_projeto' pk=p.pk %}"
+                      data-acao="Reprovar"
+                      data-cor="danger">
+                <i class="bi bi-x-lg me-1"></i>Reprovar
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">
+            <i class="bi bi-hourglass display-6 opacity-25 d-block mb-2"></i>
+            Nenhum projeto aguardando aprovação do conselho.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Aba: Aguardando Encerramento ─────────────────────────────────────── #}
+  {% if aba == 'encerramento' %}
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-flag-fill text-success me-2"></i>Aguardando Encerramento</strong>
+      <small class="text-muted">{{ count_encerramento }} projeto{{ count_encerramento|pluralize }}</small>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Título</th>
+            <th>Coordenador</th>
+            <th>Centro</th>
+            <th class="text-center">Data de Fim</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in projetos_aguardando_encerramento %}
+          <tr>
+            <td>
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="fw-semibold text-decoration-none text-dark small">
+                {{ p.titulo|truncatechars:55 }}
+              </a>
+            </td>
+            <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
+            <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
+            <td class="text-center small text-muted">
+              {% if p.data_fim %}{{ p.data_fim|date:"d/m/Y" }}{% else %}—{% endif %}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
+                <i class="bi bi-eye"></i>
+              </a>
+              <button type="button" class="btn btn-sm btn-success ms-1"
+                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                      data-titulo="{{ p.titulo }}"
+                      data-url="{% url 'encerrar_projeto' pk=p.pk %}"
+                      data-acao="Encerrar"
+                      data-cor="success">
+                <i class="bi bi-check-circle me-1"></i>Encerrar
+              </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center text-muted py-4">
+            <i class="bi bi-flag display-6 opacity-25 d-block mb-2"></i>
+            Nenhum projeto aguardando encerramento.
+          </td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
 </div>
 
-<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="modalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="modalLabel">Confirmar Ação</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="modalBody">
-                Você tem certeza que deseja executar esta ação?
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                <a href="#" id="confirmActionBtn" class="btn btn-primary">Confirmar</a>
-            </div>
+{# Modal de confirmação unificado #}
+<div class="modal fade" id="modalConfirmar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <div class="modal-body text-center p-4">
+        <div id="modal-icone" class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+             style="width:56px;height:56px;">
         </div>
+        <h5 class="mb-2" id="modal-titulo-acao"></h5>
+        <p class="text-muted small mb-1">Projeto:</p>
+        <p class="fw-semibold mb-4" id="modal-projeto-titulo"></p>
+        <p class="text-muted small mb-4">Esta ação notificará o coordenador por e-mail.</p>
+        <div class="d-flex justify-content-center gap-3">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-arrow-left me-1"></i>Cancelar
+          </button>
+          <a href="#" id="modal-btn-confirmar" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Confirmar
+          </a>
+        </div>
+      </div>
     </div>
+  </div>
 </div>
+
+<script>
+document.getElementById('modalConfirmar').addEventListener('show.bs.modal', function (e) {
+  var btn      = e.relatedTarget;
+  var titulo   = btn.getAttribute('data-titulo');
+  var url      = btn.getAttribute('data-url');
+  var acao     = btn.getAttribute('data-acao');
+  var cor      = btn.getAttribute('data-cor');
+
+  document.getElementById('modal-projeto-titulo').textContent = titulo;
+  document.getElementById('modal-titulo-acao').textContent    = acao + ' Projeto';
+
+  var icone = document.getElementById('modal-icone');
+  var btnConf = document.getElementById('modal-btn-confirmar');
+
+  var cfg = {
+    'success': { bg: '#d1fae5', icon: 'bi-check-circle-fill', txt: '#065f46', btnCls: 'btn-success' },
+    'danger':  { bg: '#fee2e2', icon: 'bi-x-circle-fill',     txt: '#991b1b', btnCls: 'btn-danger'  },
+  };
+  var c = cfg[cor] || cfg['success'];
+  icone.style.background = c.bg;
+  icone.innerHTML = '<i class="bi ' + c.icon + ' fs-3" style="color:' + c.txt + ';"></i>';
+  btnConf.className = 'btn ' + c.btnCls;
+  btnConf.innerHTML = '<i class="bi bi-check-circle me-1"></i>' + acao;
+  btnConf.href = url;
+});
+</script>
 {% endblock %}

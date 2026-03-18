@@ -1,28 +1,358 @@
 {% extends "base2.html" %}
-{% load crispy_forms_tags %}
+{% load static %}
 
-{% block title %}Emitir Relatório{% endblock %}
+{% block title %}Emitir Relatório – {{ projeto.titulo }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2 class="mb-1">Emitir Relatório de Atividades</h2>
-    <p class="lead text-muted">Projeto: {{ projeto.titulo }}</p>
-    <hr>
-    <form method="post">
-        {% csrf_token %}
-        
-        <div class="card">
-            <div class="card-body">
-                {{ form|crispy }}
-            </div>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+<div class="container-fluid py-4 px-4" style="max-width:860px;">
+
+  {# Cabeçalho #}
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h4 class="mb-0">Emitir Relatório de Atividades</h4>
+      <small class="text-muted">{{ projeto.titulo }}</small>
+    </div>
+  </div>
+
+  {# Alertas de erro #}
+  {% if form.non_field_errors %}
+  <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <form method="post" novalidate id="form-relatorio">
+    {% csrf_token %}
+
+    {# ── Card: Tipo de Relatório ──────────────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-text text-primary"></i>
+        <strong>Tipo de Relatório</strong>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          Selecione o tipo de relatório. Os campos disponíveis serão ajustados automaticamente.
+        </p>
+        <div class="d-flex gap-4">
+          {% for radio in form.tipo_relatorio %}
+          <div class="form-check form-check-inline">
+            {{ radio.tag }}
+            <label class="form-check-label fw-semibold" for="{{ radio.id_for_label }}">
+              {{ radio.choice_label }}
+            </label>
+          </div>
+          {% endfor %}
+        </div>
+        {% if form.tipo_relatorio.errors %}
+        <div class="text-danger small mt-1">{{ form.tipo_relatorio.errors }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# ── Card: Identificação do Período ───────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-range text-primary"></i>
+        <strong>Período Relatado</strong>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.periodo_inicio.id_for_label }}">
+              {{ form.periodo_inicio.label }} <span class="text-danger">*</span>
+              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                    data-bs-content="Data de início do período que este relatório cobre."
+                    class="text-muted ms-1" style="cursor:help;">
+                <i class="bi bi-question-circle"></i>
+              </span>
+            </label>
+            <input type="date" name="{{ form.periodo_inicio.html_name }}"
+                   id="{{ form.periodo_inicio.id_for_label }}"
+                   value="{{ form.periodo_inicio.value|date:'Y-m-d'|default:'' }}"
+                   class="form-control {% if form.periodo_inicio.errors %}is-invalid{% endif %}">
+            {% if form.periodo_inicio.errors %}<div class="invalid-feedback">{{ form.periodo_inicio.errors }}</div>{% endif %}
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold" for="{{ form.periodo_fim.id_for_label }}">
+              {{ form.periodo_fim.label }} <span class="text-danger">*</span>
+              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                    data-bs-content="Data de encerramento do período que este relatório cobre."
+                    class="text-muted ms-1" style="cursor:help;">
+                <i class="bi bi-question-circle"></i>
+              </span>
+            </label>
+            <input type="date" name="{{ form.periodo_fim.html_name }}"
+                   id="{{ form.periodo_fim.id_for_label }}"
+                   value="{{ form.periodo_fim.value|date:'Y-m-d'|default:'' }}"
+                   class="form-control {% if form.periodo_fim.errors %}is-invalid{% endif %}">
+            {% if form.periodo_fim.errors %}<div class="invalid-feedback">{{ form.periodo_fim.errors }}</div>{% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# ── Card: Objetivos (pré-preenchidos, editáveis) ─────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-bullseye text-primary"></i>
+        <strong>Objetivos do Projeto</strong>
+        <span class="badge bg-info text-dark ms-1 small">Pré-preenchido</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          Campos preenchidos automaticamente com base no projeto. Atualize se necessário.
+        </p>
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="{{ form.objetivo_geral.id_for_label }}">
+            {{ form.objetivo_geral.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Objetivo geral do projeto conforme submetido. Pode ser ajustado se houve reformulação."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.objetivo_geral.html_name }}"
+                    id="{{ form.objetivo_geral.id_for_label }}"
+                    rows="3"
+                    class="form-control {% if form.objetivo_geral.errors %}is-invalid{% endif %}">{{ form.objetivo_geral.value|default:'' }}</textarea>
+          {% if form.objetivo_geral.errors %}<div class="invalid-feedback">{{ form.objetivo_geral.errors }}</div>{% endif %}
+        </div>
+        <div>
+          <label class="form-label fw-semibold" for="{{ form.objetivos_especificos.id_for_label }}">
+            {{ form.objetivos_especificos.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Objetivos específicos conforme submetidos. Atualize se necessário."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.objetivos_especificos.html_name }}"
+                    id="{{ form.objetivos_especificos.id_for_label }}"
+                    rows="4"
+                    class="form-control {% if form.objetivos_especificos.errors %}is-invalid{% endif %}">{{ form.objetivos_especificos.value|default:'' }}</textarea>
+          {% if form.objetivos_especificos.errors %}<div class="invalid-feedback">{{ form.objetivos_especificos.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Card: Atividades e Resultados (ambos os tipos) ───────────────────── #}
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-clipboard-check text-primary"></i>
+        <strong>Execução do Projeto</strong>
+      </div>
+      <div class="card-body">
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="{{ form.atividades_realizadas.id_for_label }}">
+            {{ form.atividades_realizadas.label }} <span class="text-danger">*</span>
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Descreva cronologicamente as principais ações e tarefas executadas no período relatado."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.atividades_realizadas.html_name }}"
+                    id="{{ form.atividades_realizadas.id_for_label }}"
+                    rows="6"
+                    class="form-control {% if form.atividades_realizadas.errors %}is-invalid{% endif %}">{{ form.atividades_realizadas.value|default:'' }}</textarea>
+          {% if form.atividades_realizadas.errors %}<div class="invalid-feedback">{{ form.atividades_realizadas.errors }}</div>{% endif %}
         </div>
 
-        <div class="d-flex justify-content-end mt-4">
-            <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
-            <button type="submit" class="btn btn-success">
-                <i class="bi bi-check-circle-fill"></i> Gerar e Enviar Relatório
-            </button>
+        <div class="mb-4">
+          <label class="form-label fw-semibold" for="{{ form.resultados_alcancados.id_for_label }}">
+            {{ form.resultados_alcancados.label }} <span class="text-danger">*</span>
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Detalhe os resultados concretos obtidos, produtos gerados ou metas alcançadas até o momento."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.resultados_alcancados.html_name }}"
+                    id="{{ form.resultados_alcancados.id_for_label }}"
+                    rows="6"
+                    class="form-control {% if form.resultados_alcancados.errors %}is-invalid{% endif %}">{{ form.resultados_alcancados.value|default:'' }}</textarea>
+          {% if form.resultados_alcancados.errors %}<div class="invalid-feedback">{{ form.resultados_alcancados.errors }}</div>{% endif %}
         </div>
-    </form>
+
+        <div>
+          <label class="form-label fw-semibold" for="{{ form.dificuldades.id_for_label }}">
+            {{ form.dificuldades.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Relate eventuais obstáculos, atrasos ou problemas encontrados durante a execução."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.dificuldades.html_name }}"
+                    id="{{ form.dificuldades.id_for_label }}"
+                    rows="4"
+                    class="form-control {% if form.dificuldades.errors %}is-invalid{% endif %}">{{ form.dificuldades.value|default:'' }}</textarea>
+          {% if form.dificuldades.errors %}<div class="invalid-feedback">{{ form.dificuldades.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Card Parcial: Próximas Etapas ────────────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4" id="card-parcial" style="display:none;">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-right-circle text-primary"></i>
+        <strong>Planejamento das Próximas Etapas</strong>
+      </div>
+      <div class="card-body">
+        <div>
+          <label class="form-label fw-semibold" for="{{ form.proximas_etapas.id_for_label }}">
+            {{ form.proximas_etapas.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Descreva as atividades previstas para o próximo período, indicando metas e responsáveis."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.proximas_etapas.html_name }}"
+                    id="{{ form.proximas_etapas.id_for_label }}"
+                    rows="4"
+                    class="form-control {% if form.proximas_etapas.errors %}is-invalid{% endif %}">{{ form.proximas_etapas.value|default:'' }}</textarea>
+          {% if form.proximas_etapas.errors %}<div class="invalid-feedback">{{ form.proximas_etapas.errors }}</div>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# ── Card Final: Campos adicionais ────────────────────────────────────── #}
+    <div id="card-final" style="display:none;">
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-gear text-primary"></i>
+          <strong>Metodologia Utilizada</strong>
+          <span class="badge bg-info text-dark ms-1 small">Pré-preenchido</span>
+        </div>
+        <div class="card-body">
+          <label class="form-label fw-semibold" for="{{ form.metodologia_utilizada.id_for_label }}">
+            {{ form.metodologia_utilizada.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Pré-preenchido com a metodologia do projeto. Atualize descrevendo como a metodologia foi aplicada na prática."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.metodologia_utilizada.html_name }}"
+                    id="{{ form.metodologia_utilizada.id_for_label }}"
+                    rows="5"
+                    class="form-control {% if form.metodologia_utilizada.errors %}is-invalid{% endif %}">{{ form.metodologia_utilizada.value|default:'' }}</textarea>
+          {% if form.metodologia_utilizada.errors %}<div class="invalid-feedback">{{ form.metodologia_utilizada.errors }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-graph-up-arrow text-primary"></i>
+          <strong>Impactos e Produtos</strong>
+        </div>
+        <div class="card-body">
+          <div class="mb-4">
+            <label class="form-label fw-semibold" for="{{ form.impactos_observados.id_for_label }}">
+              {{ form.impactos_observados.label }}
+              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                    data-bs-content="Descreva os impactos científicos, sociais, educacionais ou institucionais gerados pelo projeto."
+                    class="text-muted ms-1" style="cursor:help;">
+                <i class="bi bi-question-circle"></i>
+              </span>
+            </label>
+            <textarea name="{{ form.impactos_observados.html_name }}"
+                      id="{{ form.impactos_observados.id_for_label }}"
+                      rows="5"
+                      class="form-control {% if form.impactos_observados.errors %}is-invalid{% endif %}">{{ form.impactos_observados.value|default:'' }}</textarea>
+          </div>
+          <div>
+            <label class="form-label fw-semibold" for="{{ form.produtos_gerados.id_for_label }}">
+              {{ form.produtos_gerados.label }}
+              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                    data-bs-content="Liste publicações, apresentações em eventos, softwares, patentes, relatórios técnicos ou qualquer outro produto gerado."
+                    class="text-muted ms-1" style="cursor:help;">
+                <i class="bi bi-question-circle"></i>
+              </span>
+            </label>
+            <textarea name="{{ form.produtos_gerados.html_name }}"
+                      id="{{ form.produtos_gerados.id_for_label }}"
+                      rows="4"
+                      class="form-control {% if form.produtos_gerados.errors %}is-invalid{% endif %}">{{ form.produtos_gerados.value|default:'' }}</textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-check-circle text-primary"></i>
+          <strong>Considerações Finais</strong>
+        </div>
+        <div class="card-body">
+          <label class="form-label fw-semibold" for="{{ form.consideracoes_finais.id_for_label }}">
+            {{ form.consideracoes_finais.label }}
+            <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                  data-bs-content="Apresente uma avaliação geral do projeto: objetivos atingidos, aprendizados, recomendações e desdobramentos futuros."
+                  class="text-muted ms-1" style="cursor:help;">
+              <i class="bi bi-question-circle"></i>
+            </span>
+          </label>
+          <textarea name="{{ form.consideracoes_finais.html_name }}"
+                    id="{{ form.consideracoes_finais.id_for_label }}"
+                    rows="5"
+                    class="form-control {% if form.consideracoes_finais.errors %}is-invalid{% endif %}">{{ form.consideracoes_finais.value|default:'' }}</textarea>
+        </div>
+      </div>
+
+    </div>{# fim card-final #}
+
+    {# ── Ações ────────────────────────────────────────────────────────────── #}
+    <div class="d-flex justify-content-between mt-2">
+      <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Cancelar
+      </a>
+      <button type="submit" class="btn btn-success btn-lg" id="btn-gerar">
+        <i class="bi bi-check-circle-fill me-1"></i>Gerar e Enviar Relatório
+      </button>
+    </div>
+
+  </form>
 </div>
+
+<script>
+// ── Popovers ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+    new bootstrap.Popover(el, { container: 'body', html: false });
+  });
+});
+
+// ── Mostrar/esconder cards por tipo de relatório ──────────────────────────────
+function atualizarTipo(valor) {
+  var cardParcial = document.getElementById('card-parcial');
+  var cardFinal   = document.getElementById('card-final');
+  var btnGerar    = document.getElementById('btn-gerar');
+
+  if (valor === 'parcial') {
+    cardParcial.style.display = '';
+    cardFinal.style.display   = 'none';
+    btnGerar.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Gerar Relatório Parcial';
+  } else if (valor === 'final') {
+    cardParcial.style.display = 'none';
+    cardFinal.style.display   = '';
+    btnGerar.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>Gerar Relatório Final';
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  var radios = document.querySelectorAll('input[name="tipo_relatorio"]');
+  radios.forEach(function (r) {
+    r.addEventListener('change', function () { atualizarTipo(this.value); });
+  });
+  // Aplica estado inicial
+  var checked = document.querySelector('input[name="tipo_relatorio"]:checked');
+  if (checked) atualizarTipo(checked.value);
+});
+</script>
 {% endblock %}

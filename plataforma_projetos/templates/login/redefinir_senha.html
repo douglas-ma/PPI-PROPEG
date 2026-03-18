@@ -1,0 +1,144 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir Senha – PROPEG</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="icon" href="{% static 'imagens/favicon.ico' %}" type="image/x-icon">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f4f8;
+      font-family: Arial, sans-serif;
+    }
+    .form-card {
+      width: 100%;
+      max-width: 420px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    }
+    .form-card h2 { font-size: 1.5rem; font-weight: 700; color: #1a1a2e; margin-bottom: .3rem; }
+    .form-card .subtexto { color: #888; font-size: .88rem; margin-bottom: 1.5rem; }
+    .form-card .form-label { font-size: .85rem; color: #555; margin-bottom: .3rem; }
+    .form-card .form-control {
+      background: #f5f7fb; border: 1px solid #e0e0e0;
+      border-radius: 8px; padding: .6rem 1rem; font-size: .9rem;
+    }
+    .form-card .form-control:focus { border-color: #1a56db; background: #fff; box-shadow: none; }
+    .btn-entrar {
+      background: #1a56db; color: #fff; border: none; border-radius: 8px;
+      padding: .7rem; font-weight: 600; font-size: .95rem;
+      width: 100%; transition: background .2s; cursor: pointer;
+    }
+    .btn-entrar:hover { background: #1447b8; }
+    .req { font-size: .78rem; color: #aaa; margin-top: .3rem; }
+    .req.ok { color: #1e8449; }
+    .req.nok { color: #c0392b; }
+  </style>
+</head>
+<body>
+
+  <div class="form-card">
+    <div class="text-center mb-3">
+      <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC" style="height:48px;">
+    </div>
+
+    <h2>Nova Senha</h2>
+    <p class="subtexto">Crie uma senha segura para sua conta na plataforma PROPEG.</p>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert {{ message.tags }} py-2 mb-3" style="font-size:.85rem;">{{ message }}</div>
+      {% endfor %}
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label class="form-label">Nova senha</label>
+        <div class="input-group">
+          <input type="password" name="nova_senha" id="nova-senha"
+                 class="form-control" placeholder="Mínimo 8 caracteres"
+                 style="border-right:none;" required autocomplete="new-password">
+          <button class="btn" type="button" id="toggle1"
+                  style="background:#f5f7fb;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;">
+            <i class="bi bi-eye-fill text-secondary"></i>
+          </button>
+        </div>
+        <p class="req" id="req-len"><i class="bi bi-circle me-1"></i>Pelo menos 8 caracteres</p>
+      </div>
+
+      <div class="mb-4">
+        <label class="form-label">Confirmar nova senha</label>
+        <div class="input-group">
+          <input type="password" name="confirmar_senha" id="conf-senha"
+                 class="form-control" placeholder="Repita a senha"
+                 style="border-right:none;" required autocomplete="new-password">
+          <button class="btn" type="button" id="toggle2"
+                  style="background:#f5f7fb;border:1px solid #e0e0e0;border-left:none;border-radius:0 8px 8px 0;">
+            <i class="bi bi-eye-fill text-secondary"></i>
+          </button>
+        </div>
+        <p class="req" id="req-match"><i class="bi bi-circle me-1"></i>As senhas devem coincidir</p>
+      </div>
+
+      <button type="submit" class="btn-entrar" id="btn-salvar" disabled>
+        <i class="bi bi-check-circle me-1"></i>Salvar nova senha
+      </button>
+    </form>
+
+    <div class="text-center mt-3">
+      <a href="{% url 'home' %}" style="font-size:.83rem;color:#888;text-decoration:none;">
+        <i class="bi bi-arrow-left me-1"></i>Voltar ao login
+      </a>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    var nova  = document.getElementById('nova-senha');
+    var conf  = document.getElementById('conf-senha');
+    var reqLen   = document.getElementById('req-len');
+    var reqMatch = document.getElementById('req-match');
+    var btnSalvar = document.getElementById('btn-salvar');
+
+    function validar() {
+      var lenOk   = nova.value.length >= 8;
+      var matchOk = nova.value === conf.value && conf.value.length > 0;
+
+      reqLen.className   = 'req ' + (lenOk   ? 'ok' : 'nok');
+      reqLen.innerHTML   = '<i class="bi bi-' + (lenOk   ? 'check' : 'x') + '-circle me-1"></i>Pelo menos 8 caracteres';
+      reqMatch.className = 'req ' + (matchOk ? 'ok' : (conf.value ? 'nok' : ''));
+      reqMatch.innerHTML = '<i class="bi bi-' + (matchOk ? 'check' : 'circle') + '-circle me-1"></i>As senhas devem coincidir';
+
+      btnSalvar.disabled = !(lenOk && matchOk);
+    }
+
+    nova.addEventListener('input', validar);
+    conf.addEventListener('input', validar);
+
+    // Toggle visibilidade
+    function toggleSenha(btnId, inputId) {
+      document.getElementById(btnId).addEventListener('click', function () {
+        var inp  = document.getElementById(inputId);
+        var icon = this.querySelector('i');
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+        icon.classList.toggle('bi-eye-fill');
+        icon.classList.toggle('bi-eye-slash-fill');
+      });
+    }
+    toggleSenha('toggle1', 'nova-senha');
+    toggleSenha('toggle2', 'conf-senha');
+  </script>
+</body>
+</html>

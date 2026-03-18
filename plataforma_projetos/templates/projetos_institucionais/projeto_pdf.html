@@ -1,241 +1,455 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Projeto: {{ projeto.titulo }}</title>
-    <style>
-        @page {
-            size: A4;
-            margin: 3cm 2cm 2cm 3cm;
-            
-            @top-center {
-                content: element(header);
-            }
+<meta charset="UTF-8">
+<title>{{ projeto.titulo }}</title>
+<style>
+/* ── Configuração ABNT NBR 14724:2011 ─────────────────────────────────────── */
+@page {
+    size: A4;
+    margin-top: 3cm; margin-right: 2cm; margin-bottom: 2cm; margin-left: 3cm;
+    @bottom-right {
+        content: counter(page);
+        font-family: 'Times New Roman', serif;
+        font-size: 10pt;
+    }
+}
+@page capa        { @bottom-right { content: none; } }
+@page folha-rosto { @bottom-right { content: none; } }
+@page sumario     { @bottom-right { content: none; } }
 
-            @bottom-right {
-                content: "Página " counter(page);
-                font-size: 10pt;
-            }
-        }
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 12pt;
-            line-height: 1.5;
-            text-align: justify;
-            counter-reset: h2;
-        }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .header {
-            position: running(header);
-            text-align: center;
-            font-size: 10pt;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-            margin-bottom: 1cm;
-        }
+body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    text-align: justify;
+}
 
-        .header img {
-            height: 50px;
-            margin-bottom: 5px;
-        }
+/* ── Capa ─────────────────────────────────────────────────────────────────── */
+.pg-capa {
+    page: capa;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 267mm; /* A4 - margens */
+    text-align: center;
+}
+.capa-logo    { width: 90px; margin-bottom: 0.4cm; }
+.capa-inst    { font-size: 12pt; font-weight: bold; text-transform: uppercase; line-height: 1.5; }
+.capa-sub     { font-size: 12pt; margin-top: 0.15cm; }
+.capa-titulo  { font-size: 14pt; font-weight: bold; text-transform: uppercase;
+                line-height: 1.5; max-width: 14cm; margin: auto; padding: 5cm 0 1cm; }
+.capa-autores { margin-top: 0.5cm; }
+.capa-autores p { font-size: 12pt; margin-bottom: 0.2cm; }
+.capa-local   { margin-top: auto; padding-top: 2cm; font-size: 12pt; }
 
-        .capa {
-            text-align: center;
-            page-break-after: always;
-        }
-        .capa .universidade { font-size: 14pt; }
-        .capa .proreitoria { font-size: 12pt; }
-        .capa h1 {
-            font-family: Arial, sans-serif;
-            font-size: 16pt;
-            margin-top: 4cm;
-            margin-bottom: 4cm;
-        }
-        .capa .coordenador { margin-top: 4cm; }
-        .capa .local-data {
-            position: absolute;
-            bottom: 3cm;
-            left: 0;
-            right: 0;
-        }
-        .quebra-pagina { page-break-before: always; }
+/* ── Folha de Rosto ───────────────────────────────────────────────────────── */
+.pg-rosto {
+    page: folha-rosto;
+    page-break-after: always;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 267mm;
+    text-align: center;
+}
+.rosto-autor  { font-size: 12pt; font-weight: bold; padding-top: 1cm; }
+.rosto-titulo { font-size: 14pt; font-weight: bold; text-transform: uppercase;
+                line-height: 1.5; max-width: 14cm; margin: 4cm auto 2cm; }
+.rosto-nota {
+    text-align: left;
+    width: 8cm;
+    margin-left: auto;
+    margin-right: 0;
+    font-size: 10pt;
+    line-height: 1.5;
+    padding-left: 0.5cm;
+    border-left: 2px solid #ccc;
+}
+.rosto-local { margin-top: auto; padding-top: 2cm; font-size: 12pt; }
 
-        .sumario a {
-            text-decoration: none;
-            color: black;
-        }
-        .sumario ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        .sumario li {
-            margin-bottom: 10px;
-        }
-        .sumario a::after {
-            content: leader('.') target-counter(attr(href), page);
-        }
+/* ── Sumário ──────────────────────────────────────────────────────────────── */
+.pg-sumario { page: sumario; page-break-after: always; }
+.titulo-pre {
+    font-size: 12pt; font-weight: bold; text-align: center;
+    text-transform: uppercase; margin-bottom: 1cm;
+}
+.sumario-lista { list-style: none; }
+.sumario-lista li { font-size: 12pt; line-height: 2; }
+.sumario-lista a  { text-decoration: none; color: #000; text-transform: uppercase; }
+.sumario-lista a::after { content: leader('.') target-counter(attr(href), page); }
+.sum-sub        { padding-left: 1.25cm; }
+.sum-sub a      { text-transform: none !important; }
 
-        h2 {
-            font-family: Arial, sans-serif;
-            font-size: 13pt;
-            font-weight: bold;
-            margin-top: 24pt;
-            margin-bottom: 18pt;
-            border-bottom: 1px solid #ddd;
-            padding-bottom: 3px;
-        }
+/* ── Parágrafos e texto ───────────────────────────────────────────────────── */
+p              { font-size: 12pt; line-height: 1.5; text-indent: 1.25cm; text-align: justify; margin: 0; }
+p.s            { text-indent: 0; }
+p + p          { margin-top: 0; }
 
-        h2::before {
-            counter-increment: h2;
-            content: counter(h2) ". ";
-        }
-        
-        p { margin-bottom: 12pt; }
-        strong { font-weight: bold; }
+/* ── Títulos de seção ─────────────────────────────────────────────────────── */
+.secao         { page-break-before: always; }
 
-        /* --- ESTILOS DAS TABELAS --- */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 18pt;
-        }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
-            vertical-align: top;
-        }
-        th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .tabela-info td:first-child {
-            font-weight: bold;
-            width: 30%;
-        }
-    </style>
+h2 {
+    font-family: 'Times New Roman', serif;
+    font-size: 12pt; font-weight: bold;
+    text-transform: uppercase;
+    text-align: left;
+    margin-bottom: 1cm;
+}
+h3 {
+    font-family: 'Times New Roman', serif;
+    font-size: 12pt; font-weight: bold;
+    text-align: left;
+    margin: 0.8cm 0 0.5cm;
+}
+
+/* ── Tabelas (quadros ABNT: sem sombreado nas linhas) ─────────────────────── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 1cm;
+    font-size: 10pt;
+    line-height: 1.5;
+}
+caption {
+    font-size: 10pt;
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 4pt;
+    caption-side: top;
+}
+th, td {
+    border: 1px solid #000;
+    padding: 4pt 6pt;
+    vertical-align: top;
+    text-align: left;
+}
+th { font-weight: bold; text-align: center; }
+.col-l { font-weight: bold; width: 42%; }
+
+/* ── Listas ───────────────────────────────────────────────────────────────── */
+ul, ol { margin: 0 0 0.5cm 1.25cm; padding: 0; font-size: 12pt; line-height: 1.5; }
+li { margin-bottom: 0; }
+
+/* ── Referências (recuo francês ABNT) ─────────────────────────────────────── */
+.ref-item {
+    padding-left: 1.25cm;
+    text-indent: -1.25cm;
+    margin-bottom: 0.5cm;
+    font-size: 12pt;
+    line-height: 1.5;
+    text-align: justify;
+}
+
+/* ── Anexos ───────────────────────────────────────────────────────────────── */
+.pg-anexo {
+    page-break-before: always;
+    text-align: center;
+}
+.pg-anexo h3  { text-align: center; margin-bottom: 0.5cm; }
+.pg-anexo img { max-width: 100%; max-height: 20cm; display: block; margin: 0 auto 0.3cm; }
+.pg-anexo .legenda { font-size: 10pt; text-align: center; font-style: italic; }
+
+/* WeasyPrint: embed de PDF como imagem não é suportado nativamente;
+   usamos referência descritiva para PDFs e embed para imagens */
+</style>
 </head>
 <body>
-    <div class="header">
-        <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo da Universidade">
-        <div>UNIVERSIDADE FEDERAL DO ACRE</div>
-        <div>PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO - PROPEG</div>
-    </div>
+{% with coord=projeto.coordenador %}
 
-    <div class="capa">
-        <p class="universidade">UNIVERSIDADE FEDERAL DO ACRE</p>
-        <p class="proreitoria">PRÓ-REITORIA DE PESQUISA E PÓS-GRADUAÇÃO - PROPEG</p>
-        
-        <h1>{{ projeto.titulo }}</h1>
-        
-        <p class="coordenador"><strong>Coordenador(a):</strong> {{ projeto.coordenador.get_full_name }}</p>
-        
-        <div class="local-data">
-            <p>Rio Branco, Acre</p>
-            <p>{{ projeto.data_inicio|date:"Y" }}</p>
-        </div>
-    </div>
 
-    <div class="sumario">
-        <h2 style="text-align: center; border: none;">SUMÁRIO</h2>
-        <ul>
-            <li><a href="#info-gerais">INFORMAÇÕES GERAIS</a></li>
-            <li><a href="#detalhes-projeto">DETALHES DO PROJETO</a></li>
-            <li><a href="#vinculo-institucional">VÍNCULO INSTITUCIONAL</a></li>
-            <li><a href="#aspectos-eticos">ASPECTOS ÉTICOS E FINANCIAMENTO</a></li>
-            <li><a href="#equipe">EQUIPE DE TRABALHO</a></li>
-            <li><a href="#ods">VÍNCULO COM ODS</a></li>
-        </ul>
-    </div>
+{# ══════════════════════════ CAPA ══════════════════════════════════════════ #}
+<div class="pg-capa">
+  <img class="capa-logo" src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC">
+  <p class="s capa-inst">Universidade Federal do Acre</p>
+  <p class="s capa-inst">Pró-Reitoria de Pesquisa e Pós-Graduação – PROPEG</p>
+  {% if projeto.centro_lotacao %}
+  <p class="s capa-sub">{{ projeto.centro_lotacao }}</p>
+  {% endif %}
 
-    <div class="quebra-pagina">
-        <h2 id="info-gerais">INFORMAÇÕES GERAIS</h2>
-        <table class="tabela-info">
-            <tr><td>Título do Projeto:</td><td>{{ projeto.titulo }}</td></tr>
-            <tr><td>Coordenador(a):</td><td>{{ projeto.coordenador.get_full_name }}</td></tr>
-            <tr><td>Vigência:</td><td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>
-            <tr><td>É docente?</td><td>{% if projeto.eh_docente %}Sim{% else %}Não{% endif %}</td></tr>
-            <tr><td>É pesquisador?</td><td>{% if projeto.eh_pesquisador %}Sim{% else %}Não{% endif %}</td></tr>
-            <tr><td>É pesquisador visitante?</td><td>{% if projeto.eh_pesquisador_visitante %}Sim{% else %}Não{% endif %}</td></tr>
-        </table>
+  <p class="s capa-titulo">{{ projeto.titulo }}</p>
 
-        <h2 id="detalhes-projeto">DETALHES DO PROJETO</h2>
-        <p><strong>Resumo:</strong> {{ projeto.resumo|linebreaksbr }}</p>
-        <p><strong>Palavras-chave:</strong> {{ projeto.palavras_chave }}</p>
-        <p><strong>Introdução:</strong> {{ projeto.introducao|linebreaksbr }}</p>
-        <p><strong>Objetivos:</strong> {{ projeto.objetivos|linebreaksbr }}</p>
-        <p><strong>Metodologia:</strong> {{ projeto.metodologia|linebreaksbr }}</p>
-        <p><strong>Resultados e/ou Impactos Esperados:</strong> {{ projeto.resultados|linebreaksbr }}</p>
-        <p><strong>Parcerias:</strong> {{ projeto.parcerias|default:"Nenhuma parceria informada."|linebreaksbr }}</p>
-        <p><strong>Referências:</strong> {{ projeto.referencias|default:"Nenhuma referência informada."|linebreaksbr }}</p>
+  <!-- <div class="capa-autores">
+    <p class="s">{{ coord.get_full_name }}</p>
+    {% for m in projeto.equipe.all %}
+    <p class="s">{{ m.membro.get_full_name }}</p>
+    {% endfor %}
+  </div> -->
 
-        <h2 id="vinculo-institucional">VÍNCULO INSTITUCIONAL</h2>
-        <table class="tabela-info">
-            <tr><td>Centro de Lotação:</td><td>{{ projeto.centro_lotacao }}</td></tr>
-            <tr><td>Curso de Graduação:</td><td>{{ projeto.curso|default:"Não se aplica" }}</td></tr>
-            <tr><td>Participa de Pós-Graduação?</td><td>{% if projeto.participa_pos_graduacao %}Sim{% else %}Não{% endif %}</td></tr>
-            {% if projeto.participa_pos_graduacao %}
-            <tr><td>Programa de Pós-Graduação:</td><td>{{ projeto.programa_pos }}</td></tr>
-            {% endif %}
-            <tr><td>Grupos de Pesquisa:</td>
-                <td>
-                    {% for grupo in projeto.grupos_pesquisa.all %}
-                        - {{ grupo.nome }}<br>
-                    {% empty %}
-                        Nenhum
-                    {% endfor %}
-                </td>
-            </tr>
-        </table>
+  <div class="capa-local">
+    <p class="s">Rio Branco – AC</p>
+    <p class="s">{% if projeto.data_inicio %}{{ projeto.data_inicio|date:"Y" }}{% endif %}</p>
+  </div>
+</div>
 
-        <h2 id="aspectos-eticos">ASPECTOS ÉTICOS E FINANCIAMENTO</h2>
-        <table class="tabela-info">
-            <tr><td>Agência Financiadora:</td><td>{{ projeto.agencia_financiadora|default:"Não possui financiamento externo" }}</td></tr>
-            <tr><td>Valor do Fomento:</td><td>R$ {{ projeto.valor_fomento|default:"0,00" }}</td></tr>
-            <tr><td>Envolve Aspectos Éticos?</td><td>{% if projeto.etica_obrigatoria %}Sim{% else %}Não{% endif %}</td></tr>
-            {% if projeto.etica_obrigatoria %}
-            <tr><td>Tipo de Comitê de Ética:</td><td>{{ projeto.tipo_etica }}</td></tr>
-            {% endif %}
-        </table>
 
-        <h2 id="equipe">EQUIPE DE TRABALHO</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome Completo</th>
-                    <th>CPF</th>
-                    <th>Curso</th>
-                    <th>Carga Horária Semanal</th>
-                    <th>Carga Horária Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for membro_equipe in projeto.equipe.all %}
-                <tr>
-                    <td>{{ membro_equipe.membro.get_full_name }}</td>
-                    <td>{{ membro_equipe.membro.cpf }}</td>
-                    <td>{{ membro_equipe.membro.curso|default:"N/A" }}</td>
-                    <td>{{ membro_equipe.carga_horaria_semanal }}h</td>
-                    <td>{{ membro_equipe.carga_horaria_total }}h</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" style="text-align: center;">Nenhum membro na equipe.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+{# ══════════════════════ FOLHA DE ROSTO ════════════════════════════════════ #}
+<div class="pg-rosto">
+  <p class="s rosto-autor">{{ coord.get_full_name }}</p>
 
-        <h2 id="ods">VÍNCULO COM OBJETIVOS DE DESENVOLVIMENTO SUSTENTÁVEL (ODS)</h2>
-        <ul>
-            {% for ods in projeto.ods.all %}
-            <li>{{ ods.titulo }}</li>
-            {% empty %}
-            <li>Nenhum ODS vinculado.</li>
-            {% endfor %}
-        </ul>
+  <p class="s rosto-titulo">{{ projeto.titulo }}</p>
 
-    </div>
+  <div class="rosto-nota">
+    Relatório de submissão de projeto de pesquisa apresentado à
+    Pró-Reitoria de Pesquisa e Pós-Graduação (PROPEG) da
+    Universidade Federal do Acre (UFAC).
+    {% if projeto.edital %}
+    <br><br>Edital: {{ projeto.edital.titulo_completo }}
+    {% endif %}
+    <br><br>
+    Coordenador(a): {{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+    {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
+    {% if coord.lattes %}<br>Lattes: {{ coord.lattes }}{% endif %}
+    {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
+  </div>
+
+  <div class="rosto-local">
+    <p class="s">Rio Branco – AC</p>
+    <p class="s">{% if projeto.data_inicio %}{{ projeto.data_inicio|date:"Y" }}{% endif %}</p>
+  </div>
+</div>
+
+
+{# ══════════════════════════ SUMÁRIO ═══════════════════════════════════════ #}
+<div class="pg-sumario">
+  <p class="titulo-pre">Sumário</p>
+  <ul class="sumario-lista">
+    <li><a href="#s0">Identificação do Projeto</a></li>
+    <li><a href="#s1">1 Introdução</a></li>
+    <li><a href="#s2">2 Objetivos</a></li>
+    <li class="sum-sub"><a href="#s21">2.1 Objetivo Geral</a></li>
+    <li class="sum-sub"><a href="#s22">2.2 Objetivos Específicos</a></li>
+    <li><a href="#s3">3 Metodologia</a></li>
+    <li><a href="#s4">4 Resultados Esperados</a></li>
+    <li><a href="#s5">5 Vínculo Institucional</a></li>
+    <li><a href="#s6">6 Aspectos Éticos e Financiamento</a></li>
+    <li><a href="#s7">7 Equipe de Trabalho</a></li>
+    <li><a href="#s8">8 Objetivos de Desenvolvimento Sustentável (ODS)</a></li>
+    {% if projeto.parcerias %}<li><a href="#s9">9 Parcerias</a></li>{% endif %}
+    <li><a href="#sref">{% if projeto.parcerias %}10{% else %}9{% endif %} Referências</a></li>
+    {% for anx in projeto.anexos.all %}{% if anx.tipo_anexo != 'relatorio_submissao' %}{% if forloop.first %}
+    <li><a href="#sanexos">Anexos</a></li>
+    {% endif %}{% endif %}{% endfor %}
+  </ul>
+</div>
+
+
+{# ═══════════════════ IDENTIFICAÇÃO (sem número) ═══════════════════════════ #}
+<div class="secao" id="s0">
+  <h2>Identificação do Projeto</h2>
+  <table>
+    <caption>Quadro 1 – Dados de identificação</caption>
+    <tr><td class="col-l">Título</td><td>{{ projeto.titulo }}</td></tr>
+    <tr>
+      <td class="col-l">Coordenador(a)</td>
+      <td>{{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+        {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
+        {% if coord.lattes %}<br>Lattes: {{ coord.lattes }}{% endif %}
+        {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
+      </td>
+    </tr>
+    <tr><td class="col-l">Centro de Lotação</td><td>{{ projeto.centro_lotacao|default:"—" }}</td></tr>
+    {% if projeto.curso %}<tr><td class="col-l">Curso de Graduação</td><td>{{ projeto.curso }}</td></tr>{% endif %}
+    <tr><td class="col-l">Período de Execução</td>
+        <td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>
+    {% if projeto.edital %}<tr><td class="col-l">Edital</td><td>{{ projeto.edital.titulo_completo }}</td></tr>{% endif %}
+    {% if projeto.palavras_chave %}<tr><td class="col-l">Palavras-chave</td><td>{{ projeto.palavras_chave }}</td></tr>{% endif %}
+  </table>
+
+  {# Resumo logo após a identificação, antes da numeração #}
+  <h2 style="margin-top:1cm;">Resumo</h2>
+  {% if projeto.resumo %}
+    {% for l in projeto.resumo.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}
+    <p>Não informado.</p>
+  {% endif %}
+  {% if projeto.palavras_chave %}
+  <p style="margin-top:0.5cm;"><strong>Palavras-chave:</strong> {{ projeto.palavras_chave }}</p>
+  {% endif %}
+</div>
+
+
+{# ══════════════════════ 1 INTRODUÇÃO ══════════════════════════════════════ #}
+<div class="secao" id="s1">
+  <h2>1 Introdução</h2>
+  {% if projeto.introducao %}
+    {% for l in projeto.introducao.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informada.</p>{% endif %}
+</div>
+
+
+{# ══════════════════════ 2 OBJETIVOS ═══════════════════════════════════════ #}
+<div class="secao" id="s2">
+  <h2>2 Objetivos</h2>
+
+  <h3 id="s21">2.1 Objetivo Geral</h3>
+  {% if projeto.objetivo_geral %}<p>{{ projeto.objetivo_geral }}</p>
+  {% else %}<p>Não informado.</p>{% endif %}
+
+  <h3 id="s22">2.2 Objetivos Específicos</h3>
+  {% if projeto.objetivos_especificos %}
+    {% for l in projeto.objetivos_especificos.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informados.</p>{% endif %}
+</div>
+
+
+{# ══════════════════════ 3 METODOLOGIA ════════════════════════════════════ #}
+<div class="secao" id="s3">
+  <h2>3 Metodologia</h2>
+  {% if projeto.metodologia %}
+    {% for l in projeto.metodologia.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informada.</p>{% endif %}
+</div>
+
+
+{# ══════════════════════ 4 RESULTADOS ══════════════════════════════════════ #}
+<div class="secao" id="s4">
+  <h2>4 Resultados Esperados</h2>
+  {% if projeto.resultados %}
+    {% for l in projeto.resultados.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informados.</p>{% endif %}
+</div>
+
+
+{# ══════════════════════ 5 VÍNCULO INSTITUCIONAL ══════════════════════════ #}
+<div class="secao" id="s5">
+  <h2>5 Vínculo Institucional</h2>
+  <table>
+    <caption>Quadro 2 – Vínculo institucional</caption>
+    <tr><td class="col-l">É docente?</td><td>{% if projeto.eh_docente %}Sim{% else %}Não{% endif %}</td></tr>
+    <tr><td class="col-l">É pesquisador?</td><td>{% if projeto.eh_pesquisador %}Sim{% else %}Não{% endif %}</td></tr>
+    <tr><td class="col-l">É pesquisador visitante?</td><td>{% if projeto.eh_pesquisador_visitante %}Sim{% else %}Não{% endif %}</td></tr>
+    <tr><td class="col-l">Participa de Pós-Graduação?</td><td>{% if projeto.participa_pos_graduacao %}Sim{% else %}Não{% endif %}</td></tr>
+    {% if projeto.participa_pos_graduacao and projeto.programa_pos %}
+    <tr><td class="col-l">Programa de Pós-Graduação</td><td>{{ projeto.programa_pos }}</td></tr>
+    {% endif %}
+    <tr><td class="col-l">Grupos de Pesquisa</td>
+      <td>{% for g in projeto.grupos_pesquisa.all %}{{ g.nome }}{% if not forloop.last %}; {% endif %}{% empty %}Não informado{% endfor %}</td></tr>
+  </table>
+</div>
+
+
+{# ══════════════════════ 6 ÉTICA E FINANCIAMENTO ══════════════════════════ #}
+<div class="secao" id="s6">
+  <h2>6 Aspectos Éticos e Financiamento</h2>
+  <table>
+    <caption>Quadro 3 – Aspectos éticos e financiamento</caption>
+    <tr><td class="col-l">Envolve Aspectos Éticos?</td><td>{% if projeto.etica_obrigatoria %}Sim{% else %}Não{% endif %}</td></tr>
+    {% if projeto.etica_obrigatoria %}<tr><td class="col-l">Tipo de Comitê de Ética</td><td>{{ projeto.tipo_etica|default:"—" }}</td></tr>{% endif %}
+    <tr><td class="col-l">Possui Financiamento Externo?</td><td>{% if projeto.agencia_financiadora %}Sim{% else %}Não{% endif %}</td></tr>
+    {% if projeto.agencia_financiadora %}
+    <tr><td class="col-l">Agência Financiadora</td><td>{{ projeto.agencia_financiadora }}</td></tr>
+    <tr><td class="col-l">Valor do Fomento (R$)</td><td>{{ projeto.valor_fomento }}</td></tr>
+    {% endif %}
+  </table>
+</div>
+
+
+{# ══════════════════════ 7 EQUIPE ══════════════════════════════════════════ #}
+<div class="secao" id="s7">
+  <h2>7 Equipe de Trabalho</h2>
+  <table>
+    <caption>Quadro 4 – Composição da equipe</caption>
+    <thead>
+      <tr><th>Nome Completo</th><th>CPF</th><th>Função</th><th>CH Semanal (h)</th><th>CH Total (h)</th></tr>
+    </thead>
+    <tbody>
+      {% for m in projeto.equipe.all %}
+      <tr>
+        <td>{{ m.membro.get_full_name }}</td>
+        <td>{{ m.membro.cpf }}</td>
+        <td>{{ m.get_funcao_display }}</td>
+        <td style="text-align:center;">{{ m.carga_horaria_semanal }}</td>
+        <td style="text-align:center;">{{ m.carga_horaria_total }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="5" style="text-align:center;">Nenhum membro cadastrado.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+
+{# ══════════════════════ 8 ODS ═════════════════════════════════════════════ #}
+<div class="secao" id="s8">
+  <h2>8 Objetivos de Desenvolvimento Sustentável (ODS)</h2>
+  <ul>
+    {% for ods in projeto.ods.all %}<li>{{ ods.titulo }}</li>
+    {% empty %}<li>Nenhum ODS vinculado.</li>{% endfor %}
+  </ul>
+</div>
+
+
+{# ══════════════════════ 9 PARCERIAS (condicional) ════════════════════════ #}
+{% if projeto.parcerias %}
+<div class="secao" id="s9">
+  <h2>9 Parcerias</h2>
+  {% for l in projeto.parcerias.splitlines %}{% if l %}<p>{{ l }}</p>{% endif %}{% endfor %}
+</div>
+{% endif %}
+
+
+{# ══════════════════════ REFERÊNCIAS ══════════════════════════════════════ #}
+<div class="secao" id="sref">
+  <h2>{% if projeto.parcerias %}10{% else %}9{% endif %} Referências</h2>
+  {% if projeto.referencias %}
+    {% for ref in projeto.referencias.splitlines %}{% if ref %}<p class="ref-item">{{ ref }}</p>{% endif %}{% endfor %}
+  {% else %}<p>Não informadas.</p>{% endif %}
+</div>
+
+
+{# ══════════════════════ ANEXOS ═══════════════════════════════════════════ #}
+{% with lista_anx=projeto.anexos.all %}
+{% if lista_anx %}
+{# Conta quantos anexos exibíveis há #}
+{% for anx in lista_anx %}{% if anx.tipo_anexo != 'relatorio_submissao' %}
+{% if forloop.first %}
+<div class="secao" id="sanexos">
+  <h2>Anexos</h2>
+</div>
+{% endif %}
+
+<div class="pg-anexo">
+  <h3>Anexo {{ forloop.counter }} – {{ anx.descricao|default:anx.get_tipo_anexo_display }}</h3>
+
+  {% with nome=anx.arquivo.name|lower %}
+  {% if '.png' in nome or '.jpg' in nome or '.jpeg' in nome or '.gif' in nome or '.webp' in nome %}
+    {# Imagem: exibe inline com tag <img> #}
+    <img src="{{ anx.arquivo.url }}" alt="{{ anx.descricao|default:'Anexo' }}">
+    {% if anx.descricao %}<p class="s legenda">Figura – {{ anx.descricao }}</p>{% endif %}
+
+  {% elif '.pdf' in nome %}
+    {# PDF: WeasyPrint não suporta embed de PDF; exibe como referência descritiva #}
+    <p class="s" style="margin-top:1cm;font-size:11pt;">
+      <strong>Documento PDF:</strong> {{ anx.arquivo.name|cut:"anexos/" }}
+    </p>
+    <p class="s" style="font-size:10pt;color:#444;margin-top:0.3cm;">
+      Tipo: {{ anx.get_tipo_anexo_display }}<br>
+      O conteúdo deste documento está disponível para consulta no sistema da PROPEG.
+    </p>
+
+  {% else %}
+    {# Outros formatos #}
+    <p class="s" style="margin-top:1cm;font-size:11pt;">
+      <strong>Arquivo:</strong> {{ anx.arquivo.name|cut:"anexos/" }}
+    </p>
+    <p class="s" style="font-size:10pt;color:#444;margin-top:0.3cm;">
+      Tipo: {{ anx.get_tipo_anexo_display }}
+    </p>
+  {% endif %}
+  {% endwith %}
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+
+{% endwith %}{# coord #}
 </body>
 </html>

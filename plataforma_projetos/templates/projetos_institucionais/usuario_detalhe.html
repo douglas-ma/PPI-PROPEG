@@ -1,48 +1,256 @@
 {% extends "base2.html" %}
-
-{% block title %}Visualizar Usuário{% endblock %}
-
+{% load static %}
+{% block title %}Detalhes do Usuário{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="mb-0">Detalhes do Usuário: {{ usuario_selecionado.get_full_name }}</h2>
-        <div>
-            <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-outline-secondary">Voltar para a Lista</a>
-        </div>
-    </div>
-    <hr>
+<div class="container-fluid py-4 px-4" style="max-width:860px;">
 
-    <div class="card shadow-sm">
-        <div class="card-header">
-            <h4>{{ usuario_selecionado.get_full_name }}</h4>
-            <span class="badge {% if usuario_selecionado.status == 'ativo' %}bg-success{% elif usuario_selecionado.status == 'pendente' %}bg-warning{% else %}bg-secondary{% endif %}">
-                {{ usuario_selecionado.get_perfil_display }} - {{ usuario_selecionado.status.capitalize }}
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+      <h4 class="mb-0">{{ usuario_selecionado.get_full_name }}</h4>
+      <small class="text-muted">Detalhes do usuário</small>
+    </div>
+    <div class="ms-auto d-flex gap-2">
+      <a href="{% url 'usuario_editar' pk=usuario_selecionado.pk %}"
+         class="btn btn-primary btn-sm">
+        <i class="bi bi-pencil me-1"></i>Editar
+      </a>
+      <form method="post" action="{% url 'toggle_usuario_status' pk=usuario_selecionado.pk %}"
+            class="d-inline"
+            onsubmit="return confirm('{% if usuario_selecionado.is_active %}Inativar{% else %}Ativar{% endif %} este usuário?')">
+        {% csrf_token %}
+        <button type="submit"
+                class="btn btn-sm {% if usuario_selecionado.is_active %}btn-outline-danger{% else %}btn-outline-success{% endif %}">
+          <i class="bi bi-{% if usuario_selecionado.is_active %}person-slash{% else %}person-check{% endif %} me-1"></i>
+          {% if usuario_selecionado.is_active %}Inativar{% else %}Ativar{% endif %}
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    {# Identificação #}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-person-circle text-primary"></i>
+            <strong>Identificação</strong>
+          </div>
+          <div class="d-flex gap-2">
+            <span class="badge {% if usuario_selecionado.perfil == 'coordenador' %}bg-info bg-opacity-10 text-info
+                               {% elif usuario_selecionado.perfil == 'aluno' %}bg-opacity-10 text-dark
+                               {% else %}bg-warning bg-opacity-10 text-warning{% endif %}">
+              {{ usuario_selecionado.get_perfil_display }}
             </span>
+            <span class="badge {% if usuario_selecionado.is_active %}bg-success bg-opacity-10 text-success{% else %}bg-secondary bg-opacity-10 text-secondary{% endif %}">
+              {% if usuario_selecionado.is_active %}Ativo{% else %}Inativo{% endif %}
+            </span>
+          </div>
         </div>
         <div class="card-body">
-            <dl class="row">
-                <dt class="col-sm-3">Nome Completo:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.first_name }} {{ usuario_selecionado.last_name }}</dd>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Nome Completo</span>
+              <span class="fw-semibold">{{ usuario_selecionado.get_full_name|default:"—" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">CPF</span>
+              <span class="fw-semibold">{{ usuario_selecionado.cpf|default:"—" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">RG</span>
+              <span class="fw-semibold">{{ usuario_selecionado.rg|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Data de Nascimento</span>
+              <span class="fw-semibold">{{ usuario_selecionado.data_nascimento|date:"d/m/Y"|default:"Não informada" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Cadastro em</span>
+              <span class="fw-semibold">{{ usuario_selecionado.date_joined|date:"d/m/Y" }}</span>
+            </div>
 
-                <dt class="col-sm-3">Email:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.email }}</dd>
-                
-                <dt class="col-sm-3">CPF:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.cpf }}</dd>
+            {# Campos exclusivos coordenador #}
+            {% if usuario_selecionado.perfil == 'coordenador' %}
+            <div class="col-md-3">
+              <span class="text-muted small d-block">SIAPE</span>
+              <span class="fw-semibold">{{ usuario_selecionado.siape|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Nº Lattes</span>
+              <span class="fw-semibold">{{ usuario_selecionado.lattes|default:"Não informado" }}</span>
+            </div>
+            <div class="col-md-6">
+              <span class="text-muted small d-block">Área CNPq</span>
+              <span class="fw-semibold">{{ usuario_selecionado.get_cnpq_area_display|default:"Não informada" }}</span>
+            </div>
+            {% endif %}
 
-                <dt class="col-sm-3">Telefone:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.telefone|default:"Não informado" }}</dd>
-
-                <dt class="col-sm-3">Curso:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.curso|default:"Não informado" }}</dd>
-                
-                <dt class="col-sm-3">Titulação:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.titulacao|default:"Não informada" }}</dd>
-                
-                <dt class="col-sm-3">Data de Cadastro:</dt>
-                <dd class="col-sm-9">{{ usuario_selecionado.date_joined|date:"d/m/Y H:i" }}</dd>
-            </dl>
+            {# Campos exclusivos aluno #}
+            {% if usuario_selecionado.perfil == 'aluno' %}
+            <div class="col-md-3">
+              <span class="text-muted small d-block">Nº de Matrícula</span>
+              <span class="fw-semibold">{{ usuario_selecionado.matricula|default:"Não informada" }}</span>
+            </div>
+            {% endif %}
+          </div>
         </div>
+      </div>
     </div>
+
+    {# Contato #}
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-envelope text-primary"></i>
+          <strong>Contato</strong>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <span class="text-muted small d-block">E-mail</span>
+            <span class="fw-semibold">{{ usuario_selecionado.email|default:"—" }}</span>
+          </div>
+          <div>
+            <span class="text-muted small d-block">Telefone</span>
+            <span class="fw-semibold">{{ usuario_selecionado.telefone|default:"Não informado" }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Institucional #}
+    <div class="col-md-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-building text-primary"></i>
+          <strong>Informações Institucionais</strong>
+        </div>
+        <div class="card-body">
+          {% if usuario_selecionado.perfil == 'coordenador' %}
+          <div class="mb-3">
+            <span class="text-muted small d-block">Titulação</span>
+            <span class="fw-semibold">{{ usuario_selecionado.titulacao|default:"Não informada" }}</span>
+          </div>
+          <div class="mb-3">
+            <span class="text-muted small d-block">Regime de Trabalho</span>
+            <span class="fw-semibold">{{ usuario_selecionado.regime_trabalho|default:"Não informado" }}</span>
+          </div>
+          <div>
+            <span class="text-muted small d-block">Centro de Lotação</span>
+            <span class="fw-semibold">{{ usuario_selecionado.centro_lotacao|default:"Não informado" }}</span>
+          </div>
+          {% elif usuario_selecionado.perfil == 'aluno' %}
+          <div>
+            <span class="text-muted small d-block">Curso de Graduação</span>
+            <span class="fw-semibold">{{ usuario_selecionado.curso|default:"Não informado" }}</span>
+          </div>
+          {% else %}
+          <div>
+            <span class="text-muted small d-block">Perfil</span>
+            <span class="fw-semibold">{{ usuario_selecionado.get_perfil_display }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {# Projetos vinculados #}
+    {% if usuario_selecionado.perfil == 'coordenador' %}
+    {% with projetos=usuario_selecionado.projetos_coordenados.exclude|default:None %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-folder2 text-primary"></i>
+          <strong>Projetos Coordenados</strong>
+          <span class="badge bg-primary bg-opacity-10 text-primary ms-1">
+            {{ usuario_selecionado.projetos_coordenados.count }}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          {% with ps=usuario_selecionado.projetos_coordenados.all %}
+          {% if ps %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr><th>Título</th><th class="text-center">Status</th></tr>
+              </thead>
+              <tbody>
+                {% for p in ps %}
+                <tr>
+                  <td><a href="{% url 'projeto_detalhe' pk=p.pk %}" class="text-decoration-none fw-semibold">{{ p.titulo|truncatechars:60 }}</a></td>
+                  <td class="text-center">
+                    {% if p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+                    {% elif p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
+                    {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
+                    {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
+                    {% elif p.status == 'rascunho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Rascunho</span>
+                    {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted small">Nenhum projeto coordenado.</div>
+          {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endif %}
+
+    {% if usuario_selecionado.perfil == 'aluno' %}
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+          <i class="bi bi-people text-primary"></i>
+          <strong>Projetos Vinculados</strong>
+          <span class="badge bg-primary bg-opacity-10 text-primary ms-1">
+            {{ usuario_selecionado.participacoes.count }}
+          </span>
+        </div>
+        <div class="card-body p-0">
+          {% with parts=usuario_selecionado.participacoes.select_related %}
+          {% with parts=usuario_selecionado.participacoes.all %}
+          {% if parts %}
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 small">
+              <thead class="table-light">
+                <tr><th>Projeto</th><th>Coordenador</th><th>Função</th><th class="text-center">Status</th></tr>
+              </thead>
+              <tbody>
+                {% for part in parts %}
+                <tr>
+                  <td><a href="{% url 'projeto_detalhe' pk=part.projeto.pk %}" class="text-decoration-none fw-semibold">{{ part.projeto.titulo|truncatechars:45 }}</a></td>
+                  <td class="text-muted">{{ part.projeto.coordenador.get_full_name|truncatechars:25 }}</td>
+                  <td>{{ part.get_funcao_display }}</td>
+                  <td class="text-center">
+                    {% if part.projeto.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
+                    {% elif part.projeto.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% else %}<span class="badge bg-light text-muted">{{ part.projeto.get_status_display }}</span>{% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-3 text-muted small">Nenhuma participação encontrada.</div>
+          {% endif %}
+          {% endwith %}
+          {% endwith %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
 </div>
 {% endblock %}

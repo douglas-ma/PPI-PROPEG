@@ -4,14 +4,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const sidebar = document.getElementById('sidebar');
     const toggleBtn = document.getElementById('toggle-btn');
 
-    // Verifica se os elementos existem antes de adicionar o evento
     if (sidebar && toggleBtn) {
+        // Restaura o estado salvo ao carregar a página
+        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+            sidebar.classList.add('collapsed');
+        }
+
         toggleBtn.addEventListener('click', function (event) {
-            // Previne o comportamento padrão do link (que é navegar para '#')
             event.preventDefault();
-            
-            // Adiciona ou remove a classe 'collapsed' da sidebar
             sidebar.classList.toggle('collapsed');
+            // Persiste o estado atual
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
     }
 

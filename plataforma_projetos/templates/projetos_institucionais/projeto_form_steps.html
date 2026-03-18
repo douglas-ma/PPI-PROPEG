@@ -1,0 +1,1212 @@
+{% extends "base2.html" %}
+{% load static %}
+
+{% block title %}
+  {% if projeto.titulo %}{{ projeto.titulo }}{% else %}Novo Projeto{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-4">
+
+  {# ── Cabeçalho ─────────────────────────────────────────────────────────── #}
+  <div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+          <li class="breadcrumb-item">
+            <a href="{% url 'projeto_dashboard' %}" class="text-decoration-none">Meus Projetos</a>
+          </li>
+          <li class="breadcrumb-item active text-truncate" style="max-width:300px;">
+            {% if projeto.titulo %}{{ projeto.titulo }}{% else %}Novo Projeto{% endif %}
+          </li>
+        </ol>
+      </nav>
+      <div class="d-flex align-items-center gap-2">
+        <h4 class="mb-0">
+          {% if projeto.titulo %}{{ projeto.titulo }}{% else %}Novo Projeto{% endif %}
+        </h4>
+        {% if projeto.status == 'rascunho' %}
+          <span class="badge bg-warning text-dark">
+            <i class="bi bi-pencil-fill me-1"></i>Rascunho
+          </span>
+        {% elif projeto.status == 'reprovado' %}
+          <span class="badge bg-danger">
+            <i class="bi bi-x-circle-fill me-1"></i>Reprovado – Em edição
+          </span>
+        {% endif %}
+      </div>
+    </div>
+    <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-x-lg me-1"></i>Sair (rascunho mantido)
+    </a>
+  </div>
+
+  {# ── Barra de progresso ────────────────────────────────────────────────── #}
+  <div class="mb-4">
+    <div class="d-flex justify-content-between small text-muted mb-1">
+      <span>{{ step_info.nome }}</span>
+      <span>Etapa {{ step }} de {{ step_total }}</span>
+    </div>
+    <div class="progress" style="height:7px;border-radius:10px;">
+      <div class="progress-bar bg-primary"
+           style="width: {% widthratio step step_total 100 %}%; border-radius:10px;"
+           role="progressbar"
+           aria-valuenow="{{ step }}" aria-valuemin="1" aria-valuemax="{{ step_total }}">
+      </div>
+    </div>
+  </div>
+
+  {# ── Layout principal ──────────────────────────────────────────────────── #}
+  <div class="row g-4">
+
+    {# Sidebar de etapas #}
+    <div class="col-12 col-md-3">
+      <div class="card shadow-sm border-0">
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush rounded">
+          {% for etapa in etapas_info %}
+            {% with status=etapas_status|default:'' %}
+            {# Determina o estado visual da etapa #}
+            {# completo = etapa anterior AND campos preenchidos #}
+            {# incompleto = etapa anterior AND campos faltando #}
+            {# atual = etapa em foco #}
+            {# futuro = etapa ainda não visitada #}
+            <a href="{% url 'projeto_etapa' pk=projeto.pk step=etapa.num %}"
+               class="list-group-item list-group-item-action d-flex align-items-center gap-3 py-3 px-3
+                      {% if etapa.num == step %}active{% endif %}">
+
+              {% if etapa.num == step %}
+                {# Etapa atual — bolinha azul com número #}
+                <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold"
+                     style="width:28px;height:28px;min-width:28px;font-size:.8rem;
+                            background:#fff;color:#0d6efd;">
+                  {{ etapa.num }}
+                </div>
+                <span class="fw-semibold">{{ etapa.nome }}</span>
+
+              {% elif etapa.num < step %}
+                {# Etapa já passada — verde se completa, amarelo se incompleta #}
+                {% if etapa.num == 1 and etapas_status.1 %}
+                  <div class="d-flex align-items-center justify-content-center rounded-circle"
+                       style="width:28px;height:28px;min-width:28px;background:#198754;color:#fff;">
+                    <i class="bi bi-check-lg" style="font-size:.9rem;"></i>
+                  </div>
+                  <span class="text-success fw-semibold small">{{ etapa.nome }}</span>
+                {% elif etapa.num == 2 and etapas_status.2 %}
+                  <div class="d-flex align-items-center justify-content-center rounded-circle"
+                       style="width:28px;height:28px;min-width:28px;background:#198754;color:#fff;">
+                    <i class="bi bi-check-lg" style="font-size:.9rem;"></i>
+                  </div>
+                  <span class="text-success fw-semibold small">{{ etapa.nome }}</span>
+                {% elif etapa.num == 3 or etapa.num == 4 %}
+                  {# Etapas opcionais — sempre verde quando passadas #}
+                  <div class="d-flex align-items-center justify-content-center rounded-circle"
+                       style="width:28px;height:28px;min-width:28px;background:#198754;color:#fff;">
+                    <i class="bi bi-check-lg" style="font-size:.9rem;"></i>
+                  </div>
+                  <span class="text-success fw-semibold small">{{ etapa.nome }}</span>
+                {% else %}
+                  {# Incompleta — amarelo com ícone de aviso #}
+                  <div class="d-flex align-items-center justify-content-center rounded-circle"
+                       style="width:28px;height:28px;min-width:28px;background:#ffc107;color:#212529;">
+                    <i class="bi bi-exclamation-lg" style="font-size:.9rem;"></i>
+                  </div>
+                  <span class="fw-semibold small" style="color:#856404;">
+                    {{ etapa.nome }}
+                    <span class="d-block" style="font-weight:normal;font-size:.7rem;">Campos obrigatórios</span>
+                  </span>
+                {% endif %}
+
+              {% else %}
+                {# Etapa futura — cinza #}
+                <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold"
+                     style="width:28px;height:28px;min-width:28px;font-size:.8rem;
+                            background:#e9ecef;color:#6c757d;">
+                  {{ etapa.num }}
+                </div>
+                <span class="text-muted small">{{ etapa.nome }}</span>
+              {% endif %}
+
+            </a>
+            {% endwith %}
+          {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      {# Dica de rascunho #}
+      <div class="alert alert-info border-0 mt-3 py-2 px-3 small">
+        <i class="bi bi-lightbulb-fill me-1"></i>
+        <strong>Dica:</strong> Use <em>"Salvar Rascunho"</em> a qualquer momento. Seus dados ficam salvos mesmo que você feche o navegador.
+      </div>
+    </div>
+
+    {# Conteúdo do formulário #}
+    <div class="col-12 col-md-9">
+      <div class="card shadow-sm border-0">
+        <div class="card-header bg-white border-bottom py-3">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi {{ step_info.icon }} text-primary fs-5"></i>
+            <h5 class="mb-0">{{ step_info.nome }}</h5>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <form method="post" enctype="multipart/form-data" novalidate id="etapa-form">
+            {% csrf_token %}
+
+            {# ETAPA 1 – Informações Gerais #}
+            {% if step == 1 %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              {# Seção: Edital (opcional) #}
+              <div class="mb-4 p-3 bg-light rounded">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-file-earmark-text me-1"></i>Vínculo com Edital (Opcional)
+                </h6>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label" for="{{ form.edital.id_for_label }}">{{ form.edital.label }}</label>
+                    <select name="{{ form.edital.html_name }}" id="{{ form.edital.id_for_label }}" class="form-select {% if form.edital.errors %}is-invalid{% endif %}">
+                      <option value="">{{ form.fields.edital.empty_label }}</option>
+                      {% for val, label in form.fields.edital.choices %}
+                        {% if val %}
+                          <option value="{{ val }}" {% if form.edital.value == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    {% if form.edital.errors %}<div class="invalid-feedback">{{ form.edital.errors }}</div>{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Identificação #}
+              <div class="mb-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-card-heading me-1"></i>Identificação do Projeto
+                </h6>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label fw-semibold" for="{{ form.titulo.id_for_label }}">
+                      {{ form.titulo.label }} <span class="text-danger">*</span>
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Informe o título completo e oficial do projeto, conforme será apresentado na submissão."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <input type="text" name="{{ form.titulo.html_name }}" id="{{ form.titulo.id_for_label }}"
+                           value="{{ form.titulo.value|default:'' }}"
+                           class="form-control {% if form.titulo.errors %}is-invalid{% endif %}"
+                           placeholder="Título completo do projeto">
+                    {% if form.titulo.errors %}<div class="invalid-feedback">{{ form.titulo.errors }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.data_inicio.id_for_label }}">
+                      {{ form.data_inicio.label }} <span class="text-danger">*</span>
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Data prevista para o início das atividades do projeto."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <input type="date" name="{{ form.data_inicio.html_name }}" id="{{ form.data_inicio.id_for_label }}"
+                           value="{{ form.data_inicio.value|date:'Y-m-d'|default:'' }}"
+                           class="form-control {% if form.data_inicio.errors %}is-invalid{% endif %}">
+                    {% if form.data_inicio.errors %}<div class="invalid-feedback">{{ form.data_inicio.errors }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.data_fim.id_for_label }}">
+                      {{ form.data_fim.label }} <span class="text-danger">*</span>
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Data prevista para o encerramento das atividades do projeto."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <input type="date" name="{{ form.data_fim.html_name }}" id="{{ form.data_fim.id_for_label }}"
+                           value="{{ form.data_fim.value|date:'Y-m-d'|default:'' }}"
+                           class="form-control {% if form.data_fim.errors %}is-invalid{% endif %}">
+                    {% if form.data_fim.errors %}<div class="invalid-feedback">{{ form.data_fim.errors }}</div>{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Localização #}
+              <div class="mb-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-building me-1"></i>Localização Institucional
+                </h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold" for="{{ form.centro_lotacao.id_for_label }}">
+                      {{ form.centro_lotacao.label }} <span class="text-danger">*</span>
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Selecione o centro ou unidade da UFAC ao qual o coordenador do projeto está vinculado."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <select name="{{ form.centro_lotacao.html_name }}" id="{{ form.centro_lotacao.id_for_label }}"
+                            class="form-select {% if form.centro_lotacao.errors %}is-invalid{% endif %}"
+                            onchange="carregarCursos(this.value)">
+                      <option value="">Selecione o centro</option>
+                      {% for val, label in form.fields.centro_lotacao.choices %}
+                        {% if val %}
+                          <option value="{{ val }}" {% if form.centro_lotacao.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    {% if form.centro_lotacao.errors %}<div class="invalid-feedback">{{ form.centro_lotacao.errors }}</div>{% endif %}
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="{{ form.curso.id_for_label }}">
+                      {{ form.curso.label }}
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Se o projeto estiver vinculado a um curso de graduação, selecione-o aqui. Caso contrário, deixe em branco."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <select name="{{ form.curso.html_name }}" id="{{ form.curso.id_for_label }}"
+                            class="form-select {% if form.curso.errors %}is-invalid{% endif %}">
+                      <option value="">Selecione o curso</option>
+                      {% for val, label in form.fields.curso.choices %}
+                        {% if val %}
+                          <option value="{{ val }}" {% if form.curso.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                        {% endif %}
+                      {% endfor %}
+                    </select>
+                    {% if form.curso.errors %}<div class="invalid-feedback">{{ form.curso.errors }}</div>{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Perfil do Coordenador #}
+              <div class="mb-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-person-badge me-1"></i>Perfil do Coordenador
+                </h6>
+                <div class="row g-3">
+                  {% for fname, flabel in form.fields.items %}{% endfor %}
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">{{ form.eh_docente.label }}</label>
+                    {% for radio in form.eh_docente %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">{{ form.eh_pesquisador.label }}</label>
+                    {% for radio in form.eh_pesquisador %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-4">
+                    <label class="form-label fw-semibold">{{ form.eh_pesquisador_visitante.label }}</label>
+                    {% for radio in form.eh_pesquisador_visitante %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">{{ form.participa_pos_graduacao.label }}</label>
+                    {% for radio in form.participa_pos_graduacao %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6" id="bloco-programa-pos" style="display:none;">
+                    <label class="form-label" for="{{ form.programa_pos_nome.id_for_label }}">{{ form.programa_pos_nome.label }}</label>
+                    <input type="text" name="{{ form.programa_pos_nome.html_name }}" id="{{ form.programa_pos_nome.id_for_label }}"
+                           value="{{ form.programa_pos_nome.value|default:'' }}"
+                           class="form-control" placeholder="{{ form.fields.programa_pos_nome.widget.attrs.placeholder }}">
+                  </div>
+
+                  <div class="col-12">
+                    <label class="form-label" for="{{ form.grupos_pesquisa_str.id_for_label }}">
+                      {{ form.grupos_pesquisa_str.label }}
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Liste os grupos de pesquisa cadastrados no CNPq dos quais o coordenador ou membros participam. Separe cada nome por vírgula."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <input type="text" name="{{ form.grupos_pesquisa_str.html_name }}" id="{{ form.grupos_pesquisa_str.id_for_label }}"
+                           value="{{ form.grupos_pesquisa_str.value|default:'' }}"
+                           class="form-control" placeholder="{{ form.fields.grupos_pesquisa_str.widget.attrs.placeholder }}">
+                    <div class="form-text">{{ form.grupos_pesquisa_str.help_text }}</div>
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Financiamento #}
+              <div class="mb-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-cash-coin me-1"></i>Financiamento
+                </h6>
+                <div class="row g-3">
+                  <div class="col-12">
+                    <label class="form-label fw-semibold">{{ form.possui_financiamento.label }}</label>
+                    {% for radio in form.possui_financiamento %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div id="bloco-financiamento" style="display:none;">
+                    <div class="row g-3">
+                      <div class="col-md-8">
+                        <label class="form-label" for="{{ form.agencia_financiadora_nome.id_for_label }}">{{ form.agencia_financiadora_nome.label }}</label>
+                        <input type="text" name="{{ form.agencia_financiadora_nome.html_name }}" id="{{ form.agencia_financiadora_nome.id_for_label }}"
+                               value="{{ form.agencia_financiadora_nome.value|default:'' }}"
+                               class="form-control" placeholder="{{ form.fields.agencia_financiadora_nome.widget.attrs.placeholder }}">
+                      </div>
+                      <div class="col-md-4">
+                        <label class="form-label" for="{{ form.valor_fomento.id_for_label }}">
+                          {{ form.valor_fomento.label }}
+                          <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                                data-bs-content="Informe o valor total em reais (R$) do financiamento externo obtido para o projeto."
+                                class="text-muted ms-1" style="cursor:help;">
+                            <i class="bi bi-question-circle"></i>
+                          </span>
+                        </label>
+                        <div class="input-group">
+                          <span class="input-group-text">R$</span>
+                          <input type="text" name="{{ form.valor_fomento.html_name }}"
+                                 id="{{ form.valor_fomento.id_for_label }}"
+                                 value="{{ form.valor_fomento.value|default:'' }}"
+                                 class="form-control {% if form.valor_fomento.errors %}is-invalid{% endif %}"
+                                 placeholder="0,00"
+                                 inputmode="numeric"
+                                 autocomplete="off"
+                                 data-mascara="moeda">
+                        </div>
+                        {% if form.valor_fomento.errors %}<div class="invalid-feedback d-block">{{ form.valor_fomento.errors }}</div>{% endif %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Ética #}
+              <div class="mb-4">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-shield-check me-1"></i>Aspectos Éticos
+                </h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">
+                      {{ form.etica_obrigatoria.label }}
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Marque 'Sim' se o projeto envolve seres humanos, animais ou aspectos que exijam aprovação de um Comitê de Ética (CEP, CEUA, etc.)."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    {% for radio in form.etica_obrigatoria %}
+                      <div class="form-check">
+                        {{ radio.tag }}
+                        <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                      </div>
+                    {% endfor %}
+                  </div>
+                  <div class="col-md-6" id="bloco-etica" style="display:none;">
+                    <label class="form-label" for="{{ form.tipo_etica_nome.id_for_label }}">
+                      {{ form.tipo_etica_nome.label }}
+                      <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                            data-bs-content="Informe o tipo de comitê responsável pela aprovação, ex: CEP (Comitê de Ética em Pesquisa) ou CEUA (Comitê de Ética no Uso de Animais)."
+                            class="text-muted ms-1" style="cursor:help;">
+                        <i class="bi bi-question-circle"></i>
+                      </span>
+                    </label>
+                    <input type="text" name="{{ form.tipo_etica_nome.html_name }}" id="{{ form.tipo_etica_nome.id_for_label }}"
+                           value="{{ form.tipo_etica_nome.value|default:'' }}"
+                           class="form-control" placeholder="{{ form.fields.tipo_etica_nome.widget.attrs.placeholder }}">
+                    <div class="mt-3">
+                      <label class="form-label fw-semibold">
+                        {{ form.comprovante_etica.label }}
+                        <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                              data-bs-content="Anexe o documento oficial de aprovação emitido pelo comitê de ética (preferencialmente em PDF)."
+                              class="text-muted ms-1" style="cursor:help;">
+                          <i class="bi bi-question-circle"></i>
+                        </span>
+                      </label>
+                      {% with comprovante_etica_salvo=projeto.anexos.all %}
+                        {% for anx in comprovante_etica_salvo %}
+                          {% if anx.tipo_anexo == 'comite_etica' %}
+                          <div class="d-flex align-items-center gap-2 mb-2 small text-success">
+                            <i class="bi bi-file-earmark-check"></i>
+                            <a href="{{ anx.arquivo.url }}" target="_blank">Comprovante já enviado</a>
+                            <span class="text-muted">(envie outro para substituir)</span>
+                          </div>
+                          {% endif %}
+                        {% endfor %}
+                      {% endwith %}
+                      <input type="file" name="{{ form.comprovante_etica.html_name }}"
+                             id="{{ form.comprovante_etica.id_for_label }}"
+                             class="form-control" accept=".pdf,.png,.jpg,.jpeg">
+                      <div class="form-text">{{ form.comprovante_etica.help_text }}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {# Seção: Imagem e Anexos #}
+              <div class="mb-2">
+                <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                  <i class="bi bi-images me-1"></i>Imagem e Anexos
+                </h6>
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label" for="{{ form.imagem_capa.id_for_label }}">{{ form.imagem_capa.label }}</label>
+                    {% if projeto.imagem_capa %}
+                      <div class="mb-2">
+                        <img src="{{ projeto.imagem_capa.url }}" alt="Capa atual" style="max-height:100px;border-radius:8px;">
+                        <div class="form-text">Imagem atual. Selecione outra para substituir.</div>
+                      </div>
+                    {% endif %}
+                    <input type="file" name="{{ form.imagem_capa.html_name }}" id="{{ form.imagem_capa.id_for_label }}"
+                           class="form-control" accept="image/*">
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label" for="{{ form.anexos_gerais.id_for_label }}">{{ form.anexos_gerais.label }}</label>
+                    <input type="file" name="{{ form.anexos_gerais.html_name }}" id="{{ form.anexos_gerais.id_for_label }}"
+                           class="form-control" multiple accept=".pdf,.png,.jpg,.jpeg">
+                    <div class="form-text">{{ form.anexos_gerais.help_text }}</div>
+
+                    {# Listar anexos já salvos #}
+                    {% with anexos_atuais=projeto.anexos.filter %}
+                    {% if projeto.anexos.all %}
+                      <div class="mt-2">
+                        <small class="text-muted fw-semibold">Anexos já enviados:</small>
+                        <ul class="list-unstyled mt-1 mb-0">
+                          {% for anexo in projeto.anexos.exclude %}
+                          {% endfor %}
+                          {% for anexo in projeto.anexos.all %}
+                            {% if anexo.tipo_anexo == 'outro' %}
+                            <li class="d-flex align-items-center gap-2 small py-1 border-bottom">
+                              <i class="bi bi-file-earmark text-secondary"></i>
+                              <a href="{{ anexo.arquivo.url }}" target="_blank" class="text-truncate" style="max-width:200px;">
+                                {{ anexo.arquivo.name|cut:"anexos/" }}
+                              </a>
+                              <a href="{% url 'deletar_anexo' anexo_id=anexo.pk %}"
+                                 class="btn btn-link btn-sm text-danger p-0 ms-auto"
+                                 onclick="return confirm('Remover este anexo?')">
+                                <i class="bi bi-trash"></i>
+                              </a>
+                            </li>
+                            {% endif %}
+                          {% endfor %}
+                        </ul>
+                      </div>
+                    {% endif %}
+                    {% endwith %}
+                  </div>
+                </div>
+              </div>
+
+            {# ETAPA 2 – Detalhes do Projeto #}
+            {% elif step == 2 %}
+
+              {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+              {% endif %}
+
+              <p class="text-muted mb-4">Preencha os campos abaixo com detalhes acadêmicos do projeto. Todos os campos podem ser preenchidos parcialmente e salvos como rascunho.</p>
+
+              {% for field in form %}
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="{{ field.id_for_label }}">
+                  {{ field.label }}
+                  {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                  {% if field.html_name == 'resumo' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Apresente de forma sucinta os objetivos, metodologia e resultados esperados. Máximo de 1500 caracteres."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'palavras_chave' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Informe de 3 a 6 palavras que representem os temas centrais do projeto. Separe por vírgulas."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'introducao' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Contextualize o tema, apresente o problema de pesquisa e a justificativa para a realização do projeto."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'objetivos' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Descreva o objetivo geral e os objetivos específicos do projeto de forma clara e mensurável."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'objetivo_geral' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Descreva em uma frase o propósito central do projeto — o que ele pretende alcançar de forma ampla."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'objetivos_especificos' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Liste as metas mensuráveis que, juntas, levarão ao objetivo geral. Cada linha pode ser um objetivo específico."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'metodologia' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Detalhe os procedimentos, técnicas e instrumentos que serão utilizados para alcançar os objetivos."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'resultados' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Descreva os resultados, produtos ou impactos esperados ao final do projeto."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'referencias' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Liste as referências bibliográficas utilizadas, preferencialmente no formato ABNT."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% elif field.html_name == 'parcerias' %}
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Informe instituições, empresas ou organizações parceiras envolvidas no projeto, se houver."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                  {% endif %}
+                </label>
+                {% if field.field.widget.input_type == 'textarea' %}
+                  <textarea name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                            class="form-control {% if field.errors %}is-invalid{% endif %}"
+                            rows="{{ field.field.widget.attrs.rows|default:4 }}"
+                            {% if field.html_name == 'resumo' %}maxlength="1500"{% endif %}>{{ field.value|default:'' }}</textarea>
+                  {% if field.html_name == 'resumo' %}
+                    <div class="form-text d-flex justify-content-between">
+                      <span>Máximo de 1500 caracteres.</span>
+                      <span id="resumo-count">{{ field.value|default:''|length }}/1500</span>
+                    </div>
+                  {% endif %}
+                {% else %}
+                  <input type="{{ field.field.widget.input_type }}"
+                         name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                         value="{{ field.value|default:'' }}"
+                         class="form-control {% if field.errors %}is-invalid{% endif %}"
+                         {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}>
+                {% endif %}
+                {% if field.errors %}<div class="invalid-feedback">{{ field.errors }}</div>{% endif %}
+                {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+              </div>
+              {% endfor %}
+
+              {# ── Seção de Anexos do Projeto ── #}
+              <hr class="my-3">
+              <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                <i class="bi bi-paperclip me-1"></i>Anexos do Projeto
+                <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                      data-bs-content="Envie documentos, imagens ou figuras que farão parte do relatório de submissão (cronograma, mapas, gráficos, etc.). Formatos aceitos: PDF, PNG, JPG."
+                      class="text-muted ms-1 fw-normal" style="cursor:help;">
+                  <i class="bi bi-question-circle"></i>
+                </span>
+              </h6>
+
+              {# Listar anexos já salvos nesta etapa #}
+              {% with anexos_projeto=projeto.anexos.all %}
+              {% if anexos_projeto %}
+              <div class="mb-3">
+                <p class="small text-muted mb-2">Arquivos já enviados:</p>
+                <ul class="list-group list-group-flush">
+                  {% for anx in anexos_projeto %}
+                  {% if anx.tipo_anexo == 'imagens' or anx.tipo_anexo == 'cronograma' or anx.tipo_anexo == 'outro' %}
+                  <li class="list-group-item d-flex align-items-center gap-2 py-2 px-0">
+                    <i class="bi bi-file-earmark text-secondary"></i>
+                    <a href="{{ anx.arquivo.url }}" target="_blank" class="text-truncate flex-grow-1" style="max-width:300px;">
+                      {% if anx.descricao %}{{ anx.descricao }}{% else %}{{ anx.arquivo.name|cut:"anexos/" }}{% endif %}
+                    </a>
+                    <span class="badge bg-light text-muted border small">{{ anx.get_tipo_anexo_display }}</span>
+                    <a href="{% url 'deletar_anexo' anexo_id=anx.pk %}"
+                       class="btn btn-link btn-sm text-danger p-0 ms-1"
+                       onclick="return confirm('Remover este anexo do projeto?')">
+                      <i class="bi bi-trash"></i>
+                    </a>
+                  </li>
+                  {% endif %}
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+              {% endwith %}
+
+              {# Upload de novos anexos — formulário separado com ação própria #}
+              <form method="post" enctype="multipart/form-data"
+                    action="{% url 'projeto_etapa2_add_anexo' pk=projeto.pk %}">
+                {% csrf_token %}
+                <div class="row g-3">
+                  <div class="col-md-5">
+                    <label class="form-label fw-semibold">Tipo do Arquivo</label>
+                    <select name="tipo_anexo_etapa2" id="tipo_anexo_etapa2" class="form-select">
+                      <option value="cronograma">Cronograma</option>
+                      <option value="imagens">Figura / Imagem</option>
+                      <option value="outro">Outro</option>
+                    </select>
+                  </div>
+                  <div class="col-md-7">
+                    <label class="form-label fw-semibold">Descrição (opcional)</label>
+                    <input type="text" name="descricao_anexo_etapa2" id="descricao_anexo_etapa2"
+                           class="form-control" placeholder="Ex: Cronograma de atividades, Figura 1...">
+                  </div>
+                  <div class="col-md-9">
+                    <label class="form-label fw-semibold">Selecionar Arquivo</label>
+                    <input type="file" name="arquivo_etapa2" id="arquivo_etapa2"
+                           class="form-control" accept=".pdf,.png,.jpg,.jpeg">
+                    <div class="form-text">Envie um arquivo por vez. Repita para adicionar mais.</div>
+                  </div>
+                  <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                      <i class="bi bi-upload me-1"></i>Adicionar Anexo
+                    </button>
+                  </div>
+                </div>
+              </form>
+            {% elif step == 3 %}
+
+              <p class="text-muted mb-3">Adicione os membros que participarão do projeto. Você pode salvar como rascunho com a equipe incompleta.</p>
+
+              {{ formset.management_form }}
+
+              <div class="table-responsive">
+                <table class="table table-hover align-middle" id="equipe-table">
+                  <thead class="table-light">
+                    <tr>
+                      <th>Membro</th>
+                      <th>Função</th>
+                      <th>CH Semanal (h)</th>
+                      <th>CH Total (h)</th>
+                      <th class="text-center" style="width:80px;">Remover</th>
+                    </tr>
+                  </thead>
+                  <tbody id="equipe-formset-container">
+                    {% for equipe_form in formset %}
+                    <tr class="equipe-form-row {% if equipe_form.instance.pk %}table-light{% endif %}">
+                      {{ equipe_form.id }}
+                      {% if equipe_form.errors %}
+                      <td colspan="5">
+                        <div class="alert alert-danger py-1 mb-0 small">{{ equipe_form.errors }}</div>
+                      </td>
+                      {% else %}
+                      <td>
+                        <select name="{{ equipe_form.membro.html_name }}"
+                                class="form-select form-select-sm">
+                          <option value="">Selecione um membro</option>
+                          {% for val, label in equipe_form.fields.membro.choices %}
+                            {% if val %}
+                              <option value="{{ val }}" {% if equipe_form.membro.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+                            {% endif %}
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td>
+                        <select name="{{ equipe_form.funcao.html_name }}"
+                                class="form-select form-select-sm">
+                          {% for val, label in equipe_form.fields.funcao.choices %}
+                            <option value="{{ val }}" {% if equipe_form.funcao.value == val %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                      </td>
+                      <td>
+                        <input type="number" name="{{ equipe_form.carga_horaria_semanal.html_name }}"
+                               value="{{ equipe_form.carga_horaria_semanal.value|default:'' }}"
+                               class="form-control form-control-sm" min="1" max="40" placeholder="h/sem">
+                      </td>
+                      <td>
+                        <input type="number" name="{{ equipe_form.carga_horaria_total.html_name }}"
+                               value="{{ equipe_form.carga_horaria_total.value|default:'' }}"
+                               class="form-control form-control-sm" min="1" placeholder="h total">
+                      </td>
+                      <td class="text-center">
+                        <div style="display:none;">{{ equipe_form.DELETE }}</div>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-equipe-row">
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                      {% endif %}
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+
+              <button type="button" id="add-equipe-btn" class="btn btn-outline-primary btn-sm mt-1">
+                <i class="bi bi-plus-lg me-1"></i>Adicionar Membro
+              </button>
+
+              {# Template de linha vazia para o JS #}
+              <table style="display:none;">
+                <tbody id="equipe-empty-template">
+                  <tr class="equipe-form-row">
+                    {{ formset.empty_form.id }}
+                    <td>
+                      <select name="{{ formset.empty_form.membro.html_name }}" class="form-select form-select-sm">
+                        <option value="">Selecione um membro</option>
+                        {% for val, label in formset.empty_form.fields.membro.choices %}
+                          {% if val %}<option value="{{ val }}">{{ label }}</option>{% endif %}
+                        {% endfor %}
+                      </select>
+                    </td>
+                    <td>
+                      <select name="{{ formset.empty_form.funcao.html_name }}" class="form-select form-select-sm">
+                        {% for val, label in formset.empty_form.fields.funcao.choices %}
+                          <option value="{{ val }}">{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number" name="{{ formset.empty_form.carga_horaria_semanal.html_name }}"
+                             class="form-control form-control-sm" min="1" max="40" placeholder="h/sem">
+                    </td>
+                    <td>
+                      <input type="number" name="{{ formset.empty_form.carga_horaria_total.html_name }}"
+                             class="form-control form-control-sm" min="1" placeholder="h total">
+                    </td>
+                    <td class="text-center">
+                      <div style="display:none;">{{ formset.empty_form.DELETE }}</div>
+                      <button type="button" class="btn btn-outline-danger btn-sm remove-equipe-row">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+            {# ETAPA 4 – Vínculo com ODS #}
+            {% elif step == 4 %}
+
+              <p class="text-muted mb-1">Selecione os Objetivos de Desenvolvimento Sustentável relacionados ao projeto.</p>
+              <p class="small text-muted mb-3">Selecionados: <strong id="ods-counter">0</strong> de 17</p>
+
+              <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 g-3" id="ods-grid">
+                {% for ods in form.fields.ods.queryset %}
+                <div class="col">
+                  <label class="ods-card w-100 position-relative"
+                         style="cursor:pointer;">
+                    <input type="checkbox"
+                           name="{{ form.ods.html_name }}"
+                           value="{{ ods.id }}"
+                           class="ods-checkbox visually-hidden"
+                           {% if ods in form.initial.ods or ods.id|stringformat:"s" in form.ods.value|default:''|stringformat:"s" %}checked{% endif %}>
+                    <div class="card border-2 h-100 ods-card-inner"
+                         style="transition:all .15s;border-color:#dee2e6 !important;">
+                      {% if ods.imagem %}
+                        <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="card-img-top" style="border-radius:4px 4px 0 0;">
+                      {% endif %}
+                      <div class="card-body p-2 text-center">
+                        <small class="fw-semibold" style="font-size:.7rem;line-height:1.2;">{{ ods.titulo }}</small>
+                      </div>
+                      <div class="ods-check-badge position-absolute top-0 end-0 m-1 bg-success text-white rounded-circle d-none"
+                           style="width:22px;height:22px;line-height:22px;text-align:center;font-size:.8rem;">
+                        <i class="bi bi-check"></i>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                {% endfor %}
+              </div>
+
+            {# ETAPA 5 – Revisão e Submissão #}
+            {% elif step == 5 %}
+
+              <p class="lead text-muted mb-4">Revise todas as informações antes de submeter. Se precisar corrigir algo, clique em "Etapa Anterior" ou navegue pelo menu lateral.</p>
+
+              {# Alertas de etapas obrigatórias incompletas #}
+              {% if not etapas_status.1 or not etapas_status.2 %}
+              <div class="alert alert-danger d-flex align-items-start gap-2 mb-4">
+                <i class="bi bi-x-circle-fill mt-1 flex-shrink-0"></i>
+                <div>
+                  <strong>Etapas obrigatórias incompletas:</strong>
+                  <ul class="mb-0 mt-1 ps-3">
+                    {% if not etapas_status.1 %}
+                    <li>
+                      <a href="{% url 'projeto_etapa' pk=projeto.pk step=1 %}" class="alert-link">
+                        Etapa 1 – Informações Gerais
+                      </a>
+                      — Título, datas e centro de lotação são obrigatórios.
+                    </li>
+                    {% endif %}
+                    {% if not etapas_status.2 %}
+                    <li>
+                      <a href="{% url 'projeto_etapa' pk=projeto.pk step=2 %}" class="alert-link">
+                        Etapa 2 – Detalhes do Projeto
+                      </a>
+                      — Resumo, objetivos e metodologia são obrigatórios.
+                    </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </div>
+              {% endif %}
+
+              {# Card: Info Gerais #}
+              <div class="card border-0 bg-light mb-3">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+                  <strong><i class="bi bi-info-circle-fill text-primary me-2"></i>Informações Gerais</strong>
+                  <a href="{% url 'projeto_etapa' pk=projeto.pk step=1 %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </a>
+                </div>
+                <div class="card-body py-2">
+                  <dl class="row mb-0 small">
+                    <dt class="col-sm-4 text-muted">Título</dt>
+                    <dd class="col-sm-8">{{ projeto.titulo|default:"—" }}</dd>
+                    <dt class="col-sm-4 text-muted">Vigência</dt>
+                    <dd class="col-sm-8">
+                      {{ projeto.data_inicio|date:"d/m/Y"|default:"—" }} a {{ projeto.data_fim|date:"d/m/Y"|default:"—" }}
+                    </dd>
+                    <dt class="col-sm-4 text-muted">Centro de Lotação</dt>
+                    <dd class="col-sm-8">{{ projeto.centro_lotacao|default:"—" }}</dd>
+                    <dt class="col-sm-4 text-muted">Curso</dt>
+                    <dd class="col-sm-8">{{ projeto.curso|default:"—" }}</dd>
+                    <dt class="col-sm-4 text-muted">Edital Vinculado</dt>
+                    <dd class="col-sm-8">{{ projeto.edital|default:"Nenhum" }}</dd>
+                    {% if projeto.agencia_financiadora %}
+                    <dt class="col-sm-4 text-muted">Agência Financiadora</dt>
+                    <dd class="col-sm-8">{{ projeto.agencia_financiadora }}</dd>
+                    {% endif %}
+                    {% if projeto.valor_fomento %}
+                    <dt class="col-sm-4 text-muted">Valor do Fomento</dt>
+                    <dd class="col-sm-8">R$ {{ projeto.valor_fomento }}</dd>
+                    {% endif %}
+                  </dl>
+                </div>
+              </div>
+
+              {# Card: Detalhes #}
+              <div class="card border-0 bg-light mb-3">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+                  <strong><i class="bi bi-file-text-fill text-primary me-2"></i>Detalhes do Projeto</strong>
+                  <a href="{% url 'projeto_etapa' pk=projeto.pk step=2 %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </a>
+                </div>
+                <div class="card-body py-2">
+                  <dl class="row mb-0 small">
+                    <dt class="col-sm-4 text-muted">Resumo</dt>
+                    <dd class="col-sm-8">{{ projeto.resumo|default:"—"|truncatechars:200 }}</dd>
+                    <dt class="col-sm-4 text-muted">Palavras-chave</dt>
+                    <dd class="col-sm-8">{{ projeto.palavras_chave|default:"—" }}</dd>
+                    <dt class="col-sm-4 text-muted">Objetivo Geral</dt>
+                    <dd class="col-sm-8">{{ projeto.objetivo_geral|default:"—"|truncatechars:200 }}</dd>
+                    <dt class="col-sm-4 text-muted">Objetivos Específicos</dt>
+                    <dd class="col-sm-8">{{ projeto.objetivos_especificos|default:"—"|truncatechars:200 }}</dd>
+                  </dl>
+                </div>
+              </div>
+
+              {# Card: Equipe #}
+              <div class="card border-0 bg-light mb-3">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+                  <strong><i class="bi bi-people-fill text-primary me-2"></i>Equipe de Trabalho</strong>
+                  <a href="{% url 'projeto_etapa' pk=projeto.pk step=3 %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </a>
+                </div>
+                <div class="card-body py-2">
+                  {% if projeto.equipe.all %}
+                    <ul class="list-unstyled mb-0 small">
+                      {% for membro in projeto.equipe.all %}
+                      <li class="d-flex align-items-center gap-2 py-1 border-bottom">
+                        <i class="bi bi-person-circle text-secondary"></i>
+                        <span>{{ membro.membro.get_full_name }}</span>
+                        <span class="badge bg-light text-dark border">{{ membro.get_funcao_display }}</span>
+                        <span class="text-muted ms-auto">{{ membro.carga_horaria_semanal }}h/sem · {{ membro.carga_horaria_total }}h total</span>
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  {% else %}
+                    <span class="text-muted small">Nenhum membro adicionado.</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Card: ODS #}
+              <div class="card border-0 bg-light mb-3">
+                <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center py-2">
+                  <strong><i class="bi bi-globe2 text-primary me-2"></i>Vínculo com ODS</strong>
+                  <a href="{% url 'projeto_etapa' pk=projeto.pk step=4 %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-pencil me-1"></i>Editar
+                  </a>
+                </div>
+                <div class="card-body py-2">
+                  {% if projeto.ods.all %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for ods in projeto.ods.all %}
+                        {% if ods.imagem %}
+                          <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" style="height:40px;border-radius:4px;" title="{{ ods.titulo }}">
+                        {% else %}
+                          <span class="badge bg-secondary">{{ ods.titulo }}</span>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <span class="text-muted small">Nenhum ODS selecionado.</span>
+                  {% endif %}
+                </div>
+              </div>
+
+              {# Aviso de submissão #}
+              <div class="alert alert-warning d-flex align-items-start gap-2 mt-4">
+                <i class="bi bi-exclamation-triangle-fill mt-1 flex-shrink-0"></i>
+                <div>
+                  <strong>Atenção:</strong> Ao submeter, o projeto será encaminhado para análise e você <strong>não poderá editá-lo</strong> até receber um retorno do gestor. Certifique-se de que todas as informações estão corretas.
+                </div>
+              </div>
+
+            {% endif %}{# fim dos blocos de etapa #}
+
+            {# ── Botões de ação ──────────────────────────────────────────── #}
+            <hr class="mt-4">
+            <div class="d-flex justify-content-between align-items-center">
+              <div>
+                {% if step > 1 %}
+                <a href="{% url 'projeto_etapa' pk=projeto.pk step=step|add:'-1' %}"
+                   class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-left me-1"></i>Etapa Anterior
+                </a>
+                {% endif %}
+              </div>
+              <div class="d-flex gap-2">
+                {% if step < 5 %}
+                  <button type="submit" name="acao" value="rascunho"
+                          class="btn btn-outline-success">
+                    <i class="bi bi-floppy me-1"></i>Salvar Rascunho
+                  </button>
+                  <button type="submit" name="acao" value="proximo"
+                          class="btn btn-primary">
+                    Próxima Etapa<i class="bi bi-arrow-right ms-1"></i>
+                  </button>
+                {% else %}
+                  <button type="button"
+                          class="btn btn-success btn-lg {% if not etapas_status.1 or not etapas_status.2 %}disabled{% endif %}"
+                          {% if etapas_status.1 and etapas_status.2 %}
+                          data-bs-toggle="modal"
+                          data-bs-target="#modalConfirmarSubmissao"
+                          {% endif %}>
+                    <i class="bi bi-check-circle-fill me-1"></i>Confirmar e Submeter
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+
+          </form>{# fim do form #}
+
+          {# ── Modal de confirmação de submissão ── #}
+          {% if step == 5 %}
+          <div class="modal fade" id="modalConfirmarSubmissao" tabindex="-1" aria-labelledby="modalSubmissaoLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+              <div class="modal-content border-0 shadow">
+                <div class="modal-body text-center p-4">
+                  <i class="bi bi-send-check-fill text-success mb-3" style="font-size:2.5rem;"></i>
+                  <h5 class="mb-2" id="modalSubmissaoLabel">Submeter Projeto</h5>
+                  <p class="text-muted mb-1">Você está prestes a submeter o projeto</p>
+                  <p class="fw-semibold mb-3">
+                    "{{ projeto.titulo|default:'(sem título)' }}"
+                  </p>
+                  <div class="alert alert-warning text-start small py-2 mb-4">
+                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                    Após a submissão, o projeto será encaminhado para análise e <strong>não poderá ser editado</strong> até receber retorno do gestor.
+                  </div>
+                  <div class="d-flex justify-content-center gap-3">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                      <i class="bi bi-arrow-left me-1"></i>Cancelar
+                    </button>
+                    <form method="post">
+                      {% csrf_token %}
+                      <button type="submit" name="acao" value="submeter" class="btn btn-success">
+                        <i class="bi bi-check-circle-fill me-1"></i>Sim, submeter
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>{# fim col-md-9 #}
+
+  </div>{# fim row #}
+</div>{# fim container-fluid #}
+
+
+<script>
+// ── Inicializar popovers Bootstrap ───────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
+    new bootstrap.Popover(el, { container: 'body', html: false });
+  });
+});
+
+// ── Visibilidade condicional (Etapa 1) ────────────────────────────────────────
+function toggleBloco(idBloco, valor) {
+  var bloco = document.getElementById(idBloco);
+  if (!bloco) return;
+  bloco.style.display = (valor === 'True') ? '' : 'none';
+}
+
+// Restaura visibilidade ao recarregar página (quando já há valor salvo)
+// e vincula os listeners de change
+document.addEventListener('DOMContentLoaded', function () {
+  var mapeamentos = [
+    { name: 'possui_financiamento',    bloco: 'bloco-financiamento' },
+    { name: 'participa_pos_graduacao', bloco: 'bloco-programa-pos'  },
+    { name: 'etica_obrigatoria',       bloco: 'bloco-etica'         },
+  ];
+  mapeamentos.forEach(function(m) {
+    var radios = document.querySelectorAll('input[name="' + m.name + '"]');
+    radios.forEach(function(r) {
+      r.addEventListener('change', function() { toggleBloco(m.bloco, this.value); });
+    });
+    // Aplica estado inicial
+    var checked = document.querySelector('input[name="' + m.name + '"]:checked');
+    if (checked) toggleBloco(m.bloco, checked.value);
+  });
+});
+
+// ── Máscara de moeda (R$) ────────────────────────────────────────────────────
+(function () {
+  function formatarMoeda(valor) {
+    var nums = valor.replace(/\D/g, '');
+    if (!nums) return '';
+    var n = parseInt(nums, 10);
+    return (n / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  document.querySelectorAll('[data-mascara="moeda"]').forEach(function (input) {
+    // Formata o valor já salvo ao carregar (ex: "1234.56" → "1.234,56")
+    if (input.value) {
+      var f = parseFloat(input.value.replace(',', '.'));
+      if (!isNaN(f)) input.value = f.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    input.addEventListener('input', function () {
+      var pos = this.selectionStart;
+      var ant = this.value.length;
+      this.value = formatarMoeda(this.value);
+      try { this.setSelectionRange(pos + (this.value.length - ant), pos + (this.value.length - ant)); } catch(e){}
+    });
+    // Antes de submeter converte "1.234,56" → "1234.56"
+    var form = input.closest('form');
+    if (form) {
+      form.addEventListener('submit', function () {
+        input.value = input.value.replace(/\./g, '').replace(',', '.');
+      }, { once: false });
+    }
+  });
+})();
+
+// ── AJAX: carregar cursos por centro (Etapa 1) ────────────────────────────────
+function carregarCursos(centroId) {
+  var cursoSelect = document.getElementById('id_curso');
+  if (!cursoSelect) return;
+  var valorAtual  = '{{ projeto.curso_id|default:"" }}';
+  cursoSelect.innerHTML = '<option value="">Carregando…</option>';
+  if (!centroId) { cursoSelect.innerHTML = '<option value="">Selecione o curso</option>'; return; }
+
+  fetch('{% url "ajax_load_cursos" %}?centro_id=' + centroId)
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      cursoSelect.innerHTML = '<option value="">Selecione o curso</option>';
+      data.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c.id;
+        opt.text  = c.nome;
+        if (String(c.id) === String(valorAtual)) opt.selected = true;
+        cursoSelect.appendChild(opt);
+      });
+    });
+}
+
+// ── Formset dinâmico de Equipe (Etapa 3) ─────────────────────────────────────
+(function () {
+  var container  = document.getElementById('equipe-formset-container');
+  var template   = document.getElementById('equipe-empty-template');
+  var addBtn     = document.getElementById('add-equipe-btn');
+  // Busca o input TOTAL_FORMS independente do prefixo do formset
+  var totalInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
+
+  if (!container || !template || !addBtn || !totalInput) return;
+
+  function bindRemoveBtn(row) {
+    var btn = row.querySelector('.remove-equipe-row');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var delChk = row.querySelector('input[type="checkbox"][name*="DELETE"]');
+      if (delChk) {
+        // Linha já salva no banco: marca DELETE e esconde visualmente
+        delChk.checked = true;
+        row.style.display = 'none';
+      } else {
+        // Linha nova (ainda não salva): remove do DOM e decrementa contador
+        row.remove();
+        totalInput.value = parseInt(totalInput.value) - 1;
+      }
+    });
+  }
+
+  // Vincula o botão remover nas linhas já existentes
+  container.querySelectorAll('.equipe-form-row').forEach(bindRemoveBtn);
+
+  addBtn.addEventListener('click', function () {
+    var total  = parseInt(totalInput.value);
+    var source = template.querySelector('.equipe-form-row');
+    var newRow = source.cloneNode(true);
+    // Substitui __prefix__ pelo índice correto em todos os atributos
+    newRow.innerHTML = newRow.innerHTML.replace(/__prefix__/g, total);
+    container.appendChild(newRow);
+    totalInput.value = total + 1;
+    bindRemoveBtn(newRow);
+  });
+})();
+
+// ── ODS: seleção visual com contador (Etapa 4) ────────────────────────────────
+(function () {
+  var counterEl = document.getElementById('ods-counter');
+  var checkboxes = document.querySelectorAll('.ods-checkbox');
+
+  function atualizarODS() {
+    var count = 0;
+    checkboxes.forEach(function (cb) {
+      var card  = cb.closest('.ods-card').querySelector('.ods-card-inner');
+      var badge = cb.closest('.ods-card').querySelector('.ods-check-badge');
+      if (cb.checked) {
+        count++;
+        card.style.borderColor = '#0d6efd !important';
+        card.classList.add('border-primary', 'shadow-sm');
+        if (badge) badge.classList.remove('d-none');
+      } else {
+        card.classList.remove('border-primary', 'shadow-sm');
+        if (badge) badge.classList.add('d-none');
+      }
+    });
+    if (counterEl) counterEl.textContent = count;
+  }
+
+  checkboxes.forEach(function (cb) {
+    cb.addEventListener('change', atualizarODS);
+  });
+  atualizarODS();
+})();
+
+// ── Contador de caracteres do Resumo (Etapa 2) ────────────────────────────────
+(function () {
+  var resumo  = document.getElementById('id_resumo');
+  var counter = document.getElementById('resumo-count');
+  if (!resumo || !counter) return;
+  resumo.addEventListener('input', function () {
+    counter.textContent = resumo.value.length + '/1500';
+    counter.style.color = resumo.value.length > 1400 ? '#dc3545' : '';
+  });
+})();
+
+
+</script>
+{% endblock %}

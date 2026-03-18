@@ -32,6 +32,9 @@ html, body {
     .sidebar-header {
         justify-content: center;
     }
+    .sidebar-header .logo-propeg {
+        display: none;
+    }
     .sidebar-footer {
         justify-content: center;
         gap: 1rem;

@@ -53,6 +53,58 @@ class Usuario(AbstractUser):
         ('inativo', 'Inativo'),
     )
 
+    CNPQ_AREA_CHOICES = [
+        ('', 'Selecione uma área'),
+        ('Ciências Exatas e da Terra', (
+            ('exatas_matematica',  'Matemática'),
+            ('exatas_computacao',  'Computação'),
+            ('exatas_fisica',      'Física'),
+            ('exatas_quimica',     'Química'),
+            ('exatas_geociencias', 'Geociências'),
+        )),
+        ('Ciências Biológicas', (
+            ('bio_geral',     'Biologia Geral'),
+            ('bio_biofisica', 'Biofísica'),
+            ('bio_botanica',  'Botânica'),
+            ('bio_ecologia',  'Ecologia'),
+            ('bio_genetica',  'Genética'),
+        )),
+        ('Engenharias', (
+            ('eng_civil',    'Engenharia Civil'),
+            ('eng_eletrica', 'Engenharia Elétrica'),
+            ('eng_mecanica', 'Engenharia Mecânica'),
+            ('eng_producao', 'Engenharia de Produção'),
+        )),
+        ('Ciências da Saúde', (
+            ('saude_medicina', 'Medicina'),
+            ('saude_nutricao', 'Nutrição'),
+            ('saude_coletiva', 'Saúde Coletiva'),
+        )),
+        ('Ciências Agrárias', (
+            ('agrar_agronomia', 'Agronomia'),
+            ('agrar_florestal', 'Recursos Florestais'),
+            ('agrar_zootecnia', 'Zootecnia'),
+        )),
+        ('Ciências Sociais Aplicadas', (
+            ('sociais_direito',  'Direito'),
+            ('sociais_admin',    'Administração'),
+            ('sociais_economia', 'Economia'),
+            ('sociais_info',     'Ciência da Informação'),
+        )),
+        ('Ciências Humanas', (
+            ('humanas_filosofia',  'Filosofia'),
+            ('humanas_sociologia', 'Sociologia'),
+            ('humanas_historia',   'História'),
+            ('humanas_psicologia', 'Psicologia'),
+            ('humanas_educacao',   'Educação'),
+        )),
+        ('Linguística, Letras e Artes', (
+            ('lla_linguistica', 'Linguística'),
+            ('lla_letras',      'Letras'),
+            ('lla_artes',       'Artes'),
+        )),
+    ]
+
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -66,6 +118,19 @@ class Usuario(AbstractUser):
     cpf = models.CharField(max_length=14, unique=True, verbose_name="CPF")
     email = models.EmailField(unique=True)
     telefone = models.CharField(max_length=20, blank=True, null=True)
+    rg = models.CharField(max_length=20, blank=True, null=True, verbose_name="RG")
+    data_nascimento = models.DateField(blank=True, null=True, verbose_name="Data de Nascimento")
+    siape = models.CharField(max_length=10, blank=True, null=True, verbose_name="SIAPE")
+    matricula = models.CharField(max_length=20, blank=True, null=True, verbose_name="Nº de Matrícula")
+    lattes = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nº Currículo Lattes")
+    cnpq_area = models.CharField(
+        max_length=100,
+        choices=CNPQ_AREA_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="Grande Área CNPq",
+    )
+    cnpq = models.CharField(max_length=20, blank=True, null=True, verbose_name="Nº Currículo Lattes/CNPq")
     perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     regime_trabalho = models.CharField(max_length=3, blank=True, null=True, verbose_name="Regime de Trabalho")
     is_active = models.BooleanField(default=False, verbose_name="Ativo", help_text="Marque esta opção para ativar a conta do usuário.")
@@ -281,6 +346,24 @@ class AnexoEdital(models.Model):
         verbose_name_plural = "Anexos do Edital"
 
 
+class AdendoEdital(models.Model):
+    edital    = models.ForeignKey(Edital, on_delete=models.CASCADE, related_name='adendos')
+    titulo    = models.CharField(max_length=255, verbose_name="Título do Adendo")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    arquivo   = models.FileField(upload_to='editais/adendos/', blank=True, null=True,
+                                  verbose_name="Arquivo do Adendo (PDF, opcional)")
+    criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    data_criacao = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Adendo: {self.titulo} — {self.edital.titulo_completo}"
+
+    class Meta:
+        verbose_name = "Adendo do Edital"
+        verbose_name_plural = "Adendos do Edital"
+        ordering = ['-data_criacao']
+
+
 # Entidade Principal
 class Projeto(models.Model):
     STATUS_CHOICES = [
@@ -298,7 +381,9 @@ class Projeto(models.Model):
     descricao = models.TextField(verbose_name="Descrição", blank=True, null=True)
     resumo = models.TextField(blank=True, null=True)
     introducao = models.TextField(verbose_name="Introdução", blank=True, null=True)
-    objetivos = models.TextField(blank=True, null=True)
+    objetivo_geral = models.TextField(blank=True, null=True, verbose_name="Objetivo Geral")
+    objetivos_especificos = models.TextField(blank=True, null=True, verbose_name="Objetivos Específicos")
+    objetivos = models.TextField(blank=True, null=True)  # mantido para compatibilidade
     metodologia = models.TextField(blank=True, null=True)
     resultados = models.TextField(blank=True, null=True)
     referencias = models.TextField(blank=True, null=True)
@@ -401,9 +486,25 @@ class EquipeProjeto(models.Model):
     Modelo intermediário para registrar os membros da equipe de um projeto
     e suas informações específicas, como carga horária.
     """
+    FUNCAO_CHOICES = [
+        ('coordenador_auxiliar', 'Coordenador Auxiliar'),
+        ('pesquisador', 'Pesquisador'),
+        ('aluno_bolsista', 'Aluno Bolsista'),
+        ('aluno_voluntario', 'Aluno Voluntário'),
+        ('aluno_pesquisador', 'Aluno Pesquisador'),
+        ('tecnico', 'Técnico'),
+        ('colaborador', 'Colaborador'),
+        ('outro', 'Outro'),
+    ]
+
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name='equipe')
     membro = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='participa_em')
-    
+    funcao = models.CharField(
+        max_length=50,
+        choices=FUNCAO_CHOICES,
+        default='colaborador',
+        verbose_name='Função na Equipe',
+    )
     carga_horaria_semanal = models.PositiveIntegerField(verbose_name="Carga Horária Semanal (h)")
     carga_horaria_total = models.PositiveIntegerField(verbose_name="Carga Horária Total (h)")
 
@@ -413,7 +514,7 @@ class EquipeProjeto(models.Model):
         unique_together = ('projeto', 'membro')
 
     def __str__(self):
-        return f"{self.membro.get_full_name()} no projeto {self.projeto.titulo}"
+        return f"{self.membro.get_full_name()} ({self.get_funcao_display()}) no projeto {self.projeto.titulo}"
 
 # Modelos relacionados a um projeto
 def caminho_upload_arquivo(instance, filename): # função para gerar um caminho dinâmico para o upload de um arquivo
@@ -466,6 +567,7 @@ class Anexo(models.Model):
         ('imagens', 'Figuras, Imagens, etc.'),
         ('projeto_completo', 'Projeto Completo'),
         ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
+        ('ata_conselho', 'Ata de Aprovação do Conselho'),
         ('relatorio_submissao', 'Relatório de Submissão (Automático)'),
         ('outro', 'Outro'),
     )

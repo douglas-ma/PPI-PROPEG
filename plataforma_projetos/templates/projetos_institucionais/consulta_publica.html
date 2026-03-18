@@ -1,0 +1,216 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Consulta Pública de Projetos — PROPEG/UFAC</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="icon" href="{% static 'imagens/favicon.ico' %}" type="image/x-icon">
+  <style>
+    body { background: #f0f4f8; font-family: Arial, sans-serif; }
+    .card-projeto { transition: transform .15s, box-shadow .15s; cursor: pointer; }
+    .card-projeto:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12) !important; }
+    .navbar-propeg {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,.08);
+      padding: .75rem 1.5rem;
+    }
+  </style>
+</head>
+<body>
+
+{# Cabeçalho #}
+<header class="navbar-propeg d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  <div class="d-flex align-items-center gap-3">
+    <a href="https://www.ufac.br" target="_blank" rel="noopener">
+      <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC" style="height:56px;">
+    </a>
+    <div style="width:1px;height:48px;background:#ddd;"></div>
+    <a href="{% url 'home' %}">
+      <img src="{% static 'imagens/Logo-Propeg.png' %}" alt="Logo PROPEG" style="height:44px;">
+    </a>
+    <div class="d-none d-md-block ms-2">
+      <div class="fw-bold" style="font-size:.9rem;color:#1a1a2e;line-height:1.2;">Consulta Pública de Projetos</div>
+      <div class="text-muted" style="font-size:.75rem;">PROPEG — Pró-Reitoria de Pesquisa e Pós-Graduação / UFAC</div>
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    {# Botão PDF — passa os filtros ativos #}
+    <a href="{% url 'consulta_publica_pdf' %}?q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}"
+       class="btn btn-danger btn-sm" target="_blank">
+      <i class="bi bi-file-earmark-pdf me-1"></i>Gerar Relatório PDF
+    </a>
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-house me-1"></i>Página Inicial
+    </a>
+  </div>
+</header>
+
+<div class="container-fluid px-4" style="max-width:1140px;">
+
+  <div class="mb-4">
+    <h4 class="mb-1">Projetos Institucionais</h4>
+    <p class="text-muted small mb-0">Projetos de pesquisa e extensão aprovados, em andamento ou encerrados pela UFAC.</p>
+  </div>
+
+  {# Filtros #}
+  <form method="get" class="card border-0 shadow-sm mb-4">
+    <div class="card-body py-3">
+      <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+          <label class="form-label small text-muted mb-1">Buscar</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+            <input type="text" name="q" value="{{ q }}" class="form-control border-start-0"
+                   placeholder="Título, resumo ou coordenador…">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Status</label>
+          <select name="status" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="aprovado"     {% if status_filter == 'aprovado'     %}selected{% endif %}>Aprovado</option>
+            <option value="em_andamento" {% if status_filter == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
+            <option value="encerrado"    {% if status_filter == 'encerrado'    %}selected{% endif %}>Encerrado</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Centro</label>
+          <select name="centro" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            {% for c in centros %}
+            <option value="{{ c.pk }}" {% if centro_filter == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Curso</label>
+          <select name="curso" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            {% for c in cursos %}
+            <option value="{{ c.pk }}" {% if curso_filter == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nome }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+          <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
+            <i class="bi bi-funnel"></i>
+          </button>
+          {% if q or status_filter or centro_filter or curso_filter %}
+          <a href="{% url 'consulta_publica' %}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros">
+            <i class="bi bi-x"></i>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </form>
+
+  {# Contador + tags de filtros ativos #}
+  <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <small class="text-muted">
+      <strong>{{ total }}</strong> projeto{{ total|pluralize }} encontrado{{ total|pluralize }}
+    </small>
+    <div class="d-flex flex-wrap gap-1">
+      {% if q %}<span class="badge bg-light text-dark border small"><i class="bi bi-search me-1"></i>{{ q }}</span>{% endif %}
+      {% if status_filter %}<span class="badge bg-primary bg-opacity-10 text-primary border small">{{ status_filter|title }}</span>{% endif %}
+      {% for c in centros %}{% if centro_filter == c.pk|stringformat:"s" %}<span class="badge bg-info bg-opacity-10 text-info border small">{{ c.nome }}</span>{% endif %}{% endfor %}
+      {% for c in cursos %}{% if curso_filter == c.pk|stringformat:"s" %}<span class="badge bg-success bg-opacity-10 text-success border small">{{ c.nome }}</span>{% endif %}{% endfor %}
+    </div>
+  </div>
+
+  {# Cards de projetos #}
+  {% if page_obj.object_list %}
+  <div class="row g-3 mb-4">
+    {% for p in page_obj %}
+    <div class="col-md-6 col-lg-4">
+      <a href="{% url 'projeto_detalhe_publico' pk=p.pk %}" class="text-decoration-none">
+        <div class="card border-0 shadow-sm h-100 card-projeto">
+          <div class="card-body d-flex flex-column p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+              {% if p.status == 'em_andamento' %}
+                <span class="badge bg-success bg-opacity-10 text-success">Em Andamento</span>
+              {% elif p.status == 'aprovado' %}
+                <span class="badge bg-primary bg-opacity-10 text-primary">Aprovado</span>
+              {% else %}
+                <span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+              {% endif %}
+              {% if p.data_inicio %}<small class="text-muted">{{ p.data_inicio|date:"Y" }}</small>{% endif %}
+            </div>
+            <p class="fw-semibold text-dark mb-2 flex-grow-1" style="font-size:.9rem;">
+              {{ p.titulo|truncatechars:80 }}
+            </p>
+            {% if p.resumo %}
+            <p class="text-muted small mb-2" style="font-size:.8rem;">{{ p.resumo|truncatechars:110 }}</p>
+            {% endif %}
+            <div class="mt-auto border-top pt-2">
+              <small class="text-muted d-block">
+                <i class="bi bi-person me-1"></i>{{ p.coordenador.get_full_name|truncatechars:30 }}
+              </small>
+              {% if p.centro_lotacao %}
+              <small class="text-muted d-block">
+                <i class="bi bi-building me-1"></i>{{ p.centro_lotacao }}
+              </small>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# Paginação #}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <nav class="d-flex justify-content-center mb-4">
+    <ul class="pagination pagination-sm">
+      {% if page_obj.has_previous %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+      </li>
+      {% endif %}
+      {% for n in page_obj.paginator.page_range %}
+        {% if page_obj.number == n %}
+          <li class="page-item active"><span class="page-link">{{ n }}</span></li>
+        {% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}
+          <li class="page-item">
+            <a class="page-link" href="?page={{ n }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">{{ n }}</a>
+          </li>
+        {% endif %}
+      {% endfor %}
+      {% if page_obj.has_next %}
+      <li class="page-item">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </li>
+      {% endif %}
+    </ul>
+  </nav>
+  {% endif %}
+
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-folder2-open display-4 opacity-25 d-block mb-3"></i>
+    <p>Nenhum projeto encontrado.</p>
+    {% if q or status_filter or centro_filter or curso_filter %}
+    <a href="{% url 'consulta_publica' %}" class="btn btn-outline-secondary btn-sm mt-1">
+      <i class="bi bi-x me-1"></i>Limpar filtros
+    </a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
+
+<footer class="text-center py-4 mt-2" style="font-size:.78rem;color:#aaa;">
+  PROPEG — Pró-Reitoria de Pesquisa e Pós-Graduação · Universidade Federal do Acre
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
