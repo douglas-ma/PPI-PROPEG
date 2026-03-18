@@ -1,0 +1,52 @@
+## render.yaml
+## Coloque este arquivo na RAIZ do repositório (junto com manage.py ou na pasta pai).
+## O Render lê este arquivo para criar todos os serviços automaticamente.
+
+services:
+  # ── Aplicação Web Django ────────────────────────────────────────────────────
+  - type: web
+    name: propeg-plataforma
+    runtime: python
+    region: oregon          # ou frankfurt se quiser mais próximo do Brasil
+    plan: free              # troque por "starter" ($7/mês) para sem sleep
+    rootDir: plataforma_projetos   # pasta onde está o manage.py
+    buildCommand: ./build.sh
+    startCommand: gunicorn plataforma_projetos.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: plataforma_projetos.settings_prod
+      - key: SECRET_KEY
+        generateValue: true          # Render gera automaticamente
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"       # atualize com seu domínio real se tiver
+      - key: CSRF_TRUSTED_ORIGINS
+        value: "https://*.onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: propeg-db
+          property: connectionString
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USE_TLS
+        value: "True"
+      - key: EMAIL_HOST_USER
+        sync: false    # preencha manualmente no painel
+      - key: EMAIL_HOST_PASSWORD
+        sync: false    # preencha manualmente no painel
+      - key: DEFAULT_FROM_EMAIL
+        sync: false
+      # Descomente se usar Cloudinary para armazenamento de mídia:
+      # - key: CLOUDINARY_URL
+      #   sync: false
+
+  # ── Banco de dados PostgreSQL ───────────────────────────────────────────────
+databases:
+  - name: propeg-db
+    databaseName: propeg
+    user: propeg
+    plan: free              # 90 dias gratuito, depois $7/mês
+    region: oregon
