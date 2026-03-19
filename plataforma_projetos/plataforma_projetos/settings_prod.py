@@ -79,8 +79,10 @@ if cloudinary_url:
     # Configurações do django-cloudinary-storage
     CLOUDINARY_STORAGE = {
         'CLOUD_NAME': cloudinary_url.split('@')[-1].strip('/'),
-        'FILE_OVERWRITE': False,       # gera nome único em vez de sobrescrever
-        'MEDIA_TAG': 'media',          # tag padrão para organização no Cloudinary
+        'FILE_OVERWRITE': False,
+        'MEDIA_TAG': 'media',
+        'SECURE': True,           # URLs sempre em HTTPS
+        'ACCESS_CONTROL': [{'access_type': 'anonymous'}],  # acesso público
     }
 else:
     MEDIA_URL  = '/media/'
