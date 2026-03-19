@@ -51,8 +51,10 @@
     padding-bottom: 3mm;
     border-bottom: 1.5px solid #c8a84b;
   }
-  .logo-ufac   { height: 18mm; width: auto; }
-  .logo-propeg { height: 14mm; width: auto; }
+  .logo-wrap-esq { width: 30mm; flex-shrink: 0; }
+  .logo-wrap-dir { width: 30mm; flex-shrink: 0; text-align: right; }
+  .logo-ufac   { height: 18mm; width: auto; max-width: 28mm; }
+  .logo-propeg { height: 14mm; width: auto; max-width: 28mm; }
 
   .inst-centro { text-align: center; flex: 1; padding: 0 6mm; }
   .inst-univ   { font-size: 9.5pt; font-weight: bold; color: #1a3a5c; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4; }
@@ -186,12 +188,16 @@
 
     <!-- Cabeçalho -->
     <div class="cabecalho">
-      <img class="logo-ufac" src="{% static 'imagens/logo_ufac.png' %}" alt="UFAC">
+      <div class="logo-wrap-esq">
+        <img class="logo-ufac" src="{% static 'imagens/logo_ufac.png' %}" alt="UFAC">
+      </div>
       <div class="inst-centro">
         <div class="inst-univ">Universidade Federal do Acre</div>
         <div class="inst-sub">Pró-Reitoria de Pesquisa e Pós-Graduação — PROPEG</div>
       </div>
-      <img class="logo-propeg" src="{% static 'imagens/Logo-Propeg.png' %}" alt="PROPEG">
+      <div class="logo-wrap-dir">
+        <img class="logo-propeg" src="{% static 'imagens/Logo-Propeg.png' %}" alt="PROPEG">
+      </div>
     </div>
 
     <!-- Corpo -->
