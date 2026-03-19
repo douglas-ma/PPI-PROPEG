@@ -421,11 +421,21 @@ class RelatorioForm(forms.Form):
 
 
 class EditalForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+        self.is_draft = kwargs.pop('is_draft', False)
+        super().__init__(*args, **kwargs)
+        if self.is_draft:
+            # No rascunho, nenhum campo é obrigatório
+            for field in self.fields.values():
+                field.required = False
+
     class Meta:
         model = Edital
         fields = [
-            'tipo', 'numero', 'ano', 'titulo', 'descricao', 'data_inicio_submissoes', 
-            'data_fim_submissoes', 'status', 'documento_principal'
+            'tipo', 'numero', 'ano', 'titulo', 'descricao',
+            'data_inicio_submissoes', 'data_fim_submissoes',
+            'status', 'documento_principal'
         ]
         widgets = {
             'data_inicio_submissoes': forms.DateInput(attrs={'type': 'date'}),
@@ -435,12 +445,12 @@ class EditalForm(forms.ModelForm):
         labels = {
             'titulo': 'Título Descritivo do Edital',
         }
-    
+
 AnexoEditalFormSet = inlineformset_factory(
-    Edital, 
+    Edital,
     AnexoEdital,
     fields=('descricao', 'arquivo'),
-    extra=1,
+    extra=0,          # começa sem slots vazios — JS adiciona dinamicamente
     can_delete=True,
     labels={
         'descricao': 'Descrição do Anexo',

@@ -1454,16 +1454,17 @@ def gestor_detalhe_edital(request, pk):
 def gestor_criar_edital(request):
     if request.method == 'POST':
         acao = request.POST.get('acao', 'publicar')
-        form = EditalForm(request.POST, request.FILES)
+        is_draft = (acao == 'rascunho')
+        form = EditalForm(request.POST, request.FILES, is_draft=is_draft)
         if form.is_valid():
             edital = form.save(commit=False)
             edital.criado_por = request.user
-            edital.status = 'rascunho' if acao == 'rascunho' else 'aberto'
+            edital.status = 'rascunho' if is_draft else 'aberto'
             edital.save()
             formset = AnexoEditalFormSet(request.POST, request.FILES, instance=edital)
             if formset.is_valid():
                 formset.save()
-            msg = 'Edital salvo como rascunho.' if acao == 'rascunho' else 'Edital publicado com sucesso!'
+            msg = 'Rascunho salvo! Você pode continuar editando quando quiser.' if is_draft else 'Edital publicado com sucesso!'
             messages.success(request, msg)
             return redirect('gestor_detalhe_edital', pk=edital.pk)
     else:
@@ -1480,7 +1481,8 @@ def gestor_editar_edital(request, pk):
     edital = get_object_or_404(Edital, pk=pk)
     if request.method == 'POST':
         acao = request.POST.get('acao', 'salvar')
-        form = EditalForm(request.POST, request.FILES, instance=edital)
+        is_draft = (acao == 'rascunho')
+        form = EditalForm(request.POST, request.FILES, instance=edital, is_draft=is_draft)
         formset = AnexoEditalFormSet(request.POST, request.FILES, instance=edital)
         if form.is_valid() and formset.is_valid():
             edital_salvo = form.save(commit=False)
