@@ -79,7 +79,7 @@
             <i class="bi bi-check-circle me-1"></i>Encerrar Projeto
           </a>
         {% endif %}
-        {% if projeto.status in 'em_andamento,encerrado' %}
+        {% if projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
           <a href="{% url 'listar_certificados' pk=projeto.pk %}" class="btn btn-outline-primary btn-sm">
             <i class="bi bi-award me-1"></i>Certificados
           </a>
