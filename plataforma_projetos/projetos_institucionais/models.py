@@ -337,6 +337,7 @@ class Edital(models.Model):
         upload_to='editais/documentos/',
         storage=_raw_storage(),
         blank=True, null=True,
+        max_length=500,
         verbose_name="Documento Principal do Edital (PDF)"
     )
     
@@ -360,7 +361,7 @@ class Edital(models.Model):
 class AnexoEdital(models.Model):
     edital = models.ForeignKey(Edital, on_delete=models.CASCADE, related_name='anexos')
     descricao = models.CharField(max_length=255, verbose_name="Descrição do Anexo")
-    arquivo = models.FileField(upload_to='editais/anexos/', storage=_raw_storage())
+    arquivo = models.FileField(upload_to='editais/anexos/', storage=_raw_storage(), max_length=500)
     data_upload = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -377,6 +378,7 @@ class AdendoEdital(models.Model):
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     arquivo   = models.FileField(upload_to='editais/adendos/', blank=True, null=True,
                                   storage=_raw_storage(),
+                                  max_length=500,
                                   verbose_name="Arquivo do Adendo (PDF, opcional)")
     criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     data_criacao = models.DateTimeField(auto_now_add=True)
@@ -550,7 +552,7 @@ def caminho_upload_arquivo(instance, filename): # função para gerar um caminho
 class Documento(models.Model):
     nome = models.CharField(max_length=255)
     tipo = models.CharField(max_length=100)
-    caminho_arquivo = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage(), verbose_name="Arquivo")
+    caminho_arquivo = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage(), max_length=500, verbose_name="Arquivo")
     enviado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     projeto = models.ForeignKey(
         Projeto,
@@ -564,7 +566,7 @@ class Documento(models.Model):
 class Ata(models.Model):
     descricao = models.CharField(max_length=255, verbose_name="Descrição")
     data_reuniao = models.DateField(verbose_name="Data da Reunião")
-    arquivo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage())
+    arquivo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage(), max_length=500)
     enviado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
@@ -612,6 +614,7 @@ class Anexo(models.Model):
     arquivo = models.FileField(
         upload_to='anexos/%Y/%m/',
         storage=_raw_storage(),
+        max_length=500,
         verbose_name="Arquivo"
     )
     
@@ -633,7 +636,7 @@ class Relatorio(models.Model):
     )
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     data_envio = models.DateTimeField(auto_now_add=True)
-    anexo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage())
+    anexo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage(), max_length=500)
     responsavel = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
