@@ -79,15 +79,18 @@
             <i class="bi bi-check-circle me-1"></i>Encerrar Projeto
           </a>
         {% endif %}
-        {% if projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
-          <a href="{% url 'listar_certificados' pk=projeto.pk %}" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-award me-1"></i>Certificados
-          </a>
-        {% endif %}
         {% if relatorio_submissao %}
           <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-outline-danger btn-sm">
             <i class="bi bi-file-earmark-pdf me-1"></i>Relatório de Submissão
           </a>
+        {% endif %}
+      {% endif %}
+      {# Certificados — visível para coordenador e gestor #}
+      {% if projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
+        {% if user == projeto.coordenador or user.perfil == 'gestor' %}
+        <a href="{% url 'listar_certificados' pk=projeto.pk %}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-award me-1"></i>Certificados
+        </a>
         {% endif %}
       {% endif %}
     </div>
