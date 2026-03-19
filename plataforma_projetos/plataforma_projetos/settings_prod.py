@@ -49,16 +49,30 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Arquivos de mídia — Cloudinary
-# NÃO sobrescrever MEDIA_URL — o django-cloudinary-storage gera as URLs
-# completas automaticamente via .url (inclui cloud_name e /image/upload/)
 # ─────────────────────────────────────────────────────────────────────────────
+# Formato da CLOUDINARY_URL: cloudinary://api_key:api_secret@cloud_name
 cloudinary_url = config('CLOUDINARY_URL', default='')
 if cloudinary_url:
     import cloudinary
+    import cloudinary.uploader
+    import cloudinary.api
+
+    # Configura o Cloudinary explicitamente
+    cloudinary.config(cloudinary_url=cloudinary_url)
+
+    # Extrai o cloud_name da URL para montar o MEDIA_URL corretamente
+    # Ex: cloudinary://123:abc@dbwrwudmb  →  cloud_name = dbwrwudmb
+    try:
+        cloud_name = cloudinary_url.split('@')[-1].strip('/')
+    except Exception:
+        cloud_name = ''
+
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     INSTALLED_APPS      += ['cloudinary_storage', 'cloudinary']
     CLOUDINARY_URL       = cloudinary_url
-    # Não definir MEDIA_URL aqui — o Cloudinary cuida disso
+
+    # MEDIA_URL com cloud_name correto — necessário para .url gerar URLs completas
+    MEDIA_URL = f'https://res.cloudinary.com/{cloud_name}/'
 else:
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
