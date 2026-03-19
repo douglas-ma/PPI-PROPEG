@@ -11,6 +11,17 @@ python manage.py collectstatic --no-input
 # Aplica as migrations
 python manage.py migrate
 
+# Testa o email
+python manage.py shell -c "
+from django.conf import settings
+print('=== DIAGNÓSTICO EMAIL ===')
+print('BACKEND:', settings.EMAIL_BACKEND)
+print('HOST:', settings.EMAIL_HOST)
+print('USER:', settings.EMAIL_HOST_USER)
+print('PORT:', settings.EMAIL_PORT)
+print('========================')
+"
+
 # Adicione o super user se ele não existir
 python manage.py shell -c "
 from projetos_institucionais.models import Usuario
