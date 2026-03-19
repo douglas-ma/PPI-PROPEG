@@ -1,6 +1,7 @@
 {% extends "base2.html" %}
 {% load static %}
 {% block title %}{% if edital %}Editar Edital{% else %}Novo Edital{% endif %}{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4 px-4" style="max-width:860px;">
 
@@ -10,14 +11,7 @@
     </a>
     <div class="flex-grow-1">
       <h4 class="mb-0">{% if edital %}Editar Edital{% else %}Novo Edital{% endif %}</h4>
-      <small class="text-muted">
-        {% if edital %}
-          {% if edital.status == 'rascunho' %}<span class="badge bg-warning text-dark">Rascunho</span>{% endif %}
-          {% if edital.status == 'aberto' %}<span class="badge bg-success">Publicado</span>{% endif %}
-        {% else %}
-          Preencha os campos e salve como rascunho ou publique diretamente.
-        {% endif %}
-      </small>
+      <small class="text-muted">Preencha os campos e salve como rascunho ou publique diretamente.</small>
     </div>
     {% if edital and edital.status == 'rascunho' %}
     <span class="badge bg-warning text-dark py-2 px-3">
@@ -33,7 +27,7 @@
     <div class="alert alert-danger">{{ form.non_field_errors }}</div>
     {% endif %}
 
-    {# ── Identificação ──────────────────────────────────────────────────── #}
+    {# ── Identificação ─────────────────────────────────── #}
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-header bg-white border-bottom py-3">
         <strong><i class="bi bi-file-earmark text-primary me-2"></i>Identificação</strong>
@@ -45,9 +39,9 @@
           <div class="col-md-4">
             <label class="form-label fw-semibold">
               Tipo/Origem <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Informe a unidade responsável pelo edital. Ex: PROPEG (pesquisa), PROEX (extensão), PROGRAD (graduação)."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Unidade responsável pelo edital. Ex: PROPEG (pesquisa), PROEX (extensão), PROGRAD (graduação)."></i>
             </label>
             <input type="text" name="{{ form.tipo.html_name }}" value="{{ form.tipo.value|default:'' }}"
                    class="form-control {% if form.tipo.errors %}is-invalid{% endif %}"
@@ -58,9 +52,9 @@
           <div class="col-md-4">
             <label class="form-label fw-semibold">
               Número <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Número sequencial do edital no ano. Ex: 1 para o primeiro edital do ano."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Número sequencial do edital no ano. Ex: 1 para o primeiro edital do ano."></i>
             </label>
             <input type="number" name="{{ form.numero.html_name }}" value="{{ form.numero.value|default:'' }}"
                    class="form-control {% if form.numero.errors %}is-invalid{% endif %}" min="1">
@@ -70,9 +64,9 @@
           <div class="col-md-4">
             <label class="form-label fw-semibold">
               Ano <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Ano de publicação do edital. Junto com o número e tipo forma o identificador único."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Ano de publicação do edital. Junto com o número e tipo forma o identificador único."></i>
             </label>
             <input type="number" name="{{ form.ano.html_name }}" value="{{ form.ano.value|default:'' }}"
                    class="form-control {% if form.ano.errors %}is-invalid{% endif %}" min="2000">
@@ -82,9 +76,9 @@
           <div class="col-12">
             <label class="form-label fw-semibold">
               Título Descritivo <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Nome completo e descritivo do edital. Ex: Pesquisa Docente — Bolsas de Iniciação Científica Institucional 2026."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Nome completo e descritivo do edital. Ex: Pesquisa Docente — Bolsas de Iniciação Científica Institucional 2026."></i>
             </label>
             <input type="text" name="{{ form.titulo.html_name }}" value="{{ form.titulo.value|default:'' }}"
                    class="form-control {% if form.titulo.errors %}is-invalid{% endif %}"
@@ -95,13 +89,13 @@
           <div class="col-12">
             <label class="form-label fw-semibold">
               Descrição Resumida <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Apresente o objetivo do edital, público-alvo e principais informações. Esta descrição aparece para os coordenadores na listagem de editais abertos."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Apresente o objetivo do edital, público-alvo e principais informações. Aparece para os coordenadores na listagem de editais abertos."></i>
             </label>
             <textarea name="{{ form.descricao.html_name }}"
                       class="form-control {% if form.descricao.errors %}is-invalid{% endif %}"
-                      rows="3" placeholder="Objetivo do edital, público-alvo e instruções gerais de submissão.">{{ form.descricao.value|default:'' }}</textarea>
+                      rows="3" placeholder="Objetivo do edital, público-alvo e instruções gerais.">{{ form.descricao.value|default:'' }}</textarea>
             {% if form.descricao.errors %}<div class="invalid-feedback">{{ form.descricao.errors }}</div>{% endif %}
           </div>
 
@@ -109,7 +103,7 @@
       </div>
     </div>
 
-    {# ── Período e Documento ────────────────────────────────────────────── #}
+    {# ── Período e Documento ───────────────────────────── #}
     <div class="card border-0 shadow-sm mb-3">
       <div class="card-header bg-white border-bottom py-3">
         <strong><i class="bi bi-calendar text-primary me-2"></i>Período e Documento</strong>
@@ -120,9 +114,9 @@
           <div class="col-md-6">
             <label class="form-label fw-semibold">
               Início das Submissões <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Data a partir da qual os coordenadores poderão submeter projetos vinculados a este edital."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Data a partir da qual os coordenadores poderão submeter projetos vinculados a este edital."></i>
             </label>
             <input type="date" name="{{ form.data_inicio_submissoes.html_name }}"
                    value="{{ form.data_inicio_submissoes.value|date:'Y-m-d'|default:'' }}"
@@ -133,9 +127,9 @@
           <div class="col-md-6">
             <label class="form-label fw-semibold">
               Fim das Submissões <span class="text-danger">*</span>
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="Data limite para submissão de projetos. Após essa data o edital é encerrado automaticamente."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="Data limite para submissão. Após essa data o edital pode ser encerrado."></i>
             </label>
             <input type="date" name="{{ form.data_fim_submissoes.html_name }}"
                    value="{{ form.data_fim_submissoes.value|date:'Y-m-d'|default:'' }}"
@@ -146,17 +140,17 @@
           <div class="col-12">
             <label class="form-label fw-semibold">
               Documento Principal
-              <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                    data-bs-content="PDF oficial do edital com todas as normas, critérios de avaliação, cronograma e instruções detalhadas. Fica disponível para download pelos coordenadores."
-                    class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
-              <span class="text-muted fw-normal small ms-1">(PDF — opcional no rascunho)</span>
+              <i class="bi bi-question-circle text-muted ms-1" style="cursor:help;"
+                 data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+                 data-bs-content="PDF oficial do edital com todas as normas, critérios de avaliação, cronograma e instruções detalhadas. Disponível para download pelos coordenadores."></i>
+              <span class="text-muted fw-normal small ms-1">(opcional no rascunho)</span>
             </label>
             {% if edital and edital.documento_principal %}
             <div class="mb-2 d-flex align-items-center gap-2">
               <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
                 <i class="bi bi-file-earmark-pdf me-1"></i>Ver documento atual
               </a>
-              <small class="text-muted">Envie um novo arquivo para substituir.</small>
+              <small class="text-muted">Deixe em branco para manter o arquivo atual.</small>
             </div>
             {% endif %}
             <input type="file" name="{{ form.documento_principal.html_name }}"
@@ -169,14 +163,14 @@
       </div>
     </div>
 
-    {# ── Anexos Adicionais ──────────────────────────────────────────────── #}
+    {# ── Anexos Adicionais ─────────────────────────────── #}
     <div class="card border-0 shadow-sm mb-4">
       <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
         <div>
           <strong><i class="bi bi-paperclip text-primary me-2"></i>Anexos Adicionais</strong>
-          <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
-                data-bs-content="Arquivos complementares ao edital: modelos de formulários, quadros de vagas, tabelas de bolsas, regulamentos internos, etc. Cada anexo deve ter uma descrição clara."
-                class="text-muted ms-1 fw-normal" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+          <i class="bi bi-question-circle text-muted ms-1 fw-normal" style="cursor:help;"
+             data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-placement="top"
+             data-bs-content="Arquivos complementares: modelos de formulários, quadros de vagas, tabelas de bolsas, regulamentos. Cada anexo deve ter uma descrição clara."></i>
         </div>
         <button type="button" id="btn-add-anexo" class="btn btn-outline-primary btn-sm">
           <i class="bi bi-plus-lg me-1"></i>Adicionar Anexo
@@ -185,15 +179,15 @@
       <div class="card-body">
         {{ formset.management_form }}
 
-        {# Anexos existentes #}
         <div id="anexos-container">
           {% for f in formset %}
-          <div class="row g-2 mb-2 align-items-center anexo-row">
+          <div class="row g-2 mb-2 align-items-center anexo-row border-bottom pb-2">
             {{ f.id }}
             <div class="col-md-5">
               <input type="text" name="{{ f.descricao.html_name }}"
                      value="{{ f.descricao.value|default:'' }}"
-                     class="form-control form-control-sm" placeholder="Descrição do anexo (ex: Modelo de Plano de Trabalho)">
+                     class="form-control form-control-sm"
+                     placeholder="Descrição do anexo">
             </div>
             <div class="col-md-5">
               <input type="file" name="{{ f.arquivo.html_name }}" class="form-control form-control-sm">
@@ -203,51 +197,27 @@
               </small>
               {% endif %}
             </div>
-            <div class="col-md-2 d-flex gap-2 align-items-center">
-              {% if f.instance.pk %}
+            <div class="col-md-2">
               <div class="form-check">
                 <input type="checkbox" name="{{ f.DELETE.html_name }}" class="form-check-input" id="del_{{ f.prefix }}">
                 <label class="form-check-label text-danger small" for="del_{{ f.prefix }}">Remover</label>
               </div>
-              {% else %}
-              <button type="button" class="btn btn-sm btn-outline-danger btn-remove-anexo" title="Remover">
-                <i class="bi bi-trash"></i>
-              </button>
-              {% endif %}
             </div>
           </div>
           {% endfor %}
         </div>
 
         <div id="anexos-vazio" class="text-center text-muted small py-3 {% if formset.forms %}d-none{% endif %}">
-          <i class="bi bi-paperclip opacity-50 me-1"></i>Nenhum anexo adicionado. Clique em "Adicionar Anexo" para incluir.
-        </div>
-
-        {# Template oculto para novos anexos (clonado via JS) #}
-        <div id="anexo-template" class="d-none">
-          <div class="row g-2 mb-2 align-items-center anexo-row">
-            <div class="col-md-5">
-              <input type="text" name="__PREFIXO__-descricao" class="form-control form-control-sm"
-                     placeholder="Descrição do anexo (ex: Modelo de Plano de Trabalho)">
-            </div>
-            <div class="col-md-5">
-              <input type="file" name="__PREFIXO__-arquivo" class="form-control form-control-sm">
-            </div>
-            <div class="col-md-2">
-              <button type="button" class="btn btn-sm btn-outline-danger btn-remove-anexo" title="Remover">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>
+          <i class="bi bi-paperclip opacity-50 me-1"></i>Nenhum anexo. Clique em "Adicionar Anexo".
         </div>
 
       </div>
     </div>
 
-    {# ── Botões ─────────────────────────────────────────────────────────── #}
+    {# ── Botões ────────────────────────────────────────── #}
     <div class="d-flex justify-content-between align-items-center">
       <a href="{% url 'gestor_listar_editais' %}" class="btn btn-outline-secondary">
-        <i class="bi bi-arrow-left me-1"></i>Cancelar
+        <i class="bi bi-x me-1"></i>Cancelar
       </a>
       <div class="d-flex gap-2">
         <button type="submit" name="acao" value="rascunho" class="btn btn-outline-secondary">
@@ -262,56 +232,61 @@
 
   </form>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 (function () {
-  // Inicializa popovers
+  // ── Popovers ────────────────────────────────────────────────────────────────
   document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (el) {
-    new bootstrap.Popover(el, { container: 'body' });
+    new bootstrap.Popover(el, { container: 'body', html: false });
   });
 
-  var container   = document.getElementById('anexos-container');
-  var template    = document.getElementById('anexo-template');
-  var vazio       = document.getElementById('anexos-vazio');
-  var totalInput  = document.querySelector('[name$="-TOTAL_FORMS"]');
-  var initialInput = document.querySelector('[name$="-INITIAL_FORMS"]');
+  // ── Adicionar Anexo Dinamicamente ───────────────────────────────────────────
+  var container  = document.getElementById('anexos-container');
+  var vazio      = document.getElementById('anexos-vazio');
+  var totalInput = document.querySelector('[name="anexos-TOTAL_FORMS"]');
+  if (!totalInput || !container) return;
 
-  function getTotal() { return parseInt(totalInput.value) || 0; }
+  function getTotal()  { return parseInt(totalInput.value) || 0; }
   function setTotal(n) { totalInput.value = n; }
 
   function updateVazio() {
-    var rows = container.querySelectorAll('.anexo-row');
-    vazio.classList.toggle('d-none', rows.length > 0);
+    var visible = Array.from(container.querySelectorAll('.anexo-row')).filter(function (r) {
+      return r.style.display !== 'none';
+    });
+    vazio.classList.toggle('d-none', visible.length > 0);
   }
 
-  // Prefixo do formset (ex: "anex oedital_set")
-  var prefixBase = totalInput ? totalInput.name.replace('-TOTAL_FORMS', '') : 'anexoedital_set';
-
-  document.getElementById('btn-add-anexo').addEventListener('click', function () {
+  function addRow() {
     var idx  = getTotal();
-    var html = template.innerHTML.replace(/__PREFIXO__/g, prefixBase + '-' + idx);
-    var div  = document.createElement('div');
-    div.innerHTML = html;
-    var row = div.firstElementChild;
-    container.appendChild(row);
-    setTotal(idx + 1);
-    updateVazio();
+    var row  = document.createElement('div');
+    row.className = 'row g-2 mb-2 align-items-center anexo-row border-bottom pb-2';
+    row.innerHTML =
+      '<div class="col-md-5">' +
+        '<input type="text" name="anexos-' + idx + '-descricao" ' +
+               'class="form-control form-control-sm" placeholder="Descrição do anexo">' +
+      '</div>' +
+      '<div class="col-md-5">' +
+        '<input type="file" name="anexos-' + idx + '-arquivo" class="form-control form-control-sm">' +
+      '</div>' +
+      '<div class="col-md-2">' +
+        '<button type="button" class="btn btn-sm btn-outline-danger btn-remove" title="Remover">' +
+          '<i class="bi bi-trash"></i>' +
+        '</button>' +
+      '</div>';
 
-    // Evento de remover
-    row.querySelector('.btn-remove-anexo').addEventListener('click', function () {
+    row.querySelector('.btn-remove').addEventListener('click', function () {
       row.remove();
       updateVazio();
     });
-  });
 
-  // Remover linhas existentes de novos anexos (sem pk)
-  container.querySelectorAll('.btn-remove-anexo').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      btn.closest('.anexo-row').remove();
-      updateVazio();
-    });
-  });
+    container.appendChild(row);
+    setTotal(idx + 1);
+    updateVazio();
+  }
 
+  document.getElementById('btn-add-anexo').addEventListener('click', addRow);
   updateVazio();
 })();
 </script>

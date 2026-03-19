@@ -336,6 +336,7 @@ class Edital(models.Model):
     documento_principal = models.FileField(
         upload_to='editais/documentos/',
         storage=_raw_storage(),
+        blank=True, null=True,
         verbose_name="Documento Principal do Edital (PDF)"
     )
     
