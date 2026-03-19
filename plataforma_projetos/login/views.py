@@ -79,20 +79,36 @@ def esqueceu_senha(request):
         )
 
         # Envia e-mail
-        send_mail(
-            subject='Redefinição de Senha — PROPEG',
-            message=(
-                f'Olá, {user.get_full_name() or user.username}!\n\n'
-                f'Recebemos uma solicitação para redefinir a senha da sua conta na Plataforma PROPEG/UFAC.\n\n'
-                f'Clique no link abaixo para criar uma nova senha (válido por 24 horas):\n\n'
-                f'{link}\n\n'
-                f'Se você não solicitou a redefinição, ignore este e-mail.\n\n'
-                f'Atenciosamente,\nEquipe PROPEG/UFAC'
-            ),
-            from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@propeg.ufac.br'),
-            recipient_list=[user.email],
-            fail_silently=True,
+        subject_mail = 'Redefinição de Senha — PROPEG'
+        body_mail = (
+            f'Olá, {user.get_full_name() or user.username}!\n\n'
+            f'Recebemos uma solicitação para redefinir a senha da sua conta na Plataforma PROPEG/UFAC.\n\n'
+            f'Clique no link abaixo para criar uma nova senha (válido por 24 horas):\n\n'
+            f'{link}\n\n'
+            f'Se você não solicitou a redefinição, ignore este e-mail.\n\n'
+            f'Atenciosamente,\nEquipe PROPEG/UFAC'
         )
+        brevo_key = getattr(settings, 'BREVO_API_KEY', '')
+        if brevo_key:
+            try:
+                import sib_api_v3_sdk
+                configuration = sib_api_v3_sdk.Configuration()
+                configuration.api_key['api-key'] = brevo_key
+                api = sib_api_v3_sdk.TransactionalEmailsApi(
+                    sib_api_v3_sdk.ApiClient(configuration)
+                )
+                api.send_transac_email(sib_api_v3_sdk.SendSmtpEmail(
+                    to=[{"email": user.email, "name": user.get_full_name() or user.username}],
+                    sender={"email": settings.DEFAULT_FROM_EMAIL, "name": "PROPEG/UFAC"},
+                    subject=subject_mail,
+                    text_content=body_mail,
+                ))
+            except Exception as e:
+                print(f"Erro Brevo: {e}")
+        else:
+            send_mail(subject_mail, body_mail,
+                      getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@propeg.ufac.br'),
+                      [user.email], fail_silently=True)
 
         messages.success(
             request,

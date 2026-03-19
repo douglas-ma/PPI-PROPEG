@@ -1117,16 +1117,38 @@ def projeto_anexos(request, pk):
 
 def enviar_email_e_notificacao(subject, message, destinatario_usuario, link=None):
     """
-    Envia um email e cria uma notificação no sistema para o usuário.
+    Envia um email (via Brevo API ou SMTP) e cria uma notificação no sistema.
     """
-    # Envia o email
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [destinatario_usuario.email],
-    )
-    # Cria a notificação
+    brevo_key = getattr(settings, 'BREVO_API_KEY', '')
+    if brevo_key:
+        # Produção: usa API HTTP do Brevo (funciona no Render free)
+        try:
+            import sib_api_v3_sdk
+            from sib_api_v3_sdk.rest import ApiException
+            configuration = sib_api_v3_sdk.Configuration()
+            configuration.api_key['api-key'] = brevo_key
+            api = sib_api_v3_sdk.TransactionalEmailsApi(
+                sib_api_v3_sdk.ApiClient(configuration)
+            )
+            nome = destinatario_usuario.get_full_name() or destinatario_usuario.username
+            email_obj = sib_api_v3_sdk.SendSmtpEmail(
+                to=[{"email": destinatario_usuario.email, "name": nome}],
+                sender={"email": settings.DEFAULT_FROM_EMAIL, "name": "PROPEG/UFAC"},
+                subject=subject,
+                text_content=message,
+            )
+            api.send_transac_email(email_obj)
+        except Exception as e:
+            print(f"Erro Brevo: {e}")
+    else:
+        # Desenvolvimento: usa backend configurado no settings (console ou SMTP)
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL,
+                      [destinatario_usuario.email], fail_silently=True)
+        except Exception as e:
+            print(f"Erro send_mail: {e}")
+
+    # Cria a notificação no sistema independentemente do e-mail
     Notificacao.objects.create(
         destinatario=destinatario_usuario,
         mensagem=message,
