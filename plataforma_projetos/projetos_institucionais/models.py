@@ -3,13 +3,27 @@ from django.db import models
 from django.conf import settings
 
 def _raw_storage():
-    """Retorna RawMediaCloudinaryStorage em produção, FileSystemStorage em dev."""
-    try:
-        from cloudinary_storage.storage import RawMediaCloudinaryStorage
-        return RawMediaCloudinaryStorage()
-    except ImportError:
-        from django.core.files.storage import FileSystemStorage
-        return FileSystemStorage()
+    """
+    Storage lazy para FileFields — usa RawMediaCloudinaryStorage se CLOUDINARY_URL
+    estiver configurada, caso contrário usa FileSystemStorage local.
+    A inicialização é adiada para evitar erro de credenciais no carregamento do módulo.
+    """
+    import os
+    from django.utils.functional import LazyObject
+
+    class LazyRawStorage(LazyObject):
+        def _setup(self):
+            if os.environ.get('CLOUDINARY_URL') or os.environ.get('DJANGO_SETTINGS_MODULE', '').endswith('settings_prod'):
+                try:
+                    from cloudinary_storage.storage import RawMediaCloudinaryStorage
+                    self._wrapped = RawMediaCloudinaryStorage()
+                    return
+                except Exception:
+                    pass
+            from django.core.files.storage import FileSystemStorage
+            self._wrapped = FileSystemStorage()
+
+    return LazyRawStorage()
 from validate_docbr import CPF
 
 class UsuarioManager(BaseUserManager):
