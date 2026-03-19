@@ -6,135 +6,80 @@
 <style>
   @page {
     size: A4 landscape;
-    margin: 0;
+    margin: 12mm 14mm;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 
   body {
     font-family: 'Times New Roman', Times, serif;
-    width: 297mm;
-    height: 210mm;
-    background: #fff;
     color: #1a1a1a;
+    height: 100%;
+    border: 3px solid #1a3a5c;
+    padding: 4mm;
     position: relative;
-    overflow: hidden;
   }
 
-  /* Bordas decorativas */
-  .borda-ext {
-    position: absolute;
-    inset: 6mm;
-    border: 3px solid #1a3a5c;
-    border-radius: 2px;
-  }
+  /* Borda interna */
   .borda-int {
-    position: absolute;
-    inset: 9mm;
     border: 1px solid #1a3a5c;
-    border-radius: 1px;
+    height: 100%;
+    padding: 5mm 8mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
-  /* Cantos ornamentais */
+
+  /* Cantos dourados */
   .canto {
     position: absolute;
-    width: 14mm;
-    height: 14mm;
+    width: 12mm;
+    height: 12mm;
     border-color: #c8a84b;
     border-style: solid;
   }
-  .canto-tl { top: 6mm;  left: 6mm;  border-width: 3px 0 0 3px; }
-  .canto-tr { top: 6mm;  right:6mm;  border-width: 3px 3px 0 0; }
-  .canto-bl { bottom:6mm;left: 6mm;  border-width: 0 0 3px 3px; }
-  .canto-br { bottom:6mm;right:6mm;  border-width: 0 3px 3px 0; }
+  .canto-tl { top: 3mm;  left: 3mm;  border-width: 2.5px 0 0 2.5px; }
+  .canto-tr { top: 3mm;  right:3mm;  border-width: 2.5px 2.5px 0 0; }
+  .canto-bl { bottom:3mm;left: 3mm;  border-width: 0 0 2.5px 2.5px; }
+  .canto-br { bottom:3mm;right:3mm;  border-width: 0 2.5px 2.5px 0; }
 
-  /* Faixa superior dourada */
-  .faixa-topo {
-    position: absolute;
-    top: 12mm;
-    left: 12mm;
-    right: 12mm;
-    height: 1.2mm;
-    background: linear-gradient(to right, transparent, #c8a84b 20%, #c8a84b 80%, transparent);
-  }
-  .faixa-base {
-    position: absolute;
-    bottom: 12mm;
-    left: 12mm;
-    right: 12mm;
-    height: 1.2mm;
-    background: linear-gradient(to right, transparent, #c8a84b 20%, #c8a84b 80%, transparent);
-  }
-
-  /* Marca d'água */
-  .watermark {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%) rotate(-30deg);
-    font-size: 90pt;
-    color: rgba(200, 168, 75, 0.04);
-    font-weight: bold;
-    white-space: nowrap;
-    letter-spacing: 8px;
-    pointer-events: none;
-  }
-
-  /* Conteúdo principal */
-  .content {
-    position: absolute;
-    inset: 14mm;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 2mm 8mm;
-  }
-
-  /* Cabeçalho com logos */
+  /* Cabeçalho */
   .cabecalho {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    padding-bottom: 2mm;
-    border-bottom: 1px solid #c8a84b;
+    padding-bottom: 3mm;
+    border-bottom: 1.5px solid #c8a84b;
   }
-  .logo-ufac  { height: 16mm; }
-  .logo-propeg { height: 13mm; }
+  .logo-ufac   { height: 18mm; width: auto; }
+  .logo-propeg { height: 14mm; width: auto; }
 
-  .instituicao {
-    text-align: center;
-    flex: 1;
-  }
-  .instituicao .univ {
-    font-size: 9pt;
-    font-weight: bold;
-    color: #1a3a5c;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    line-height: 1.4;
-  }
-  .instituicao .propeg {
-    font-size: 7.5pt;
-    color: #555;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+  .inst-centro { text-align: center; flex: 1; padding: 0 6mm; }
+  .inst-univ   { font-size: 9.5pt; font-weight: bold; color: #1a3a5c; text-transform: uppercase; letter-spacing: 1px; line-height: 1.4; }
+  .inst-sub    { font-size: 7.5pt; color: #666; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1mm; }
+
+  /* Linha dourada decorativa */
+  .linha-ouro {
+    border: none;
+    border-top: 1px solid #c8a84b;
+    margin: 2mm 0;
+    opacity: 0.5;
   }
 
-  /* Corpo do certificado */
+  /* Corpo */
   .corpo {
-    text-align: center;
     flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    text-align: center;
+    padding: 2mm 10mm;
     gap: 3mm;
-    padding: 0 4mm;
   }
 
-  .tipo-cert {
-    font-size: 7.5pt;
+  .tipo-label {
+    font-size: 7pt;
     letter-spacing: 4px;
     text-transform: uppercase;
     color: #c8a84b;
@@ -142,7 +87,7 @@
   }
 
   .titulo-cert {
-    font-size: {% if concluido %}22pt{% else %}20pt{% endif %};
+    font-size: 20pt;
     font-weight: bold;
     color: #1a3a5c;
     text-transform: uppercase;
@@ -150,127 +95,101 @@
     line-height: 1.2;
   }
 
-  .subtitulo-cert {
-    font-size: 9pt;
-    color: #666;
-    font-style: italic;
-  }
-
-  .divisor {
-    width: 40mm;
-    height: 1px;
-    background: linear-gradient(to right, transparent, #c8a84b, transparent);
-    margin: 1mm 0;
-  }
-
-  .nome-membro {
-    font-size: 20pt;
-    font-weight: bold;
-    color: #1a1a1a;
-    font-style: italic;
-    line-height: 1.1;
-  }
-
-  .texto-cert {
-    font-size: 9pt;
-    color: #333;
-    line-height: 1.6;
-    max-width: 200mm;
-    text-align: center;
-  }
-
-  .texto-cert strong {
-    color: #1a3a5c;
-    font-style: italic;
-  }
-
-  .badges {
-    display: flex;
-    gap: 6mm;
-    align-items: center;
-    justify-content: center;
-  }
-  .badge-item {
-    text-align: center;
-    background: #f5f0e8;
-    border: 1px solid #c8a84b;
-    border-radius: 3mm;
-    padding: 1.5mm 4mm;
-  }
-  .badge-label { font-size: 6pt; text-transform: uppercase; letter-spacing: 1px; color: #888; }
-  .badge-valor { font-size: 10pt; font-weight: bold; color: #1a3a5c; }
-
-  /* Em andamento */
   .andamento-tag {
-    background: #fff3cd;
-    border: 1px solid #ffc107;
-    border-radius: 2mm;
-    padding: 1mm 4mm;
+    display: inline-block;
+    background: #fff8e1;
+    border: 1px solid #f0c040;
+    border-radius: 3mm;
+    padding: 1mm 5mm;
     font-size: 7pt;
-    color: #856404;
+    color: #7a5c00;
     font-weight: bold;
     letter-spacing: 1px;
     text-transform: uppercase;
   }
 
+  .divisor {
+    width: 35mm;
+    border: none;
+    border-top: 1px solid #c8a84b;
+    margin: 0 auto;
+  }
+
+  .certifica-texto {
+    font-size: 9pt;
+    color: #555;
+  }
+
+  .nome-membro {
+    font-size: 22pt;
+    font-weight: bold;
+    font-style: italic;
+    color: #111;
+    line-height: 1.1;
+  }
+
+  .descricao {
+    font-size: 9.5pt;
+    color: #333;
+    line-height: 1.7;
+    max-width: 190mm;
+  }
+  .descricao strong { color: #1a3a5c; font-style: italic; }
+
+  /* Badges */
+  .badges {
+    display: flex;
+    gap: 5mm;
+    justify-content: center;
+    align-items: stretch;
+    margin-top: 1mm;
+  }
+  .badge-box {
+    border: 1px solid #c8a84b;
+    background: #fdfaf3;
+    border-radius: 2mm;
+    padding: 2mm 5mm;
+    text-align: center;
+    min-width: 30mm;
+  }
+  .badge-label { font-size: 6pt; text-transform: uppercase; letter-spacing: 0.8px; color: #999; display: block; }
+  .badge-valor { font-size: 10.5pt; font-weight: bold; color: #1a3a5c; display: block; }
+
   /* Rodapé */
   .rodape {
-    width: 100%;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    padding-top: 2mm;
-    border-top: 1px solid #c8a84b;
+    padding-top: 3mm;
+    border-top: 1.5px solid #c8a84b;
   }
 
-  .assinatura {
-    text-align: center;
-    min-width: 55mm;
-  }
-  .assinatura-linha {
-    width: 52mm;
-    height: 1px;
-    background: #1a3a5c;
-    margin: 0 auto 1mm;
-  }
-  .assinatura-nome  { font-size: 7.5pt; font-weight: bold; color: #1a3a5c; }
-  .assinatura-cargo { font-size: 6.5pt; color: #666; }
+  .rodape-esq { font-size: 5.5pt; color: #aaa; line-height: 1.6; }
 
-  .data-geracao {
-    font-size: 6pt;
-    color: #aaa;
-    text-align: right;
-    line-height: 1.5;
-  }
+  .assinatura { text-align: center; min-width: 52mm; }
+  .ass-linha  { width: 50mm; border: none; border-top: 1px solid #1a3a5c; margin: 0 auto 1.5mm; }
+  .ass-nome   { font-size: 8pt; font-weight: bold; color: #1a3a5c; }
+  .ass-cargo  { font-size: 6.5pt; color: #666; }
 
-  .codigo-cert {
-    font-size: 6pt;
-    color: #aaa;
-    text-align: left;
-    line-height: 1.5;
-  }
+  .rodape-dir { font-size: 5.5pt; color: #aaa; text-align: right; line-height: 1.6; }
 </style>
 </head>
 <body>
 
-  <div class="borda-ext"></div>
-  <div class="borda-int"></div>
+  <!-- Cantos dourados -->
   <div class="canto canto-tl"></div>
   <div class="canto canto-tr"></div>
   <div class="canto canto-bl"></div>
   <div class="canto canto-br"></div>
-  <div class="faixa-topo"></div>
-  <div class="faixa-base"></div>
-  <div class="watermark">UFAC</div>
 
-  <div class="content">
+  <div class="borda-int">
 
     <!-- Cabeçalho -->
     <div class="cabecalho">
       <img class="logo-ufac" src="{% static 'imagens/logo_ufac.png' %}" alt="UFAC">
-      <div class="instituicao">
-        <div class="univ">Universidade Federal do Acre</div>
-        <div class="propeg">Pró-Reitoria de Pesquisa e Pós-Graduação — PROPEG</div>
+      <div class="inst-centro">
+        <div class="inst-univ">Universidade Federal do Acre</div>
+        <div class="inst-sub">Pró-Reitoria de Pesquisa e Pós-Graduação — PROPEG</div>
       </div>
       <img class="logo-propeg" src="{% static 'imagens/Logo-Propeg.png' %}" alt="PROPEG">
     </div>
@@ -278,7 +197,9 @@
     <!-- Corpo -->
     <div class="corpo">
 
-      <div class="tipo-cert">Certificado de {% if concluido %}Conclusão{% else %}Participação{% endif %}</div>
+      <div class="tipo-label">
+        Certificado de {% if concluido %}Conclusão{% else %}Participação{% endif %}
+      </div>
 
       <div class="titulo-cert">
         {% if concluido %}Projeto Concluído{% else %}Projeto em Andamento{% endif %}
@@ -288,38 +209,36 @@
       <div class="andamento-tag">⚠ Projeto ainda em execução</div>
       {% endif %}
 
-      <div class="divisor"></div>
+      <hr class="divisor">
 
-      <div class="texto-cert">Certificamos que</div>
+      <div class="certifica-texto">Certificamos que</div>
 
       <div class="nome-membro">{{ membro.get_full_name }}</div>
 
-      <div class="texto-cert">
+      <div class="descricao">
         participou{% if concluido %} e concluiu{% endif %} como
         <strong>{{ funcao }}</strong>
         do projeto de pesquisa e extensão
-        <strong>"{{ projeto.titulo }}"</strong>,
-        vinculado ao {{ projeto.centro_lotacao|default:"Centro de Lotação da UFAC" }},
-        {% if projeto.data_inicio and projeto.data_fim %}
-          no período de {{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }},
-        {% endif %}
+        <strong>&#8220;{{ projeto.titulo }}&#8221;</strong>,
+        vinculado ao {{ projeto.centro_lotacao|default:"Centro de Lotação da UFAC" }},{% if projeto.data_inicio and projeto.data_fim %}
+        no período de {{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }},{% endif %}
         sob coordenação de <strong>{{ projeto.coordenador.get_full_name }}</strong>.
       </div>
 
       <div class="badges">
         {% if carga_horaria %}
-        <div class="badge-item">
-          <div class="badge-label">Carga Horária</div>
-          <div class="badge-valor">{{ carga_horaria }}h</div>
+        <div class="badge-box">
+          <span class="badge-label">Carga Horária</span>
+          <span class="badge-valor">{{ carga_horaria }}h</span>
         </div>
         {% endif %}
-        <div class="badge-item">
-          <div class="badge-label">Função</div>
-          <div class="badge-valor">{{ funcao }}</div>
+        <div class="badge-box">
+          <span class="badge-label">Função</span>
+          <span class="badge-valor">{{ funcao }}</span>
         </div>
-        <div class="badge-item">
-          <div class="badge-label">Status</div>
-          <div class="badge-valor">{% if concluido %}Concluído{% else %}Em Andamento{% endif %}</div>
+        <div class="badge-box">
+          <span class="badge-label">Status</span>
+          <span class="badge-valor">{% if concluido %}Concluído{% else %}Em Andamento{% endif %}</span>
         </div>
       </div>
 
@@ -327,34 +246,30 @@
 
     <!-- Rodapé -->
     <div class="rodape">
-
-      <div class="codigo-cert">
-        Projeto: #{{ projeto.pk }}<br>
-        Membro: #{{ membro.pk }}<br>
-        PROPEG/UFAC — Sistema de Projetos Institucionais
+      <div class="rodape-esq">
+        Nº Projeto: {{ projeto.pk }} &nbsp;|&nbsp; Membro: {{ membro.pk }}<br>
+        PROPEG — Plataforma de Projetos Institucionais — UFAC
       </div>
 
       <div class="assinatura">
-        <div class="assinatura-linha"></div>
-        <div class="assinatura-nome">Reitor(a) da UFAC</div>
-        <div class="assinatura-cargo">Universidade Federal do Acre</div>
+        <hr class="ass-linha">
+        <div class="ass-nome">Reitor(a) da UFAC</div>
+        <div class="ass-cargo">Universidade Federal do Acre</div>
       </div>
 
       <div class="assinatura">
-        <div class="assinatura-linha"></div>
-        <div class="assinatura-nome">{{ projeto.coordenador.get_full_name }}</div>
-        <div class="assinatura-cargo">Coordenador(a) do Projeto</div>
+        <hr class="ass-linha">
+        <div class="ass-nome">{{ projeto.coordenador.get_full_name }}</div>
+        <div class="ass-cargo">Coordenador(a) do Projeto</div>
       </div>
 
-      <div class="data-geracao">
+      <div class="rodape-dir">
         Emitido em:<br>
         {{ data_geracao|date:"d/m/Y" }} às {{ data_geracao|date:"H:i:s" }}<br>
         Rio Branco — AC
       </div>
-
     </div>
 
-  </div>
-
+  </div><!-- borda-int -->
 </body>
 </html>
