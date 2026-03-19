@@ -49,6 +49,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Arquivos de mídia — Cloudinary
+# NÃO sobrescrever MEDIA_URL — o django-cloudinary-storage gera as URLs
+# completas automaticamente via .url (inclui cloud_name e /image/upload/)
 # ─────────────────────────────────────────────────────────────────────────────
 cloudinary_url = config('CLOUDINARY_URL', default='')
 if cloudinary_url:
@@ -56,14 +58,13 @@ if cloudinary_url:
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     INSTALLED_APPS      += ['cloudinary_storage', 'cloudinary']
     CLOUDINARY_URL       = cloudinary_url
-    # Cloudinary gera as URLs via .url — não usar MEDIA_URL local
-    MEDIA_URL = 'https://res.cloudinary.com/'
+    # Não definir MEDIA_URL aqui — o Cloudinary cuida disso
 else:
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
 # ─────────────────────────────────────────────────────────────────────────────
-# E-mail — Brevo API (SMTP bloqueado no Render free)
+# E-mail — Brevo API
 # ─────────────────────────────────────────────────────────────────────────────
 EMAIL_BACKEND      = 'django.core.mail.backends.dummy.EmailBackend'
 BREVO_API_KEY      = config('BREVO_API_KEY', default='')
