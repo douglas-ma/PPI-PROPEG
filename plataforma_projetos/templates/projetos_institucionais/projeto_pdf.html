@@ -39,7 +39,7 @@ body {
     min-height: 267mm; /* A4 - margens */
     text-align: center;
 }
-.capa-logo    { width: 90px; margin-bottom: 0.4cm; }
+.capa-logo    { width: 90px; margin-bottom: 0.4cm; display: block; margin-left: auto; margin-right: auto; }
 .capa-inst    { font-size: 12pt; font-weight: bold; text-transform: uppercase; line-height: 1.5; }
 .capa-sub     { font-size: 12pt; margin-top: 0.15cm; }
 .capa-titulo  { font-size: 14pt; font-weight: bold; text-transform: uppercase;
@@ -174,12 +174,12 @@ li { margin-bottom: 0; }
 
   <p class="s capa-titulo">{{ projeto.titulo }}</p>
 
-  <!-- <div class="capa-autores">
+  <div class="capa-autores">
     <p class="s">{{ coord.get_full_name }}</p>
     {% for m in projeto.equipe.all %}
     <p class="s">{{ m.membro.get_full_name }}</p>
     {% endfor %}
-  </div> -->
+  </div>
 
   <div class="capa-local">
     <p class="s">Rio Branco – AC</p>

@@ -204,7 +204,7 @@ class ProjetoCreateWizard(SessionWizardView):
             'projeto': projeto
         }
         html_string = render_to_string('projetos_institucionais/projeto_pdf.html', contexto_pdf)
-        pdf_file = HTML(string=html_string).write_pdf()
+        pdf_file = HTML(string=html_string, base_url=settings.STATIC_ROOT or settings.BASE_DIR).write_pdf()
 
         novo_anexo = Anexo(
             projeto=projeto,
@@ -1820,7 +1820,7 @@ def projeto_etapa_view(request, pk, step):
                             'projetos_institucionais/projeto_pdf.html',
                             {'projeto': projeto},
                         )
-                        pdf_file = HTML(string=html_string).write_pdf()
+                        pdf_file = HTML(string=html_string, base_url=settings.STATIC_ROOT or settings.BASE_DIR).write_pdf()
                         novo_anexo = Anexo(
                             projeto=projeto,
                             tipo_anexo='relatorio_submissao',
