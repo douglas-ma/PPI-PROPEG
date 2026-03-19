@@ -45,37 +45,43 @@ MIDDLEWARE = [
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Arquivos de mídia — Cloudinary
+# Django 4.2+ usa STORAGES em vez de DEFAULT_FILE_STORAGE
 # ─────────────────────────────────────────────────────────────────────────────
-# Formato da CLOUDINARY_URL: cloudinary://api_key:api_secret@cloud_name
 cloudinary_url = config('CLOUDINARY_URL', default='')
 if cloudinary_url:
     import cloudinary
     import cloudinary.uploader
     import cloudinary.api
 
-    # Configura o Cloudinary explicitamente
     cloudinary.config(cloudinary_url=cloudinary_url)
 
-    # Extrai o cloud_name da URL para montar o MEDIA_URL corretamente
-    # Ex: cloudinary://123:abc@dbwrwudmb  →  cloud_name = dbwrwudmb
-    try:
-        cloud_name = cloudinary_url.split('@')[-1].strip('/')
-    except Exception:
-        cloud_name = ''
+    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
+    CLOUDINARY_URL  = cloudinary_url
+    MEDIA_URL       = '/media/cloudinary/'   # prefixo simbólico — o storage ignora isso
 
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    INSTALLED_APPS      += ['cloudinary_storage', 'cloudinary']
-    CLOUDINARY_URL       = cloudinary_url
-
-    # MEDIA_URL com cloud_name correto — necessário para .url gerar URLs completas
-    MEDIA_URL = f'https://res.cloudinary.com/{cloud_name}/'
+    # Django 5.x — forma correta de definir o storage padrão
+    STORAGES = {
+        'default': {
+            'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 else:
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
+    STORAGES = {
+        'default': {
+            'BACKEND': 'django.core.files.storage.FileSystemStorage',
+        },
+        'staticfiles': {
+            'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+        },
+    }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # E-mail — Brevo API

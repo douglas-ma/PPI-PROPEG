@@ -11,6 +11,14 @@ python manage.py collectstatic --no-input
 # Aplica as migrations
 python manage.py migrate
 
+python manage.py shell -c "
+from django.core.files.storage import default_storage
+print('Storage:', default_storage.__class__.__name__)
+# Simula o .url() de um arquivo de ODS
+url = default_storage.url('ods_imagens/teste.png')
+print('URL gerada:', url)
+"
+
 # Adicione o super user se ele não existir
 python manage.py shell -c "
 from projetos_institucionais.models import Usuario
