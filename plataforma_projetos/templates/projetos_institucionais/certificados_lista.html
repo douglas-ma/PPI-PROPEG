@@ -1,0 +1,66 @@
+{% extends 'base2.html' %}
+{% load static %}
+{% block title %}Certificados — {{ projeto.titulo }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4" style="max-width:760px;">
+
+  <div class="d-flex align-items-center gap-2 mb-4">
+    <a href="{% url 'projeto_detalhe' pk=projeto.pk %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+      <h4 class="mb-0">Certificados</h4>
+      <small class="text-muted">{{ projeto.titulo|truncatechars:70 }}</small>
+    </div>
+    {% if projeto.status == 'encerrado' %}
+    <span class="badge bg-success py-2 px-3"><i class="bi bi-check-circle me-1"></i>Projeto Concluído</span>
+    {% else %}
+    <span class="badge bg-warning text-dark py-2 px-3"><i class="bi bi-hourglass-split me-1"></i>Em Andamento</span>
+    {% endif %}
+  </div>
+
+  <div class="alert alert-info d-flex gap-2 py-2 mb-4">
+    <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
+    <span class="small">
+      {% if projeto.status == 'encerrado' %}
+        Os certificados abaixo são de <strong>conclusão</strong>. Clique em "Gerar Certificado" para baixar o PDF individual de cada participante.
+      {% else %}
+        Os certificados abaixo são de <strong>participação</strong> (projeto em andamento). O certificado indica que o projeto ainda está em execução.
+      {% endif %}
+    </span>
+  </div>
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-award text-primary me-2"></i>Participantes</strong>
+      <small class="text-muted">{{ membros|length }} participante{{ membros|length|pluralize }}</small>
+    </div>
+    <ul class="list-group list-group-flush">
+      {% for m in membros %}
+      <li class="list-group-item d-flex align-items-center gap-3 py-3">
+        <div class="d-flex align-items-center justify-content-center rounded-circle bg-primary bg-opacity-10 flex-shrink-0"
+             style="width:42px;height:42px;">
+          <i class="bi bi-person text-primary"></i>
+        </div>
+        <div class="flex-grow-1">
+          <div class="fw-semibold">{{ m.usuario.get_full_name }}</div>
+          <div class="small text-muted">
+            <span class="badge bg-light text-dark border me-1">{{ m.funcao }}</span>
+            {% if m.carga_horaria_total %}
+            <span class="text-muted"><i class="bi bi-clock me-1"></i>{{ m.carga_horaria_total }}h</span>
+            {% endif %}
+          </div>
+        </div>
+        <a href="{% url 'gerar_certificado' pk=projeto.pk membro_pk=m.pk %}"
+           target="_blank"
+           class="btn btn-sm {% if projeto.status == 'encerrado' %}btn-success{% else %}btn-outline-primary{% endif %} flex-shrink-0">
+          <i class="bi bi-award me-1"></i>
+          {% if projeto.status == 'encerrado' %}Certificado de Conclusão{% else %}Certificado de Participação{% endif %}
+        </a>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+
+</div>
+{% endblock %}

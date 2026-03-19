@@ -62,7 +62,8 @@ urlpatterns = [
     path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),
     path('projetos/<int:pk>/criar-relatorio/', views.criar_relatorio, name='relatorio_criar'),
     path('ajuda/', views.ajuda, name='ajuda'),
-    path('ajax/load-cursos/', views.load_cursos, name='ajax_load_cursos'),
+    path('projetos/<int:pk>/certificado/<int:membro_pk>/', views.gerar_certificado, name='gerar_certificado'),
+    path('projetos/<int:pk>/certificados/', views.listar_certificados, name='listar_certificados'),
 ]   
 
 if settings.DEBUG:

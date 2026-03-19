@@ -2023,3 +2023,102 @@ def _ajuda_dados():
         {'pergunta': 'A plataforma funciona no celular?',                                 'resposta': 'Sim, a plataforma é responsiva. Para melhor experiência no preenchimento de projetos, recomenda-se uso em telas maiores.'},
     ]
     return fluxo, faqs
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Certificados
+# ─────────────────────────────────────────────────────────────────────────────
+
+@login_required
+def listar_certificados(request, pk):
+    """Lista todos os membros do projeto com botão para gerar certificado."""
+    projeto = get_object_or_404(Projeto, pk=pk)
+
+    # Coordenador pode gerar seus próprios e dos membros; gestor pode gerar para qualquer um
+    pode_gerar = (request.user == projeto.coordenador or
+                  request.user.perfil == 'gestor')
+    if not pode_gerar:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    # Monta lista: coordenador principal + equipe
+    membros = []
+    membros.append({
+        'usuario': projeto.coordenador,
+        'funcao': 'Coordenador',
+        'carga_horaria_total': None,
+        'pk': projeto.coordenador.pk,
+    })
+    for ep in projeto.equipe.select_related('membro').all():
+        membros.append({
+            'usuario': ep.membro,
+            'funcao': ep.get_funcao_display(),
+            'carga_horaria_total': ep.carga_horaria_total,
+            'pk': ep.membro.pk,
+        })
+
+    return render(request, 'projetos_institucionais/certificados_lista.html', {
+        'projeto': projeto,
+        'membros': membros,
+    })
+
+
+@login_required
+def gerar_certificado(request, pk, membro_pk):
+    """Gera PDF de certificado para um membro do projeto."""
+    import datetime as dt
+    projeto = get_object_or_404(Projeto, pk=pk)
+
+    # Verifica permissão
+    pode_gerar = (request.user == projeto.coordenador or
+                  request.user.perfil == 'gestor' or
+                  request.user.pk == membro_pk)
+    if not pode_gerar:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    # Busca o membro
+    usuario_membro = get_object_or_404(
+        __import__('projetos_institucionais.models', fromlist=['Usuario']).Usuario,
+        pk=membro_pk
+    )
+
+    # Determina função e horas
+    if usuario_membro.pk == projeto.coordenador.pk:
+        funcao = 'Coordenador'
+        carga_horaria = None
+    else:
+        ep = get_object_or_404(
+            __import__('projetos_institucionais.models', fromlist=['EquipeProjeto']).EquipeProjeto,
+            projeto=projeto, membro=usuario_membro
+        )
+        funcao = ep.get_funcao_display()
+        carga_horaria = ep.carga_horaria_total
+
+    concluido = projeto.status == 'encerrado'
+    agora = dt.datetime.now()
+
+    contexto = {
+        'projeto': projeto,
+        'membro': usuario_membro,
+        'funcao': funcao,
+        'carga_horaria': carga_horaria,
+        'concluido': concluido,
+        'data_geracao': agora,
+    }
+
+    html_string = render_to_string(
+        'projetos_institucionais/certificado_pdf.html',
+        contexto,
+    )
+    pdf_bytes = HTML(
+        string=html_string,
+        base_url=request.build_absolute_uri('/'),
+    ).write_pdf()
+
+    from django.http import HttpResponse
+    tipo = 'conclusao' if concluido else 'participacao'
+    nome = f'certificado_{tipo}_{usuario_membro.pk}_{projeto.pk}.pdf'
+    resp = HttpResponse(pdf_bytes, content_type='application/pdf')
+    resp['Content-Disposition'] = f'inline; filename="{nome}"'
+    return resp
