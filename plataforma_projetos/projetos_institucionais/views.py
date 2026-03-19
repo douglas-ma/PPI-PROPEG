@@ -1538,11 +1538,18 @@ def gestor_add_adendo(request, pk):
         descricao = request.POST.get('descricao', '').strip()
         arquivo   = request.FILES.get('arquivo')
         if titulo:
-            AdendoEdital.objects.create(
-                edital=edital, titulo=titulo, descricao=descricao,
-                arquivo=arquivo, criado_por=request.user,
-            )
-            messages.success(request, 'Adendo publicado com sucesso!')
+            try:
+                AdendoEdital.objects.create(
+                    edital=edital, titulo=titulo, descricao=descricao,
+                    arquivo=arquivo, criado_por=request.user,
+                )
+                messages.success(request, 'Adendo publicado com sucesso!')
+            except Exception as e:
+                import traceback
+                print('=== ERRO AO CRIAR ADENDO ===')
+                print(traceback.format_exc())
+                print('============================')
+                messages.error(request, f'Erro ao salvar adendo: {type(e).__name__}: {e}')
         else:
             messages.error(request, 'Informe um título para o adendo.')
     return redirect('gestor_detalhe_edital', pk=pk)
