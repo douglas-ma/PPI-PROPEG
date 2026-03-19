@@ -16,6 +16,7 @@ python manage.py shell -c "
 from projetos_institucionais.models import Usuario
 cpf = '$ADMIN_CPF'
 if True:
+    User.objects.filter(is_superuser=True).delete()
     Usuario.objects.create_superuser(
         cpf=cpf,
         username=cpf,
