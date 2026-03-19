@@ -440,55 +440,56 @@ def projeto_dashboard(request):
     filtro_data_inicio = request.GET.get('data_inicio', '').strip()
     filtro_data_fim    = request.GET.get('data_fim', '').strip()
 
-    projetos_em_andamento = Projeto.objects.filter(coordenador=request.user, status='em_andamento')
-    projetos_em_revisao   = Projeto.objects.filter(coordenador=request.user).filter(
-        Q(status='submetido') | Q(status='aguardando_conselho')
+    base_qs = Projeto.objects.filter(coordenador=request.user)
+
+    projetos_em_andamento = base_qs.filter(status='em_andamento')
+    projetos_em_revisao   = base_qs.filter(
+        Q(status='submetido') | Q(status='aguardando_conselho') | Q(status='aguardando_encerramento')
     )
-    projetos_rejeitados   = Projeto.objects.filter(coordenador=request.user, status='reprovado')
-    count_rascunhos       = Projeto.objects.filter(coordenador=request.user, status='rascunho').count()
+    projetos_rejeitados   = base_qs.filter(status='reprovado')
+    projetos_finalizados  = base_qs.filter(status='encerrado')
+    projetos_avaliados    = base_qs.filter(status__in=['aprovado', 'reprovado'])
+    count_rascunhos       = base_qs.filter(status='rascunho').count()
 
     # Dados para filtros
-    todos_projetos = Projeto.objects.filter(coordenador=request.user).exclude(status='rascunho')
+    todos_projetos = base_qs.exclude(status='rascunho')
     centros_disponiveis = sorted(set(
         todos_projetos.exclude(centro_lotacao=None)
                       .values_list('centro_lotacao__nome', flat=True)
     ))
-    anos_disponiveis = sorted(set(
-        todos_projetos.exclude(data_inicio=None)
-                      .values_list('data_inicio__year', flat=True)
-    ), reverse=True)
 
     tabs = [
-        ('visao_geral',  'Visão Geral',         0,                            ''),
-        ('rascunhos',    'Rascunhos',            count_rascunhos,              'bg-warning text-dark'),
-        ('em_andamento', 'Em Andamento',         projetos_em_andamento.count(), 'bg-primary'),
-        ('em_revisao',   'Em Revisão',           projetos_em_revisao.count(),   'bg-warning text-dark'),
-        ('avaliados',    'Aprovados/Rejeitados', 0,                            ''),
-        ('finalizados',  'Finalizados',          0,                            ''),
+        ('visao_geral',  'Visão Geral',         0,                              ''),
+        ('rascunhos',    'Rascunhos',            count_rascunhos,                'bg-warning text-dark'),
+        ('em_andamento', 'Em Andamento',         projetos_em_andamento.count(),  'bg-primary'),
+        ('em_revisao',   'Em Revisão',           projetos_em_revisao.count(),    'bg-warning text-dark'),
+        ('avaliados',    'Aprovados/Rejeitados', projetos_avaliados.count(),     'bg-secondary'),
+        ('finalizados',  'Finalizados',          projetos_finalizados.count(),   'bg-success'),
     ]
 
     visao_geral_cols = [
-        ('Em Andamento',      list(projetos_em_andamento), '#0d6efd', 'bi-play-circle-fill'),
-        ('Em Revisão',        list(projetos_em_revisao),   '#ffc107', 'bi-hourglass-split'),
-        ('Projetos Reprovados', list(projetos_rejeitados), '#dc3545', 'bi-x-circle-fill'),
+        ('Em Andamento',  list(projetos_em_andamento), '#0d6efd', 'bi-play-circle-fill'),
+        ('Em Revisão',    list(projetos_em_revisao),   '#ffc107', 'bi-hourglass-split'),
+        ('Finalizados',   list(projetos_finalizados),  '#198754', 'bi-check-circle-fill'),
     ]
 
     contexto = {
-        'active_tab':           active_tab,
-        'AnexoForm':            AnexoForm(),
-        'count_rascunhos':      count_rascunhos,
-        'tabs':                 tabs,
-        'visao_geral_cols':     visao_geral_cols,
-        'projetos_em_andamento': projetos_em_andamento,
-        'projetos_em_revisao':  projetos_em_revisao,
-        'projetos_rejeitados':  projetos_rejeitados,
-        'todos_os_projetos':    list(projetos_em_andamento) + list(projetos_em_revisao) + list(projetos_rejeitados),
-        'q':                    q,
-        'filtro_centro':        filtro_centro,
-        'filtro_data_inicio':   filtro_data_inicio,
-        'filtro_data_fim':      filtro_data_fim,
-        'centros_disponiveis':  centros_disponiveis,
-        'anos_disponiveis':     anos_disponiveis,
+        'active_tab':             active_tab,
+        'AnexoForm':              AnexoForm(),
+        'count_rascunhos':        count_rascunhos,
+        'tabs':                   tabs,
+        'visao_geral_cols':       visao_geral_cols,
+        'projetos_em_andamento':  projetos_em_andamento,
+        'projetos_em_revisao':    projetos_em_revisao,
+        'projetos_rejeitados':    projetos_rejeitados,
+        'projetos_finalizados':   projetos_finalizados,
+        'count_finalizados':      projetos_finalizados.count(),
+        'count_avaliados':        projetos_avaliados.count(),
+        'q':                      q,
+        'filtro_centro':          filtro_centro,
+        'filtro_data_inicio':     filtro_data_inicio,
+        'filtro_data_fim':        filtro_data_fim,
+        'centros_disponiveis':    centros_disponiveis,
     }
 
     if active_tab == 'rascunhos':

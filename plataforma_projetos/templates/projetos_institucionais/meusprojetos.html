@@ -82,28 +82,36 @@
   {% if active_tab == 'visao_geral' %}
   <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center py-3">
-        <div class="display-6 fw-bold text-primary">{{ projetos_em_andamento|length }}</div>
-        <small class="text-muted">Em Andamento</small>
-      </div>
+      <a href="{% url 'projeto_dashboard' %}?tab=em_andamento" class="text-decoration-none">
+        <div class="card border-0 shadow-sm text-center py-3 h-100">
+          <div class="display-6 fw-bold text-primary">{{ projetos_em_andamento.count }}</div>
+          <small class="text-muted">Em Andamento</small>
+        </div>
+      </a>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center py-3">
-        <div class="display-6 fw-bold text-warning">{{ projetos_em_revisao|length }}</div>
-        <small class="text-muted">Em Revisão</small>
-      </div>
+      <a href="{% url 'projeto_dashboard' %}?tab=em_revisao" class="text-decoration-none">
+        <div class="card border-0 shadow-sm text-center py-3 h-100">
+          <div class="display-6 fw-bold text-warning">{{ projetos_em_revisao.count }}</div>
+          <small class="text-muted">Em Revisão</small>
+        </div>
+      </a>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center py-3">
-        <div class="display-6 fw-bold text-danger">{{ projetos_rejeitados|length }}</div>
-        <small class="text-muted">Rejeitados</small>
-      </div>
+      <a href="{% url 'projeto_dashboard' %}?tab=finalizados" class="text-decoration-none">
+        <div class="card border-0 shadow-sm text-center py-3 h-100">
+          <div class="display-6 fw-bold text-success">{{ count_finalizados }}</div>
+          <small class="text-muted">Finalizados</small>
+        </div>
+      </a>
     </div>
     <div class="col-6 col-md-3">
-      <div class="card border-0 shadow-sm text-center py-3">
-        <div class="display-6 fw-bold text-secondary">{{ count_rascunhos }}</div>
-        <small class="text-muted">Rascunhos</small>
-      </div>
+      <a href="{% url 'projeto_dashboard' %}?tab=rascunhos" class="text-decoration-none">
+        <div class="card border-0 shadow-sm text-center py-3 h-100">
+          <div class="display-6 fw-bold text-secondary">{{ count_rascunhos }}</div>
+          <small class="text-muted">Rascunhos</small>
+        </div>
+      </a>
     </div>
   </div>
 
