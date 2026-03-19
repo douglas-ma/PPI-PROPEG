@@ -15,6 +15,7 @@ urlpatterns = [
     path('notificacoes/<int:pk>/excluir/', views.excluir_notificacao, name='excluir_notificacao'),
     path('notificacoes/excluir-em-massa/', views.excluir_notificacoes_em_massa, name='excluir_notificacoes_massa'),
     path('editais/abertos/', views.listar_editais_abertos, name='listar_editais_abertos'),
+    path('editais/<int:pk>/', views.edital_detalhe_coordenador, name='edital_detalhe_coordenador'),
     path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),
 
     path('projetos/', views.projeto_listar, name='projeto_listar'),

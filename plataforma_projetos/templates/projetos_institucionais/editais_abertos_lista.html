@@ -1,80 +1,83 @@
-{% extends "base2.html" %}
-
-{% block title %}Editais Abertos{% endblock %}
-
+{% extends 'base2.html' %}
+{% load static %}
+{% block title %}Editais{% endblock %}
 {% block content %}
-<div class="container-fluid mt-4">
-    <h2 class="mb-3">Editais com Submissões Abertas</h2>
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th style="width: 40%;">Edital</th>
-                            <th class="text-center">Período de Submissão</th>
-                            <th>Documentos</th>
-                            <th class="text-center">Ação</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for edital in editais %}
-                        <tr>
-                            <td>
-                                <strong>{{ edital.titulo_completo }}</strong>
-                                <p class="text-muted small mb-0">{{ edital.descricao }}</p>
-                            </td>
-                            <td class="text-center">{{ edital.data_inicio_submissoes|date:"d/m/Y" }} a {{ edital.data_fim_submissoes|date:"d/m/Y" }}</td>
-                            <td>
-                                <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-danger mb-1">
-                                    <i class="bi bi-file-earmark-pdf-fill"></i> Edital (PDF)
-                                </a>
-                                {% if edital.anexos.all %}
-                                <button type="button" class="btn btn-sm btn-outline-secondary mb-1" data-bs-toggle="modal" data-bs-target="#anexosModal-{{ edital.pk }}">
-                                    <i class="bi bi-paperclip"></i> Outros Anexos ({{ edital.anexos.all|length }})
-                                </button>
-                                {% endif %}
-                            </td>
-                            <td class="text-center">
-                                <a href="{% url 'projeto_criar' %}" class="btn btn-success">
-                                    <i class="bi bi-plus-circle-fill"></i> Submeter Projeto
-                                </a>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">Nenhum edital com submissões abertas no momento.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="container-fluid py-4 px-4">
 
-{% for edital in editais %}
-{% if edital.anexos.all %}
-<div class="modal fade" id="anexosModal-{{ edital.pk }}" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Anexos de "{{ edital.titulo_completo }}"</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <ul class="list-group">
-                    {% for anexo in edital.anexos.all %}
-                    <a href="{{ anexo.arquivo.url }}" target="_blank" class="list-group-item list-group-item-action">
-                        <i class="bi bi-download"></i> {{ anexo.descricao }}
-                    </a>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+      <h4 class="mb-0">Editais de Submissão</h4>
+      <small class="text-muted">Editais publicados pela PROPEG para submissão de projetos</small>
     </div>
-</div>
-{% endif %}
-{% endfor %}
+    <a href="{% url 'projeto_criar' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Submeter Projeto
+    </a>
+  </div>
 
+  {% if editais %}
+  <div class="d-flex flex-column gap-3">
+    {% for e in editais %}
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+          <div class="flex-grow-1">
+
+            {# Status + Título #}
+            <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+              {% if e.data_inicio_submissoes <= hoje and e.data_fim_submissoes >= hoje %}
+                <span class="badge bg-success">Aberto</span>
+              {% elif hoje < e.data_inicio_submissoes %}
+                <span class="badge bg-warning text-dark">Em breve</span>
+              {% else %}
+                <span class="badge bg-secondary">Encerrado</span>
+              {% endif %}
+              <h5 class="mb-0 fw-semibold">{{ e.titulo_completo }}</h5>
+            </div>
+
+            <p class="text-muted small mb-2">{{ e.descricao|truncatechars:180 }}</p>
+
+            {# Datas #}
+            <div class="d-flex align-items-center gap-3 flex-wrap small text-muted">
+              <span><i class="bi bi-calendar-range me-1"></i>
+                Submissões: <strong>{{ e.data_inicio_submissoes|date:"d/m/Y" }}</strong>
+                até <strong>{{ e.data_fim_submissoes|date:"d/m/Y" }}</strong>
+              </span>
+              {% if e.adendos.count %}
+              <span class="text-warning fw-semibold">
+                <i class="bi bi-exclamation-circle me-1"></i>{{ e.adendos.count }} adendo{{ e.adendos.count|pluralize }}
+              </span>
+              {% endif %}
+              {% if e.anexos.count %}
+              <span><i class="bi bi-paperclip me-1"></i>{{ e.anexos.count }} anexo{{ e.anexos.count|pluralize }}</span>
+              {% endif %}
+            </div>
+
+          </div>
+
+          {# Ações #}
+          <div class="d-flex gap-2 flex-shrink-0 align-items-center">
+            <a href="{% url 'edital_detalhe_coordenador' pk=e.pk %}" class="btn btn-outline-primary btn-sm">
+              <i class="bi bi-eye me-1"></i>Ver Detalhes
+            </a>
+            {% if e.documento_principal %}
+            <a href="{{ e.documento_principal.url }}" target="_blank" class="btn btn-outline-danger btn-sm">
+              <i class="bi bi-file-earmark-pdf me-1"></i>PDF
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% else %}
+  <div class="text-center py-5 text-muted">
+    <i class="bi bi-calendar-x display-4 opacity-25 d-block mb-3"></i>
+    <p class="fw-semibold">Nenhum edital disponível no momento.</p>
+    <p class="small">Fique de olho nas novidades da PROPEG para quando novos editais forem publicados.</p>
+  </div>
+  {% endif %}
+
+</div>
 {% endblock %}

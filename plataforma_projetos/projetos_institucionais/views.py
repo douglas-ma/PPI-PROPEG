@@ -1602,14 +1602,19 @@ def listar_editais_abertos(request):
     hoje = date.today()
     editais_abertos = Edital.objects.filter(
         status='aberto',
-        data_inicio_submissoes__lte=hoje,
-        data_fim_submissoes__gte=hoje
-    ).prefetch_related('anexos')
+    ).prefetch_related('anexos', 'adendos').order_by('-ano', '-numero')
+    return render(request, 'projetos_institucionais/editais_abertos_lista.html', {
+        'editais': editais_abertos,
+        'hoje': hoje,
+    })
 
-    contexto = {
-        'editais': editais_abertos
-    }
-    return render(request, 'projetos_institucionais/editais_abertos_lista.html', contexto)
+
+@login_required
+def edital_detalhe_coordenador(request, pk):
+    edital = get_object_or_404(Edital, pk=pk, status='aberto')
+    return render(request, 'projetos_institucionais/edital_detalhe_coordenador.html', {
+        'edital': edital,
+    })
 
 
 # ─────────────────────────────────────────────────────────────────────────────

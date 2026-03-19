@@ -1,0 +1,140 @@
+{% extends 'base2.html' %}
+{% load static %}
+{% block title %}{{ edital.titulo_completo }}{% endblock %}
+{% block content %}
+<div class="container-fluid py-4 px-4" style="max-width:900px;">
+
+  {# Cabeçalho #}
+  <div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+    <a href="{% url 'listar_editais_abertos' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+      <h4 class="mb-0">{{ edital.titulo_completo }}</h4>
+      <small class="text-muted">Publicado em {{ edital.data_criacao|date:"d/m/Y" }}</small>
+    </div>
+    <span class="badge bg-success py-2 px-3">Aberto</span>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+
+      {# Descrição e período #}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3">
+          <strong><i class="bi bi-info-circle text-primary me-2"></i>Informações Gerais</strong>
+        </div>
+        <div class="card-body p-0">
+          <ul class="list-group list-group-flush small">
+            <li class="list-group-item">
+              <span class="text-muted d-block mb-1">Descrição</span>
+              {{ edital.descricao }}
+            </li>
+            <li class="list-group-item">
+              <span class="text-muted d-block mb-1">Período de Submissões</span>
+              <i class="bi bi-calendar-range me-1 text-success"></i>
+              <strong>{{ edital.data_inicio_submissoes|date:"d/m/Y" }}</strong>
+              até
+              <strong>{{ edital.data_fim_submissoes|date:"d/m/Y" }}</strong>
+            </li>
+            {% if edital.documento_principal %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <span class="text-muted d-block mb-1">Documento Oficial</span>
+                Edital completo em PDF
+              </div>
+              <a href="{{ edital.documento_principal.url }}" target="_blank" class="btn btn-sm btn-danger">
+                <i class="bi bi-file-earmark-pdf me-1"></i>Baixar Edital
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+
+      {# Adendos #}
+      {% if edital.adendos.all %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-file-earmark-plus text-warning me-2"></i>Adendos</strong>
+          <span class="badge bg-warning text-dark">{{ edital.adendos.count }}</span>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for adendo in edital.adendos.all %}
+          <li class="list-group-item">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div class="flex-grow-1">
+                <div class="fw-semibold small">{{ adendo.titulo }}</div>
+                <div class="text-muted" style="font-size:.75rem;">
+                  <i class="bi bi-calendar me-1"></i>{{ adendo.data_criacao|date:"d/m/Y" }}
+                </div>
+                {% if adendo.descricao %}
+                <p class="small text-muted mb-0 mt-1">{{ adendo.descricao }}</p>
+                {% endif %}
+              </div>
+              {% if adendo.arquivo %}
+              <a href="{{ adendo.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-secondary flex-shrink-0">
+                <i class="bi bi-download me-1"></i>Baixar
+              </a>
+              {% endif %}
+            </div>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+    </div>
+
+    <div class="col-lg-4">
+
+      {# Submeter projeto #}
+      <div class="card border-0 shadow-sm mb-4 border-success" style="border-left:4px solid #198754 !important;">
+        <div class="card-body text-center py-4">
+          <i class="bi bi-send-fill text-success fs-2 mb-2 d-block"></i>
+          <h6 class="fw-bold mb-1">Submeta seu Projeto</h6>
+          <p class="text-muted small mb-3">Crie ou selecione um projeto para vincular a este edital.</p>
+          <a href="{% url 'projeto_criar' %}" class="btn btn-success w-100">
+            <i class="bi bi-plus-lg me-1"></i>Novo Projeto
+          </a>
+          <a href="{% url 'projeto_dashboard' %}" class="btn btn-outline-secondary w-100 mt-2">
+            <i class="bi bi-folder2 me-1"></i>Meus Projetos
+          </a>
+        </div>
+      </div>
+
+      {# Anexos #}
+      {% if edital.anexos.all %}
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
+          <strong><i class="bi bi-paperclip text-primary me-2"></i>Anexos</strong>
+          <span class="badge bg-primary bg-opacity-10 text-primary">{{ edital.anexos.count }}</span>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for anx in edital.anexos.all %}
+          <li class="list-group-item d-flex align-items-center gap-2 small py-2">
+            <i class="bi bi-file-earmark text-secondary flex-shrink-0"></i>
+            <span class="flex-grow-1 text-truncate">{{ anx.descricao }}</span>
+            <a href="{{ anx.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-secondary flex-shrink-0">
+              <i class="bi bi-download"></i>
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      {# Prazo visual #}
+      <div class="card border-0 shadow-sm">
+        <div class="card-body small">
+          <p class="fw-semibold mb-2"><i class="bi bi-clock text-primary me-1"></i>Prazo de Submissão</p>
+          <p class="mb-1 text-muted">Início: <strong class="text-dark">{{ edital.data_inicio_submissoes|date:"d/m/Y" }}</strong></p>
+          <p class="mb-0 text-muted">Encerramento: <strong class="text-dark">{{ edital.data_fim_submissoes|date:"d/m/Y" }}</strong></p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+{% endblock %}
