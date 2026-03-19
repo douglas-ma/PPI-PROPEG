@@ -426,16 +426,18 @@ class EditalForm(forms.ModelForm):
         self.is_draft = kwargs.pop('is_draft', False)
         super().__init__(*args, **kwargs)
         if self.is_draft:
-            # No rascunho, nenhum campo é obrigatório
             for field in self.fields.values():
                 field.required = False
+        # documento_principal nunca é obrigatório no form — gerenciado pela view
+        self.fields['documento_principal'].required = False
 
     class Meta:
         model = Edital
         fields = [
             'tipo', 'numero', 'ano', 'titulo', 'descricao',
             'data_inicio_submissoes', 'data_fim_submissoes',
-            'status', 'documento_principal'
+            'documento_principal'
+            # 'status' removido — gerenciado pelos botões publicar/rascunho/toggle
         ]
         widgets = {
             'data_inicio_submissoes': forms.DateInput(attrs={'type': 'date'}),

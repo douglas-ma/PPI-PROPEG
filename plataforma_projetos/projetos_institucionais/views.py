@@ -1464,7 +1464,7 @@ def gestor_criar_edital(request):
             formset = AnexoEditalFormSet(request.POST, request.FILES, instance=edital)
             if formset.is_valid():
                 formset.save()
-            msg = 'Rascunho salvo! Você pode continuar editando quando quiser.' if is_draft else 'Edital publicado com sucesso!'
+            msg = 'Rascunho salvo! Acesse "Editais" para continuar editando.' if is_draft else 'Edital publicado com sucesso!'
             messages.success(request, msg)
             return redirect('gestor_detalhe_edital', pk=edital.pk)
     else:
@@ -1486,8 +1486,20 @@ def gestor_editar_edital(request, pk):
         formset = AnexoEditalFormSet(request.POST, request.FILES, instance=edital)
         if form.is_valid() and formset.is_valid():
             edital_salvo = form.save(commit=False)
-            if acao == 'publicar' and edital_salvo.status == 'rascunho':
+
+            # Preserva o documento principal se nenhum novo arquivo foi enviado
+            if not request.FILES.get('documento_principal') and edital.documento_principal:
+                edital_salvo.documento_principal = edital.documento_principal
+
+            # Status: só altera se a ação exigir — caso contrário mantém o atual
+            if acao == 'publicar' and edital.status == 'rascunho':
                 edital_salvo.status = 'aberto'
+            elif acao == 'rascunho' and edital.status in ('aberto', 'fechado'):
+                # Não rebaixa para rascunho um edital já publicado — apenas salva
+                edital_salvo.status = edital.status
+            else:
+                edital_salvo.status = edital.status
+
             edital_salvo.save()
             formset.save()
             messages.success(request, 'Edital atualizado com sucesso!')
