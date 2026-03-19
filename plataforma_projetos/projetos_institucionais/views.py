@@ -812,12 +812,7 @@ def usuario_editar(request, pk):
                     f'Se você acredita que isso foi um engano, por favor, entre em contato com a administração.\n\n'
                     f'Atenciosamente,\nEquipe PROPEG'
                 )
-                send_mail(
-                    subject,
-                    message,
-                    settings.DEFAULT_FROM_EMAIL,
-                    [user.email],
-                )
+                enviar_email_e_notificacao(subject, message, user)
                 messages.warning(request, f'Usuário "{user.get_full_name()}" inativado e notificado por email.')
             else:
                 messages.success(request, 'Usuário atualizado com sucesso!')
@@ -1005,22 +1000,54 @@ def encaminhar_para_conselho(request, pk):
                 f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
                 f'Atenciosamente,\nEquipe de Gestão PROPEG'
             )
-            
-            email_conselho = EmailMessage(
-                subject_conselho,
-                message_conselho,
-                settings.DEFAULT_FROM_EMAIL,
-                [projeto.centro_lotacao.email],
-            )
 
-            if relatorio_anexo and relatorio_anexo.arquivo:
-                email_conselho.attach(
-                    relatorio_anexo.arquivo.name.split('/')[-1],
-                    relatorio_anexo.arquivo.read(),
-                    'application/pdf'
-                )
-            
-            email_conselho.send()
+            brevo_key = getattr(settings, 'BREVO_API_KEY', '')
+            if brevo_key:
+                try:
+                    import sib_api_v3_sdk
+                    configuration = sib_api_v3_sdk.Configuration()
+                    configuration.api_key['api-key'] = brevo_key
+                    api = sib_api_v3_sdk.TransactionalEmailsApi(
+                        sib_api_v3_sdk.ApiClient(configuration)
+                    )
+                    params = {
+                        'to': [{"email": projeto.centro_lotacao.email,
+                                "name": projeto.centro_lotacao.nome}],
+                        'sender': {"email": settings.DEFAULT_FROM_EMAIL, "name": "PROPEG/UFAC"},
+                        'subject': subject_conselho,
+                        'text_content': message_conselho,
+                    }
+                    # Anexa o PDF se existir
+                    if relatorio_anexo and relatorio_anexo.arquivo:
+                        import base64
+                        try:
+                            pdf_bytes = relatorio_anexo.arquivo.read()
+                            params['attachment'] = [{
+                                'content': base64.b64encode(pdf_bytes).decode('utf-8'),
+                                'name': relatorio_anexo.arquivo.name.split('/')[-1],
+                            }]
+                        except Exception as e:
+                            print(f'Erro ao anexar PDF: {e}')
+                    api.send_transac_email(sib_api_v3_sdk.SendSmtpEmail(**params))
+                except Exception as e:
+                    print(f'Erro Brevo conselho: {e}')
+            else:
+                # Desenvolvimento local — usa SMTP normal
+                try:
+                    email_conselho = EmailMessage(
+                        subject_conselho, message_conselho,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [projeto.centro_lotacao.email],
+                    )
+                    if relatorio_anexo and relatorio_anexo.arquivo:
+                        email_conselho.attach(
+                            relatorio_anexo.arquivo.name.split('/')[-1],
+                            relatorio_anexo.arquivo.read(),
+                            'application/pdf'
+                        )
+                    email_conselho.send()
+                except Exception as e:
+                    print(f'Erro email conselho: {e}')
 
         subject_coordenador = f'Atualização do seu Projeto: "{projeto.titulo}"'
         message_coordenador = (
