@@ -12,12 +12,10 @@ python manage.py collectstatic --no-input
 python manage.py migrate
 
 python manage.py shell -c "
-from django.conf import settings
-print('=== DIAGNÓSTICO STORAGE ===')
-print('DEFAULT_FILE_STORAGE:', settings.DEFAULT_FILE_STORAGE)
-print('CLOUDINARY_URL presente:', bool(getattr(settings, 'CLOUDINARY_URL', '')))
-print('INSTALLED_APPS cloudinary:', 'cloudinary' in settings.INSTALLED_APPS)
-print('===========================')
+import cloudinary
+cfg = cloudinary.config()
+print('cloud_name:', cfg.cloud_name)
+print('api_key:', cfg.api_key[:6] if cfg.api_key else 'VAZIO')
 "
 
 # Adicione o super user se ele não existir
