@@ -1,10 +1,8 @@
 """
 settings_prod.py — Configurações de PRODUÇÃO para deploy no Render.
-Importe a partir do settings.py base usando variáveis de ambiente.
 """
 
 from .settings import *
-import os
 import dj_database_url
 from decouple import config
 
@@ -12,23 +10,15 @@ from decouple import config
 # Segurança
 # ─────────────────────────────────────────────────────────────────────────────
 SECRET_KEY = config('SECRET_KEY')
-
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = config(
-    'ALLOWED_HOSTS',
-    default='.onrender.com'
-).split(',')
-
-# CSRF para o domínio do Render
+ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='.onrender.com').split(',')
 CSRF_TRUSTED_ORIGINS = config(
-    'CSRF_TRUSTED_ORIGINS',
-    default='https://*.onrender.com'
+    'CSRF_TRUSTED_ORIGINS', default='https://*.onrender.com'
 ).split(',')
-
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Banco de dados — PostgreSQL via DATABASE_URL
+# Banco de dados — PostgreSQL
 # ─────────────────────────────────────────────────────────────────────────────
 DATABASES = {
     'default': dj_database_url.config(
@@ -38,13 +28,12 @@ DATABASES = {
     )
 }
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Arquivos estáticos — WhiteNoise serve direto do Gunicorn
+# Arquivos estáticos — WhiteNoise
 # ─────────────────────────────────────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',   # logo após SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -58,45 +47,32 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Arquivos de mídia — Cloudinary (recomendado) ou AWS S3
-# Render não tem disco persistente no plano gratuito.
-# Configure CLOUDINARY_URL no painel do Render.
+# Arquivos de mídia — Cloudinary
 # ─────────────────────────────────────────────────────────────────────────────
 cloudinary_url = config('CLOUDINARY_URL', default='')
 if cloudinary_url:
     import cloudinary
-    import cloudinary.uploader
-    import cloudinary.api
     DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-    INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
-    CLOUDINARY_URL = cloudinary_url
-    MEDIA_URL = '/media/'
+    INSTALLED_APPS      += ['cloudinary_storage', 'cloudinary']
+    CLOUDINARY_URL       = cloudinary_url
+    # Cloudinary gera as URLs via .url — não usar MEDIA_URL local
+    MEDIA_URL = 'https://res.cloudinary.com/'
 else:
-    # Fallback: pasta local (só funciona se o serviço tiver disco persistente)
     MEDIA_URL  = '/media/'
     MEDIA_ROOT = BASE_DIR / 'media'
 
-
 # ─────────────────────────────────────────────────────────────────────────────
-# E-mail SMTP (Gmail ou outro)
-# Configure EMAIL_HOST_USER e EMAIL_HOST_PASSWORD no painel do Render
+# E-mail — Brevo API (SMTP bloqueado no Render free)
 # ─────────────────────────────────────────────────────────────────────────────
-EMAIL_BACKEND = 'django.core.mail.backends.dummy.EmailBackend'
-BREVO_API_KEY = config('BREVO_API_KEY', default='')
-EMAIL_HOST     = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT     = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS  = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER     = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL  = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
-EMAIL_TIMEOUT = 10
+EMAIL_BACKEND      = 'django.core.mail.backends.dummy.EmailBackend'
+BREVO_API_KEY      = config('BREVO_API_KEY', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@propeg.ufac.br')
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Segurança HTTPS
 # ─────────────────────────────────────────────────────────────────────────────
-SECURE_PROXY_SSL_HEADER       = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_PROXY_SSL_HEADER        = ('HTTP_X_FORWARDED_PROTO', 'https')
 SECURE_SSL_REDIRECT            = True
 SESSION_COOKIE_SECURE          = True
 CSRF_COOKIE_SECURE             = True
