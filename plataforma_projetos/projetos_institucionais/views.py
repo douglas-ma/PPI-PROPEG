@@ -958,11 +958,12 @@ def historico_projetos_pdf(request):
     if curso_filters:  queryset = queryset.filter(curso__pk__in=curso_filters)
 
     filtros_ativos = {}
-    if query:          filtros_ativos["Busca"]   = query
+    if query:          filtros_ativos["Busca"]        = query
     if status_filters:
         sd = dict(Projeto.STATUS_CHOICES)
         filtros_ativos["Status"] = ", ".join(sd.get(s, s) for s in status_filters)
-    if ano_filter:     filtros_ativos["Ano"]     = ano_filter
+    if data_inicio_filter: filtros_ativos["Data Início"] = data_inicio_filter
+    if data_fim_filter:    filtros_ativos["Data Fim"]    = data_fim_filter
     if centro_filters:
         from projetos_institucionais.models import CentroLotacao
         nomes = list(CentroLotacao.objects.filter(pk__in=centro_filters).values_list("nome", flat=True))
