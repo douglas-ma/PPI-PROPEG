@@ -1815,17 +1815,64 @@ def projeto_etapa_view(request, pk, step):
 # Handlers de erro personalizados
 # ─────────────────────────────────────────────────────────────────────────────
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Handlers de erro personalizados
+# Retornam HTML inline para evitar dependência de templates durante erros
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _pagina_erro(codigo, titulo, descricao, cor):
+    from django.http import HttpResponse
+    html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erro {codigo} — PROPEG/UFAC</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {{ min-height:100vh; display:flex; align-items:center; justify-content:center;
+            background:#f0f4f8; text-align:center; padding:2rem; }}
+    .card {{ border-radius:16px; padding:3rem 2.5rem; max-width:520px; width:100%; }}
+    .codigo {{ font-size:5rem; font-weight:800; color:{cor}; line-height:1; }}
+  </style>
+</head>
+<body>
+  <div class="card shadow">
+    <div class="codigo mb-2">{codigo}</div>
+    <h4 class="fw-bold mb-2">{titulo}</h4>
+    <p class="text-muted mb-4">{descricao}</p>
+    <div class="d-flex justify-content-center gap-2">
+      <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Voltar
+      </a>
+      <a href="/" class="btn btn-primary btn-sm">
+        <i class="bi bi-house me-1"></i>Página Inicial
+      </a>
+    </div>
+    <p class="mt-4 mb-0 text-muted" style="font-size:.75rem;">PROPEG — Plataforma de Projetos Institucionais · UFAC</p>
+  </div>
+</body>
+</html>"""
+    return HttpResponse(html, status=codigo)
+
+
 def handler400(request, exception=None):
-    return render(request, '400.html', status=400)
+    return _pagina_erro(400, 'Requisição Inválida',
+        'O servidor não conseguiu processar sua solicitação. Verifique os dados e tente novamente.', '#0d6efd')
 
 def handler403(request, exception=None):
-    return render(request, '403.html', status=403)
+    return _pagina_erro(403, 'Acesso Negado',
+        'Você não tem permissão para acessar este recurso.', '#fd7e14')
 
 def handler404(request, exception=None):
-    return render(request, '404.html', status=404)
+    return _pagina_erro(404, 'Página Não Encontrada',
+        'A página que você tentou acessar não existe ou foi movida.', '#6c757d')
 
 def handler500(request):
-    return render(request, '500.html', status=500)
+    return _pagina_erro(500, 'Erro Interno do Servidor',
+        'Ocorreu um erro inesperado. Nossa equipe foi notificada. Tente novamente em instantes.', '#dc3545')
 
 
 @login_required
