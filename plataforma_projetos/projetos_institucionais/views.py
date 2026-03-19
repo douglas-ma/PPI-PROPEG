@@ -988,20 +988,37 @@ def historico_projetos_pdf(request):
 @gestor_required
 def encaminhar_para_conselho(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk)
-    if projeto.status == 'submetido':
+    eh_encerramento = projeto.status == 'aguardando_encerramento'
+
+    if projeto.status in ('submetido', 'aguardando_encerramento'):
         projeto.status = 'aguardando_conselho'
         projeto.save()
 
-        relatorio_anexo = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
+        # Busca o documento mais relevante para anexar
+        relatorio_anexo = (
+            projeto.relatorios.order_by('-data_envio').first()
+            if eh_encerramento
+            else projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
+        )
 
         if projeto.centro_lotacao and projeto.centro_lotacao.email:
-            subject_conselho = f'Novo Projeto para Análise do Conselho: "{projeto.titulo}"'
-            message_conselho = (
-                f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
-                f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, foi encaminhado para sua análise e aprovação.\n\n'
-                f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
-                f'Atenciosamente,\nEquipe de Gestão PROPEG'
-            )
+            if eh_encerramento:
+                subject_conselho = f'Projeto para Aprovação de Encerramento pelo Conselho: "{projeto.titulo}"'
+                message_conselho = (
+                    f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
+                    f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, '
+                    f'concluiu suas atividades e foi encaminhado para aprovação de encerramento.\n\n'
+                    f'O relatório final de atividades está disponível para análise.\n\n'
+                    f'Atenciosamente,\nEquipe de Gestão PROPEG'
+                )
+            else:
+                subject_conselho = f'Novo Projeto para Análise do Conselho: "{projeto.titulo}"'
+                message_conselho = (
+                    f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
+                    f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, foi encaminhado para sua análise e aprovação.\n\n'
+                    f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
+                    f'Atenciosamente,\nEquipe de Gestão PROPEG'
+                )
 
             brevo_key = getattr(settings, 'BREVO_API_KEY', '')
             if brevo_key:
@@ -1019,50 +1036,58 @@ def encaminhar_para_conselho(request, pk):
                         'subject': subject_conselho,
                         'text_content': message_conselho,
                     }
-                    # Anexa o PDF se existir
-                    if relatorio_anexo and relatorio_anexo.arquivo:
-                        import base64
-                        try:
-                            pdf_bytes = relatorio_anexo.arquivo.read()
-                            params['attachment'] = [{
-                                'content': base64.b64encode(pdf_bytes).decode('utf-8'),
-                                'name': relatorio_anexo.arquivo.name.split('/')[-1],
-                            }]
-                        except Exception as e:
-                            print(f'Erro ao anexar PDF: {e}')
+                    if relatorio_anexo:
+                        arquivo = relatorio_anexo.anexo_pdf if eh_encerramento else relatorio_anexo.arquivo
+                        if arquivo:
+                            import base64
+                            try:
+                                pdf_bytes = arquivo.read()
+                                params['attachment'] = [{
+                                    'content': base64.b64encode(pdf_bytes).decode('utf-8'),
+                                    'name': arquivo.name.split('/')[-1],
+                                }]
+                            except Exception as e:
+                                print(f'Erro ao anexar PDF: {e}')
                     api.send_transac_email(sib_api_v3_sdk.SendSmtpEmail(**params))
                 except Exception as e:
                     print(f'Erro Brevo conselho: {e}')
             else:
-                # Desenvolvimento local — usa SMTP normal
                 try:
                     email_conselho = EmailMessage(
                         subject_conselho, message_conselho,
                         settings.DEFAULT_FROM_EMAIL,
                         [projeto.centro_lotacao.email],
                     )
-                    if relatorio_anexo and relatorio_anexo.arquivo:
-                        email_conselho.attach(
-                            relatorio_anexo.arquivo.name.split('/')[-1],
-                            relatorio_anexo.arquivo.read(),
-                            'application/pdf'
-                        )
+                    if relatorio_anexo:
+                        arquivo = relatorio_anexo.anexo_pdf if eh_encerramento else relatorio_anexo.arquivo
+                        if arquivo:
+                            email_conselho.attach(arquivo.name.split('/')[-1], arquivo.read(), 'application/pdf')
                     email_conselho.send()
                 except Exception as e:
                     print(f'Erro email conselho: {e}')
 
-        subject_coordenador = f'Atualização do seu Projeto: "{projeto.titulo}"'
-        message_coordenador = (
-            f'Olá, {projeto.coordenador.first_name}!\n\n'
-            f'Seu projeto "{projeto.titulo}" foi revisado pela gestão e encaminhado com sucesso para a análise do conselho do seu centro de lotação.\n\n'
-            f'O status do seu projeto foi atualizado para "Aguardando aprovação do conselho". Você será notificado sobre as próximas etapas.\n\n'
-            f'Atenciosamente,\nEquipe PROPEG'
-        )
+        if eh_encerramento:
+            msg_coord = (
+                f'Olá, {projeto.coordenador.first_name}!\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para aprovação de encerramento pelo conselho do seu centro.\n\n'
+                f'Você será notificado assim que houver uma decisão.\n\n'
+                f'Atenciosamente,\nEquipe PROPEG'
+            )
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao conselho para aprovação de encerramento.'
+        else:
+            msg_coord = (
+                f'Olá, {projeto.coordenador.first_name}!\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para análise do conselho do seu centro de lotação.\n\n'
+                f'O status foi atualizado para "Aguardando aprovação do conselho". Você será notificado sobre as próximas etapas.\n\n'
+                f'Atenciosamente,\nEquipe PROPEG'
+            )
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao conselho e o coordenador foi notificado.'
+
         link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
-        enviar_email_e_notificacao(subject_coordenador, message_coordenador, projeto.coordenador, link=link_projeto)
-        messages.success(request, f'O projeto "{projeto.titulo}" foi encaminhado ao conselho e o coordenador foi notificado.')
+        enviar_email_e_notificacao(msg_sucesso.split('"')[0], msg_coord, projeto.coordenador, link=link_projeto)
+        messages.success(request, msg_sucesso)
     else:
-        messages.warning(request, f'O projeto "{projeto.titulo}" não está no status "Submetido" e não pode ser encaminhado.')
+        messages.warning(request, f'O projeto "{projeto.titulo}" não pode ser encaminhado ao conselho no status atual.')
 
     return redirect('gestor_dashboard')
 

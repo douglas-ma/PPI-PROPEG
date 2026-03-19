@@ -96,7 +96,7 @@
             <th>Coordenador</th>
             <th>Centro</th>
             <th class="text-center">Data de Início</th>
-            <th class="text-center">Ações</th>
+            <th class="text-end">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -112,16 +112,25 @@
             <td class="text-center small text-muted">
               {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
-            <td class="text-center">
+            <td class="text-end">
+              {# Badge de financiamento #}
+              {% if p.agencia_financiadora %}
+              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="Possui financiamento externo: {{ p.agencia_financiadora }}">
+                <i class="bi bi-bank me-1"></i>Financiado
+              </span>
+              {% endif %}
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
+              {# Projetos sem financiamento externo precisam de aprovação do conselho #}
+              {% if not p.agencia_financiadora %}
               <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
                  class="btn btn-sm btn-outline-warning ms-1"
-                 title="Encaminhar para Conselho"
+                 title="Encaminhar para Conselho do Centro"
                  onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para o Conselho?')">
                 <i class="bi bi-arrow-right-circle me-1"></i>Conselho
               </a>
+              {% endif %}
               <button type="button" class="btn btn-sm btn-success ms-1"
                       data-bs-toggle="modal" data-bs-target="#modalConfirmar"
                       data-titulo="{{ p.titulo }}"
@@ -167,7 +176,7 @@
             <th>Coordenador</th>
             <th>Centro</th>
             <th class="text-center">Data de Início</th>
-            <th class="text-center">Ações</th>
+            <th class="text-end">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -183,7 +192,7 @@
             <td class="text-center small text-muted">
               {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
-            <td class="text-center">
+            <td class="text-end">
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
@@ -236,7 +245,7 @@
             <th>Coordenador</th>
             <th>Centro</th>
             <th class="text-center">Data de Fim</th>
-            <th class="text-center">Ações</th>
+            <th class="text-end">Ações</th>
           </tr>
         </thead>
         <tbody>
@@ -252,18 +261,47 @@
             <td class="text-center small text-muted">
               {% if p.data_fim %}{{ p.data_fim|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
-            <td class="text-center">
+            <td class="text-end">
+              {# Badge de financiamento #}
+              {% if p.agencia_financiadora %}
+              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="Possui financiamento externo: {{ p.agencia_financiadora }}">
+                <i class="bi bi-bank me-1"></i>Financiado
+              </span>
+              {% else %}
+              <span class="badge bg-secondary bg-opacity-10 text-secondary me-1" title="Sem financiamento externo — requer aprovação do conselho para encerrar">
+                <i class="bi bi-building me-1"></i>Institucional
+              </span>
+              {% endif %}
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
-              <button type="button" class="btn btn-sm btn-success ms-1"
-                      data-bs-toggle="modal" data-bs-target="#modalConfirmar"
-                      data-titulo="{{ p.titulo }}"
-                      data-url="{% url 'encerrar_projeto' pk=p.pk %}"
-                      data-acao="Encerrar"
-                      data-cor="success">
-                <i class="bi bi-check-circle me-1"></i>Encerrar
-              </button>
+              {% if p.agencia_financiadora %}
+                {# Com financiamento: encerra diretamente #}
+                <button type="button" class="btn btn-sm btn-success ms-1"
+                        data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                        data-titulo="{{ p.titulo }}"
+                        data-url="{% url 'encerrar_projeto' pk=p.pk %}"
+                        data-acao="Encerrar"
+                        data-cor="success">
+                  <i class="bi bi-check-circle me-1"></i>Encerrar
+                </button>
+              {% else %}
+                {# Sem financiamento: precisa passar pelo conselho novamente #}
+                <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
+                   class="btn btn-sm btn-outline-warning ms-1"
+                   title="Encaminhar para aprovação do Conselho do Centro antes de encerrar"
+                   onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para aprovação do Conselho antes do encerramento?')">
+                  <i class="bi bi-arrow-right-circle me-1"></i>Conselho
+                </a>
+                <button type="button" class="btn btn-sm btn-success ms-1"
+                        data-bs-toggle="modal" data-bs-target="#modalConfirmar"
+                        data-titulo="{{ p.titulo }}"
+                        data-url="{% url 'encerrar_projeto' pk=p.pk %}"
+                        data-acao="Encerrar"
+                        data-cor="success">
+                  <i class="bi bi-check-circle me-1"></i>Encerrar
+                </button>
+              {% endif %}
             </td>
           </tr>
           {% empty %}
