@@ -48,7 +48,9 @@ STATICFILES_DIRS = [BASE_DIR / 'static']
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Arquivos de mídia — Cloudinary
-# Django 4.2+ usa STORAGES em vez de DEFAULT_FILE_STORAGE
+# ImageField  → MediaCloudinaryStorage    (resource_type='image')
+# FileField   → RawMediaCloudinaryStorage (resource_type='raw')  ← PDFs, docs
+# A separação é feita no models.py via storage=_raw_storage()
 # ─────────────────────────────────────────────────────────────────────────────
 cloudinary_url = config('CLOUDINARY_URL', default='')
 if cloudinary_url:
@@ -60,9 +62,11 @@ if cloudinary_url:
 
     INSTALLED_APPS += ['cloudinary_storage', 'cloudinary']
     CLOUDINARY_URL  = cloudinary_url
-    MEDIA_URL       = '/media/cloudinary/'   # prefixo simbólico — o storage ignora isso
 
-    # Django 5.x — forma correta de definir o storage padrão
+    # Sem prefixo espúrio no MEDIA_URL — o cloudinary monta as URLs via .url()
+    MEDIA_URL = '/media/'
+
+    # Django 5.x — STORAGES substitui DEFAULT_FILE_STORAGE
     STORAGES = {
         'default': {
             'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
@@ -70,6 +74,13 @@ if cloudinary_url:
         'staticfiles': {
             'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
         },
+    }
+
+    # Configurações do django-cloudinary-storage
+    CLOUDINARY_STORAGE = {
+        'CLOUD_NAME': cloudinary_url.split('@')[-1].strip('/'),
+        'FILE_OVERWRITE': False,       # gera nome único em vez de sobrescrever
+        'MEDIA_TAG': 'media',          # tag padrão para organização no Cloudinary
     }
 else:
     MEDIA_URL  = '/media/'

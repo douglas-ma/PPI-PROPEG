@@ -1,6 +1,15 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
+
+def _raw_storage():
+    """Retorna RawMediaCloudinaryStorage em produção, FileSystemStorage em dev."""
+    try:
+        from cloudinary_storage.storage import RawMediaCloudinaryStorage
+        return RawMediaCloudinaryStorage()
+    except ImportError:
+        from django.core.files.storage import FileSystemStorage
+        return FileSystemStorage()
 from validate_docbr import CPF
 
 class UsuarioManager(BaseUserManager):
@@ -312,6 +321,7 @@ class Edital(models.Model):
     
     documento_principal = models.FileField(
         upload_to='editais/documentos/',
+        storage=_raw_storage(),
         verbose_name="Documento Principal do Edital (PDF)"
     )
     
@@ -335,7 +345,7 @@ class Edital(models.Model):
 class AnexoEdital(models.Model):
     edital = models.ForeignKey(Edital, on_delete=models.CASCADE, related_name='anexos')
     descricao = models.CharField(max_length=255, verbose_name="Descrição do Anexo")
-    arquivo = models.FileField(upload_to='editais/anexos/')
+    arquivo = models.FileField(upload_to='editais/anexos/', storage=_raw_storage())
     data_upload = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -351,6 +361,7 @@ class AdendoEdital(models.Model):
     titulo    = models.CharField(max_length=255, verbose_name="Título do Adendo")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     arquivo   = models.FileField(upload_to='editais/adendos/', blank=True, null=True,
+                                  storage=_raw_storage(),
                                   verbose_name="Arquivo do Adendo (PDF, opcional)")
     criado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     data_criacao = models.DateTimeField(auto_now_add=True)
@@ -524,7 +535,7 @@ def caminho_upload_arquivo(instance, filename): # função para gerar um caminho
 class Documento(models.Model):
     nome = models.CharField(max_length=255)
     tipo = models.CharField(max_length=100)
-    caminho_arquivo = models.FileField(upload_to=caminho_upload_arquivo, verbose_name="Arquivo")
+    caminho_arquivo = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage(), verbose_name="Arquivo")
     enviado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
     projeto = models.ForeignKey(
         Projeto,
@@ -538,7 +549,7 @@ class Documento(models.Model):
 class Ata(models.Model):
     descricao = models.CharField(max_length=255, verbose_name="Descrição")
     data_reuniao = models.DateField(verbose_name="Data da Reunião")
-    arquivo_pdf = models.FileField(upload_to=caminho_upload_arquivo)
+    arquivo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage())
     enviado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT
@@ -585,6 +596,7 @@ class Anexo(models.Model):
     )
     arquivo = models.FileField(
         upload_to='anexos/%Y/%m/',
+        storage=_raw_storage(),
         verbose_name="Arquivo"
     )
     
@@ -606,7 +618,7 @@ class Relatorio(models.Model):
     )
     tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
     data_envio = models.DateTimeField(auto_now_add=True)
-    anexo_pdf = models.FileField(upload_to=caminho_upload_arquivo)
+    anexo_pdf = models.FileField(upload_to=caminho_upload_arquivo, storage=_raw_storage())
     responsavel = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
