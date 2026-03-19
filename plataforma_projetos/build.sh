@@ -11,6 +11,12 @@ python manage.py collectstatic --no-input
 # Aplica as migrations
 python manage.py migrate
 
+# Testa o Cloudinary
+python manage.py shell -c "
+from django.conf import settings
+print('DEFAULT_FILE_STORAGE:', settings.DEFAULT_FILE_STORAGE)
+"
+
 # Adicione o super user se ele não existir
 python manage.py shell -c "
 from projetos_institucionais.models import Usuario
