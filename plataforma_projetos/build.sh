@@ -14,16 +14,20 @@ python manage.py migrate
 # Adicione o super user se ele não existir
 python manage.py shell -c "
 from projetos_institucionais.models import Usuario
-if not Usuario.objects.filter(cpf='$ADMIN_CPF').exists():
-    u = Usuario.objects.create_superuser(
-        username='$ADMIN_CPF',
-        cpf='$ADMIN_CPF',
+cpf = '$ADMIN_CPF'
+if not Usuario.objects.filter(cpf=cpf).exists():
+    Usuario.objects.create_superuser(
+        cpf=cpf,
+        username=cpf,
         email='$ADMIN_EMAIL',
         password='$ADMIN_PASSWORD',
+        first_name='Admin',
+        last_name='PROPEG',
         perfil='gestor',
         status='ativo',
+        is_active=True,
     )
-    print('Superusuário criado com sucesso.')
+    print('Superusuario criado.')
 else:
-    print('Superusuário já existe.')
+    print('Superusuario ja existe.')
 "
