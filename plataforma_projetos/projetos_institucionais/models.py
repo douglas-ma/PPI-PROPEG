@@ -656,6 +656,24 @@ class Relatorio(models.Model):
         verbose_name_plural = "Relatórios"
 
 
+class EvidenciaRelatorio(models.Model):
+    relatorio   = models.ForeignKey(Relatorio, on_delete=models.CASCADE, related_name='evidencias')
+    arquivo     = models.FileField(upload_to='relatorios/evidencias/', storage=_raw_storage(), max_length=500)
+    descricao   = models.CharField(max_length=255, blank=True, default='')
+    data_upload = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def is_imagem(self):
+        return self.arquivo.name.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp'))
+
+    def __str__(self):
+        return f"Evidência do {self.relatorio}"
+
+    class Meta:
+        verbose_name = "Evidência de Relatório"
+        verbose_name_plural = "Evidências de Relatório"
+
+
 class Notificacao(models.Model):
     destinatario = models.ForeignKey(
         settings.AUTH_USER_MODEL,

@@ -176,7 +176,7 @@
               <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
               <div class="flex-grow-1">
                 <span class="fw-semibold small">Comprovante de Aprovação</span>
-                <div class="text-muted" style="font-size:.75rem;">{{ comprovante.data_upload|date:"d/m/Y" }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ comprovante.data_upload|date:"d/m/Y" }} às {{ comprovante.data_upload|date:"H:i" }}</div>
               </div>
               <a href="{{ comprovante.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-success">
                 <i class="bi bi-download me-1"></i>Baixar
@@ -188,7 +188,7 @@
               <i class="bi bi-file-earmark-text-fill text-warning fs-5"></i>
               <div class="flex-grow-1">
                 <span class="fw-semibold small">Ata de Aprovação do Conselho</span>
-                <div class="text-muted" style="font-size:.75rem;">{{ ata_conselho.data_upload|date:"d/m/Y" }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ ata_conselho.data_upload|date:"d/m/Y" }} às {{ ata_conselho.data_upload|date:"H:i" }}</div>
               </div>
               <a href="{{ ata_conselho.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-warning">
                 <i class="bi bi-download me-1"></i>Baixar
@@ -201,7 +201,7 @@
               <div class="flex-grow-1">
                 <span class="fw-semibold small">{{ anx.get_tipo_anexo_display }}</span>
                 {% if anx.descricao %}<div class="text-muted" style="font-size:.75rem;">{{ anx.descricao }}</div>{% endif %}
-                <div class="text-muted" style="font-size:.75rem;">{{ anx.data_upload|date:"d/m/Y" }}</div>
+                <div class="text-muted" style="font-size:.75rem;">{{ anx.data_upload|date:"d/m/Y" }} às {{ anx.data_upload|date:"H:i" }}</div>
               </div>
               <a href="{{ anx.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
                 <i class="bi bi-eye me-1"></i>Ver
@@ -288,7 +288,7 @@
           <strong>Relatório de Submissão</strong>
         </div>
         <div class="card-body">
-          <p class="small text-muted mb-2">Enviado em {{ relatorio_submissao.data_upload|date:"d/m/Y" }}</p>
+          <p class="small text-muted mb-2">Enviado em {{ relatorio_submissao.data_upload|date:"d/m/Y" }} às {{ relatorio_submissao.data_upload|date:"H:i" }}</p>
           <a href="{{ relatorio_submissao.arquivo.url }}" target="_blank" class="btn btn-outline-danger btn-sm w-100">
             <i class="bi bi-download me-1"></i>Baixar PDF
           </a>
@@ -305,14 +305,40 @@
         </div>
         <ul class="list-group list-group-flush">
           {% for rel in relatorios_enviados %}
-          <li class="list-group-item d-flex justify-content-between align-items-center small">
-            <div>
-              <span class="fw-semibold">{{ rel.get_tipo_display }}</span>
-              <div class="text-muted" style="font-size:.75rem;">{{ rel.data_envio|date:"d/m/Y" }} — {{ rel.responsavel.get_full_name|truncatechars:20 }}</div>
+          <li class="list-group-item small">
+            <div class="d-flex justify-content-between align-items-start gap-2">
+              <div>
+                <span class="fw-semibold">{{ rel.get_tipo_display }}</span>
+                <div class="text-muted" style="font-size:.75rem;">
+                  {{ rel.data_envio|date:"d/m/Y" }} às {{ rel.data_envio|date:"H:i" }} — {{ rel.responsavel.get_full_name|truncatechars:20 }}
+                </div>
+                {% if rel.evidencias.exists %}
+                <div class="mt-2">
+                  <span class="text-muted" style="font-size:.72rem;">
+                    <i class="bi bi-paperclip me-1"></i>{{ rel.evidencias.count }} evidência{{ rel.evidencias.count|pluralize }}:
+                  </span>
+                  <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% for ev in rel.evidencias.all %}
+                      {% if ev.is_imagem %}
+                      <a href="{{ ev.arquivo.url }}" target="_blank" title="{{ ev.descricao }}">
+                        <img src="{{ ev.arquivo.url }}" style="height:40px;width:40px;object-fit:cover;border-radius:4px;border:1px solid #dee2e6;">
+                      </a>
+                      {% else %}
+                      <a href="{{ ev.arquivo.url }}" target="_blank"
+                         class="btn btn-outline-secondary btn-sm py-0 px-1" style="font-size:.7rem;"
+                         title="{{ ev.descricao }}">
+                        <i class="bi bi-file-earmark-pdf text-danger me-1"></i>{{ ev.descricao|truncatechars:18 }}
+                      </a>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+              <a href="{{ rel.anexo_pdf.url }}" class="btn btn-sm btn-outline-danger flex-shrink-0" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i>
+              </a>
             </div>
-            <a href="{{ rel.anexo_pdf.url }}" class="btn btn-sm btn-outline-danger" target="_blank">
-              <i class="bi bi-file-earmark-pdf"></i>
-            </a>
           </li>
           {% endfor %}
         </ul>

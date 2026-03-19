@@ -24,7 +24,7 @@
   <div class="alert alert-danger">{{ form.non_field_errors }}</div>
   {% endif %}
 
-  <form method="post" novalidate id="form-relatorio">
+  <form method="post" enctype="multipart/form-data" novalidate id="form-relatorio">
     {% csrf_token %}
 
     {# ── Card: Tipo de Relatório ──────────────────────────────────────────── #}
@@ -307,6 +307,34 @@
 
     </div>{# fim card-final #}
 
+    {# ── Card: Evidências (ambos os tipos) ───────────────────────────────── #}
+    <div class="card border-0 shadow-sm mb-4" id="card-evidencias">
+      <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+        <i class="bi bi-paperclip text-primary"></i>
+        <strong>Evidências</strong>
+        <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+              data-bs-content="Anexe imagens, PDFs ou documentos que comprovem as atividades realizadas. As imagens aparecerão diretamente no relatório; PDFs serão listados como anexos."
+              class="text-muted ms-1" style="cursor:help;">
+          <i class="bi bi-question-circle"></i>
+        </span>
+        <span class="badge bg-secondary ms-1 small">Opcional</span>
+      </div>
+      <div class="card-body">
+        <p class="text-muted small mb-3">
+          Selecione múltiplos arquivos de uma vez (PDF, PNG, JPG). Imagens serão inseridas diretamente no relatório PDF.
+        </p>
+        <div id="evidencias-container">
+          <div class="evidencia-row mb-2">
+            <input type="file" name="evidencias" multiple
+                   accept=".pdf,.png,.jpg,.jpeg"
+                   class="form-control form-control-sm"
+                   id="evidencias-input">
+          </div>
+        </div>
+        <div id="evidencias-preview" class="row g-2 mt-2"></div>
+      </div>
+    </div>
+
     {# ── Ações ────────────────────────────────────────────────────────────── #}
     <div class="d-flex justify-content-between mt-2">
       <a href="{% url 'relatorio_lista_projetos' %}" class="btn btn-outline-secondary">
@@ -328,7 +356,39 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 
-// ── Mostrar/esconder cards por tipo de relatório ──────────────────────────────
+// ── Preview de evidências ─────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  var input   = document.getElementById('evidencias-input');
+  var preview = document.getElementById('evidencias-preview');
+  if (!input) return;
+
+  input.addEventListener('change', function () {
+    preview.innerHTML = '';
+    Array.from(this.files).forEach(function (file) {
+      var col = document.createElement('div');
+      col.className = 'col-6 col-md-3';
+
+      if (file.type.startsWith('image/')) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+          col.innerHTML =
+            '<div class="border rounded p-1 text-center">' +
+              '<img src="' + e.target.result + '" class="img-fluid rounded mb-1" style="max-height:100px;object-fit:cover;">' +
+              '<div class="small text-muted text-truncate">' + file.name + '</div>' +
+            '</div>';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        col.innerHTML =
+          '<div class="border rounded p-2 text-center">' +
+            '<i class="bi bi-file-earmark-pdf text-danger fs-3 d-block mb-1"></i>' +
+            '<div class="small text-muted text-truncate">' + file.name + '</div>' +
+          '</div>';
+      }
+      preview.appendChild(col);
+    });
+  });
+});
 function atualizarTipo(valor) {
   var cardParcial = document.getElementById('card-parcial');
   var cardFinal   = document.getElementById('card-final');

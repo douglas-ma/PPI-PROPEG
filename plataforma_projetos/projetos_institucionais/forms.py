@@ -419,6 +419,13 @@ class RelatorioForm(forms.Form):
         help_text="Síntese geral do projeto, avaliação dos objetivos atingidos e aprendizados.",
     )
 
+    # ── Evidências (ambos os tipos) ────────────────────────────────────────
+    evidencias = MultipleFileField(
+        label="Arquivos de Evidências",
+        required=False,
+        help_text="Anexe documentos, imagens ou PDFs como evidências. Selecione múltiplos arquivos de uma vez.",
+    )
+
 
 class EditalForm(forms.ModelForm):
 

@@ -308,7 +308,7 @@ def projeto_detalhe(request, pk):
     comprovante         = projeto.anexos.filter(tipo_anexo='comprovante_aprovacao').first()
     ata_conselho        = projeto.anexos.filter(tipo_anexo='ata_conselho').order_by('-data_upload').first()
     relatorio_submissao = projeto.anexos.filter(tipo_anexo='relatorio_submissao').order_by('-data_upload').first()
-    outros_anexos       = projeto.anexos.exclude(tipo_anexo__in=['comprovante_aprovacao', 'relatorio_submissao'])
+    outros_anexos       = projeto.anexos.exclude(tipo_anexo__in=['comprovante_aprovacao', 'relatorio_submissao', 'ata_conselho'])
     relatorios_enviados = projeto.relatorios.all().order_by('-data_envio')
     visao_completa      = (request.user == projeto.coordenador or request.user.perfil == 'gestor')
 
@@ -1266,7 +1266,7 @@ def listar_projetos_para_relatorio(request):
 def criar_relatorio(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk, coordenador=request.user)
     if request.method == 'POST':
-        form = RelatorioForm(request.POST)
+        form = RelatorioForm(request.POST, request.FILES)
         if form.is_valid():
             dados = form.cleaned_data
 
@@ -1294,6 +1294,15 @@ def criar_relatorio(request, pk):
                 tipo=tipo,
                 anexo_pdf=arquivo_pdf_django,
             )
+
+            # Salvar evidências
+            from .models import EvidenciaRelatorio
+            for arq in request.FILES.getlist('evidencias'):
+                EvidenciaRelatorio.objects.create(
+                    relatorio=novo_relatorio,
+                    arquivo=arq,
+                    descricao=arq.name,
+                )
 
             if novo_relatorio.tipo == 'final':
                 projeto.status = 'aguardando_encerramento'
