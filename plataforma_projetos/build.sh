@@ -13,13 +13,20 @@ python manage.py migrate
 
 # Testa o email
 python manage.py shell -c "
+from django.core.mail import send_mail
 from django.conf import settings
-print('=== DIAGNÓSTICO EMAIL ===')
-print('BACKEND:', settings.EMAIL_BACKEND)
-print('HOST:', settings.EMAIL_HOST)
-print('USER:', settings.EMAIL_HOST_USER)
-print('PORT:', settings.EMAIL_PORT)
-print('========================')
+print('Tentando enviar para:', settings.EMAIL_HOST_USER)
+try:
+    send_mail(
+        'Teste PROPEG',
+        'Se recebeu este email, o envio está funcionando.',
+        settings.EMAIL_HOST_USER,
+        [settings.EMAIL_HOST_USER],
+        fail_silently=False,
+    )
+    print('SUCESSO: email enviado')
+except Exception as e:
+    print('ERRO:', type(e).__name__, str(e))
 "
 
 # Adicione o super user se ele não existir
