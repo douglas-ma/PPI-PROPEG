@@ -229,6 +229,20 @@ class CoordenadorProfileForm(forms.ModelForm):
         label='Grande Área CNPq',
         widget=forms.Select(attrs={'class': 'form-select'}),
     )
+    participa_pos_graduacao = forms.TypedChoiceField(
+        choices=(('False', 'Não'), ('True', 'Sim')),
+        widget=forms.RadioSelect,
+        label="Vinculado a Programa de Pós-Graduação?",
+        coerce=lambda x: x == 'True',
+        initial=False,
+        required=False,
+    )
+    programa_pos_vinculo = forms.ChoiceField(
+        choices=Usuario.PROGRAMA_POS_CHOICES,
+        required=False,
+        label='Programa de Pós-Graduação',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
 
     class Meta:
         model = Usuario
@@ -237,9 +251,12 @@ class CoordenadorProfileForm(forms.ModelForm):
             'rg', 'data_nascimento', 'siape',
             'lattes', 'cnpq_area',
             'titulacao', 'regime_trabalho',
+            'centro_lotacao',
+            'participa_pos_graduacao', 'programa_pos_vinculo',
         ]
         widgets = {
             'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
+            'lattes': forms.URLInput(attrs={'placeholder': 'https://lattes.cnpq.br/...'}),
         }
         labels = {
             'first_name':      'Nome',
@@ -249,7 +266,8 @@ class CoordenadorProfileForm(forms.ModelForm):
             'rg':              'RG',
             'data_nascimento': 'Data de Nascimento',
             'siape':           'SIAPE',
-            'lattes':          'Nº Currículo Lattes',
+            'lattes':          'Link Currículo Lattes',
+            'centro_lotacao':  'Centro de Lotação',
         }
 
 
@@ -272,11 +290,27 @@ class GestorProfileForm(forms.ModelForm):
 
 
 class AlunoProfileForm(forms.ModelForm):
+    participa_pos_graduacao = forms.TypedChoiceField(
+        choices=(('False', 'Não'), ('True', 'Sim')),
+        widget=forms.RadioSelect,
+        label="Vinculado a Programa de Pós-Graduação?",
+        coerce=lambda x: x == 'True',
+        initial=False,
+        required=False,
+    )
+    programa_pos_vinculo = forms.ChoiceField(
+        choices=Usuario.PROGRAMA_POS_CHOICES,
+        required=False,
+        label='Programa de Pós-Graduação',
+        widget=forms.Select(attrs={'class': 'form-select'}),
+    )
+
     class Meta:
         model = Usuario
         fields = [
             'first_name', 'last_name', 'email', 'telefone',
             'rg', 'data_nascimento', 'matricula', 'curso',
+            'participa_pos_graduacao', 'programa_pos_vinculo',
         ]
         widgets = {
             'data_nascimento': forms.DateInput(attrs={'type': 'date'}),
@@ -398,7 +432,7 @@ class RelatorioForm(forms.Form):
         label="Metodologia Utilizada",
         widget=forms.Textarea(attrs={'rows': 5}),
         required=False,
-        help_text="Pré-preenchido a partir do projeto. Atualize conforme a execução real.",
+        help_text="Descreva a metodologia efetivamente utilizada na execução do projeto.",
     )
     impactos_observados = forms.CharField(
         label="Impactos e Contribuições Observadas",

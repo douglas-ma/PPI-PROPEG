@@ -81,8 +81,22 @@
               <span class="fw-semibold">{{ usuario_selecionado.siape|default:"Não informado" }}</span>
             </div>
             <div class="col-md-3">
-              <span class="text-muted small d-block">Nº Lattes</span>
-              <span class="fw-semibold">{{ usuario_selecionado.lattes|default:"Não informado" }}</span>
+              <span class="text-muted small d-block">Currículo Lattes</span>
+              {% if usuario_selecionado.lattes %}
+              <a href="{{ usuario_selecionado.lattes }}" target="_blank" rel="noopener" class="fw-semibold text-decoration-none">
+                <i class="bi bi-box-arrow-up-right me-1 small"></i>Acessar Lattes
+              </a>
+              {% else %}
+              <span class="fw-semibold text-muted">Não informado</span>
+              {% endif %}
+            </div>
+            {% if usuario_selecionado.participa_pos_graduacao %}
+            <div class="col-6 col-md-4">
+              <span class="text-muted small d-block">Vínculo Pós-Graduação</span>
+              <span class="fw-semibold">{{ usuario_selecionado.get_programa_pos_vinculo_display|default:"Não especificado" }}</span>
+            </div>
+            {% endif %}
+            <div class="d-none">
             </div>
             <div class="col-md-6">
               <span class="text-muted small d-block">Área CNPq</span>

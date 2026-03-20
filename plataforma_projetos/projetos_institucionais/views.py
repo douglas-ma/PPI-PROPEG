@@ -333,15 +333,15 @@ def anexar_ata_conselho(request, pk):
             anexo = form.save(commit=False)
             anexo.projeto    = projeto
             anexo.tipo_anexo = 'ata_conselho'
-            anexo.descricao  = form.cleaned_data.get('descricao') or 'Ata de Aprovação do Conselho'
+            anexo.descricao  = form.cleaned_data.get('descricao') or 'Ata de Aprovação do Centro'
             anexo.save()
-            messages.success(request, f'Ata do conselho anexada ao projeto "{projeto.titulo}".')
+            messages.success(request, f'Ata do centro anexada ao projeto "{projeto.titulo}".')
             return redirect('gestor_dashboard')
     else:
         form = AnexoComprovanteForm()
     return render(request, 'projetos_institucionais/anexar_comprovante.html', {
         'form': form, 'projeto': projeto,
-        'titulo_pagina': 'Anexar Ata de Aprovação do Conselho',
+        'titulo_pagina': 'Anexar Ata de Aprovação do Centro',
     })
 
 
@@ -349,27 +349,34 @@ def consulta_publica(request):
     queryset = Projeto.objects.filter(
         status__in=['aprovado', 'em_andamento', 'encerrado']
     ).select_related('coordenador', 'centro_lotacao', 'curso').order_by('-data_inicio')
-    q             = request.GET.get('q', '').strip()
-    centro_filter = request.GET.get('centro', '').strip()
-    curso_filter  = request.GET.get('curso', '').strip()
-    status_filter = request.GET.get('status', '').strip()
+    q                  = request.GET.get('q', '').strip()
+    centro_filter      = request.GET.get('centro', '').strip()
+    curso_filter       = request.GET.get('curso', '').strip()
+    status_filter      = request.GET.get('status', '').strip()
+    ano_filter         = request.GET.get('ano', '').strip()
+    financiamento_filter = request.GET.get('financiamento', '').strip()
     if q:
         queryset = queryset.filter(
             Q(titulo__icontains=q) | Q(resumo__icontains=q) |
             Q(coordenador__first_name__icontains=q) | Q(coordenador__last_name__icontains=q)
         )
-    if centro_filter: queryset = queryset.filter(centro_lotacao__pk=centro_filter)
-    if curso_filter:  queryset = queryset.filter(curso__pk=curso_filter)
-    if status_filter: queryset = queryset.filter(status=status_filter)
+    if centro_filter:        queryset = queryset.filter(centro_lotacao__pk=centro_filter)
+    if curso_filter:         queryset = queryset.filter(curso__pk=curso_filter)
+    if status_filter:        queryset = queryset.filter(status=status_filter)
+    if ano_filter:           queryset = queryset.filter(data_inicio__year=ano_filter)
+    if financiamento_filter == 'sim':  queryset = queryset.filter(agencia_financiadora__isnull=False)
+    elif financiamento_filter == 'nao': queryset = queryset.filter(agencia_financiadora__isnull=True)
     from projetos_institucionais.models import CentroLotacao, CursoGraduacao
     centros = CentroLotacao.objects.filter(projeto__isnull=False).distinct().order_by('nome')
     cursos  = CursoGraduacao.objects.filter(projeto__isnull=False).distinct().order_by('nome')
+    anos    = Projeto.objects.filter(status__in=['aprovado','em_andamento','encerrado'])                .exclude(data_inicio__isnull=True).dates('data_inicio','year',order='DESC')
     paginator = Paginator(queryset, 12)
     page_obj  = paginator.get_page(request.GET.get('page'))
     return render(request, 'projetos_institucionais/consulta_publica.html', {
         'page_obj': page_obj, 'q': q, 'centro_filter': centro_filter,
         'curso_filter': curso_filter, 'status_filter': status_filter,
-        'centros': centros, 'cursos': cursos, 'total': queryset.count(),
+        'ano_filter': ano_filter, 'financiamento_filter': financiamento_filter,
+        'centros': centros, 'cursos': cursos, 'anos': anos, 'total': queryset.count(),
     })
 
 
@@ -567,7 +574,7 @@ def aluno_projeto_dashboard(request):
 @gestor_required
 def gestor_dashboard(request):
     projetos_pendentes              = Projeto.objects.filter(status='submetido').select_related('coordenador', 'centro_lotacao').order_by('data_inicio')
-    projetos_aguardando_conselho    = Projeto.objects.filter(status='aguardando_conselho').select_related('coordenador', 'centro_lotacao').order_by('data_inicio')
+    projetos_aguardando_centro    = Projeto.objects.filter(status='aguardando_conselho').select_related('coordenador', 'centro_lotacao').order_by('data_inicio')
     projetos_aguardando_encerramento = Projeto.objects.filter(status='aguardando_encerramento').select_related('coordenador', 'centro_lotacao').order_by('data_fim')
 
     # Aba ativa
@@ -575,10 +582,10 @@ def gestor_dashboard(request):
 
     contexto = {
         'projetos_pendentes':              projetos_pendentes,
-        'projetos_aguardando_conselho':    projetos_aguardando_conselho,
+        'projetos_aguardando_centro':    projetos_aguardando_centro,
         'projetos_aguardando_encerramento': projetos_aguardando_encerramento,
         'count_submetidos':      projetos_pendentes.count(),
-        'count_conselho':        projetos_aguardando_conselho.count(),
+        'count_aguardando_centro':        projetos_aguardando_centro.count(),
         'count_encerramento':    projetos_aguardando_encerramento.count(),
         'aba':                   aba,
     }
@@ -882,6 +889,9 @@ def historico_projetos(request):
         queryset = queryset.filter(centro_lotacao__pk__in=centro_filters)
     if curso_filters:
         queryset = queryset.filter(curso__pk__in=curso_filters)
+    financiamento_filter = request.GET.get("financiamento", "").strip()
+    if financiamento_filter == "sim":  queryset = queryset.filter(agencia_financiadora__isnull=False)
+    elif financiamento_filter == "nao": queryset = queryset.filter(agencia_financiadora__isnull=True)
 
     allowed_sort = [
         "titulo", "-titulo",
@@ -928,6 +938,7 @@ def historico_projetos(request):
         "data_fim_filter":    data_fim_filter,
         "centro_filters": centro_filters,
         "curso_filters":  curso_filters,
+        "financiamento_filter": financiamento_filter,
         "sort_by":       sort_by,
         "per_page":      per_page,
         "contadores":    contadores,
@@ -957,6 +968,9 @@ def historico_projetos_pdf(request):
     if data_fim_filter:    queryset = queryset.filter(data_inicio__lte=data_fim_filter)
     if centro_filters: queryset = queryset.filter(centro_lotacao__pk__in=centro_filters)
     if curso_filters:  queryset = queryset.filter(curso__pk__in=curso_filters)
+    financiamento_filter = request.GET.get("financiamento", "").strip()
+    if financiamento_filter == "sim":  queryset = queryset.filter(agencia_financiadora__isnull=False)
+    elif financiamento_filter == "nao": queryset = queryset.filter(agencia_financiadora__isnull=True)
 
     filtros_ativos = {}
     if query:          filtros_ativos["Busca"]        = query
@@ -1003,18 +1017,18 @@ def encaminhar_para_conselho(request, pk):
 
         if projeto.centro_lotacao and projeto.centro_lotacao.email:
             if eh_encerramento:
-                subject_conselho = f'Projeto para Aprovação de Encerramento pelo Conselho: "{projeto.titulo}"'
+                subject_conselho = f'Projeto para Aprovação de Encerramento pelo Centro: "{projeto.titulo}"'
                 message_conselho = (
-                    f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
+                    f'Prezados responsáveis do centro {projeto.centro_lotacao.nome},\n\n'
                     f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, '
                     f'concluiu suas atividades e foi encaminhado para aprovação de encerramento.\n\n'
                     f'O relatório final de atividades está disponível para análise.\n\n'
                     f'Atenciosamente,\nEquipe de Gestão PROPEG'
                 )
             else:
-                subject_conselho = f'Novo Projeto para Análise do Conselho: "{projeto.titulo}"'
+                subject_conselho = f'Novo Projeto para Análise do Centro: "{projeto.titulo}"'
                 message_conselho = (
-                    f'Prezados membros do conselho do {projeto.centro_lotacao.nome},\n\n'
+                    f'Prezados responsáveis do centro {projeto.centro_lotacao.nome},\n\n'
                     f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, foi encaminhado para sua análise e aprovação.\n\n'
                     f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
                     f'Atenciosamente,\nEquipe de Gestão PROPEG'
@@ -1050,7 +1064,7 @@ def encaminhar_para_conselho(request, pk):
                                 print(f'Erro ao anexar PDF: {e}')
                     api.send_transac_email(sib_api_v3_sdk.SendSmtpEmail(**params))
                 except Exception as e:
-                    print(f'Erro Brevo conselho: {e}')
+                    print(f'Erro Brevo centro: {e}')
             else:
                 try:
                     email_conselho = EmailMessage(
@@ -1069,25 +1083,25 @@ def encaminhar_para_conselho(request, pk):
         if eh_encerramento:
             msg_coord = (
                 f'Olá, {projeto.coordenador.first_name}!\n\n'
-                f'Seu projeto "{projeto.titulo}" foi encaminhado para aprovação de encerramento pelo conselho do seu centro.\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para aprovação de encerramento pelo centro do seu centro.\n\n'
                 f'Você será notificado assim que houver uma decisão.\n\n'
                 f'Atenciosamente,\nEquipe PROPEG'
             )
-            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao conselho para aprovação de encerramento.'
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao centro para aprovação de encerramento.'
         else:
             msg_coord = (
                 f'Olá, {projeto.coordenador.first_name}!\n\n'
-                f'Seu projeto "{projeto.titulo}" foi encaminhado para análise do conselho do seu centro de lotação.\n\n'
-                f'O status foi atualizado para "Aguardando aprovação do conselho". Você será notificado sobre as próximas etapas.\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para análise do centro do seu centro de lotação.\n\n'
+                f'O status foi atualizado para "Aguardando aprovação do centro". Você será notificado sobre as próximas etapas.\n\n'
                 f'Atenciosamente,\nEquipe PROPEG'
             )
-            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao conselho e o coordenador foi notificado.'
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao centro e o coordenador foi notificado.'
 
         link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
         enviar_email_e_notificacao(msg_sucesso.split('"')[0], msg_coord, projeto.coordenador, link=link_projeto)
         messages.success(request, msg_sucesso)
     else:
-        messages.warning(request, f'O projeto "{projeto.titulo}" não pode ser encaminhado ao conselho no status atual.')
+        messages.warning(request, f'O projeto "{projeto.titulo}" não pode ser encaminhado ao centro no status atual.')
 
     return redirect('gestor_dashboard')
 
@@ -1349,11 +1363,10 @@ def criar_relatorio(request, pk):
             messages.success(request, 'Relatório enviado com sucesso e salvo no projeto.')
             return redirect('projeto_detalhe', pk=projeto.pk)
     else:
-        # Pré-preenche com dados do projeto de submissão
+        # Pré-preenche apenas objetivos e período (metodologia deve ser preenchida pelo usuário)
         form = RelatorioForm(initial={
             'objetivo_geral':        projeto.objetivo_geral or '',
             'objetivos_especificos': projeto.objetivos_especificos or '',
-            'metodologia_utilizada': projeto.metodologia or '',
             'periodo_inicio':        projeto.data_inicio,
             'periodo_fim':           projeto.data_fim,
         })
@@ -2001,8 +2014,8 @@ def _ajuda_dados():
     fluxo = [
         {'titulo': 'Rascunho',                'desc': 'Coordenador cria e preenche o projeto passo a passo. Pode salvar e retomar quando quiser.',          'cor': '#6c757d'},
         {'titulo': 'Submetido',               'desc': 'Coordenador finaliza e submete. Relatório de submissão em PDF é gerado automaticamente.',            'cor': '#0d6efd'},
-        {'titulo': 'Avaliação pelo Gestor',   'desc': 'Gestor analisa o projeto. Pode aprovar, reprovar ou encaminhar ao conselho do centro.',              'cor': '#fd7e14'},
-        {'titulo': 'Aguardando Conselho',     'desc': 'Encaminhado para deliberação do conselho. Gestor pode anexar a ata de aprovação.',                  'cor': '#ffc107'},
+        {'titulo': 'Avaliação pelo Gestor',   'desc': 'Gestor analisa o projeto. Pode aprovar, reprovar ou encaminhar ao centro do centro.',              'cor': '#fd7e14'},
+        {'titulo': 'Aguardando Centro',     'desc': 'Encaminhado para deliberação do centro. Gestor pode anexar a ata de aprovação.',                  'cor': '#ffc107'},
         {'titulo': 'Aprovado',                'desc': 'Projeto aprovado. Coordenador pode iniciar a execução.',                                            'cor': '#198754'},
         {'titulo': 'Em Andamento',            'desc': 'Projeto em execução. Coordenador envia relatórios parciais periodicamente.',                        'cor': '#0d6efd'},
         {'titulo': 'Aguardando Encerramento', 'desc': 'Relatório final enviado. Gestor precisa confirmar o encerramento.',                                 'cor': '#fd7e14'},

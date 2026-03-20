@@ -111,13 +111,40 @@
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Nº Currículo Lattes</label>
-            <input type="text" name="{{ user_form.lattes.html_name }}"
+            <label class="form-label fw-semibold">Link Currículo Lattes</label>
+            <input type="url" name="{{ user_form.lattes.html_name }}"
                    value="{{ user_form.lattes.value|default:'' }}"
                    class="form-control {% if user_form.lattes.errors %}is-invalid{% endif %}"
                    placeholder="Ex: 1234567890123456">
-            <div class="form-text">Número de 16 dígitos do seu currículo na Plataforma Lattes.</div>
+            <div class="form-text">URL completa do seu currículo na Plataforma Lattes (ex: https://lattes.cnpq.br/1234567890).</div>
             {% if user_form.lattes.errors %}<div class="invalid-feedback">{{ user_form.lattes.errors }}</div>{% endif %}
+            </div>
+            {% if user_form.participa_pos_graduacao %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Vinculado a Programa de Pós-Graduação?</label>
+              <div class="d-flex gap-3">
+                {% for radio in user_form.participa_pos_graduacao %}
+                <div class="form-check">
+                  {{ radio.tag }}
+                  <label class="form-check-label" for="{{ radio.id_for_label }}">{{ radio.choice_label }}</label>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="mb-3" id="div-programa-pos" {% if not user_form.participa_pos_graduacao.value %}style="display:none"{% endif %}>
+              <label class="form-label fw-semibold">Programa de Pós-Graduação</label>
+              {{ user_form.programa_pos_vinculo }}
+              {% if user_form.programa_pos_vinculo.errors %}<div class="invalid-feedback d-block">{{ user_form.programa_pos_vinculo.errors }}</div>{% endif %}
+            </div>
+            <script>
+              document.querySelectorAll('input[name="participa_pos_graduacao"]').forEach(function(radio){
+                radio.addEventListener('change', function(){
+                  document.getElementById('div-programa-pos').style.display = this.value === 'True' ? '' : 'none';
+                });
+              });
+            </script>
+            {% endif %}
+            <div class="mb-3 d-none">
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Grande Área CNPq</label>
@@ -262,7 +289,7 @@
             <label class="form-label fw-semibold">UF</label>
             <input type="text" name="{{ endereco_form.estado.html_name }}"
                    value="{{ endereco_form.estado.value|default:'' }}"
-                   class="form-control" maxlength="2">
+                   class="form-control" maxlength="2" placeholder="AC">
           </div>
           <div class="col-md-2">
             <label class="form-label fw-semibold">CEP</label>

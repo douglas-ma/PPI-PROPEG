@@ -65,7 +65,7 @@ table.dados tbody td {
 .b-submetido  { background: #dbeafe; color: #1e40af; }
 .b-aprovado   { background: #d1fae5; color: #065f46; }
 .b-reprovado  { background: #fee2e2; color: #991b1b; }
-.b-conselho   { background: #fef9c3; color: #92400e; }
+.bg-warning bg-opacity-10 text-warning   { background: #fef9c3; color: #92400e; }
 .b-encerrado  { background: #f3f4f6; color: #374151; }
 .b-default    { background: #f3f4f6; color: #374151; }
 
@@ -123,8 +123,8 @@ table.dados tbody td {
         {% elif p.status == 'submetido' %}<span class="badge b-submetido">Submetido</span>
         {% elif p.status == 'aprovado' %}<span class="badge b-aprovado">Aprovado</span>
         {% elif p.status == 'reprovado' %}<span class="badge b-reprovado">Reprovado</span>
-        {% elif p.status == 'aguardando_conselho' %}<span class="badge b-conselho">Ag. Conselho</span>
-        {% elif p.status == 'aguardando_encerramento' %}<span class="badge b-conselho">Ag. Encerramento</span>
+        {% elif p.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span>
+        {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
         {% elif p.status == 'encerrado' %}<span class="badge b-encerrado">Encerrado</span>
         {% else %}<span class="badge b-default">{{ p.get_status_display }}</span>{% endif %}
       </td>

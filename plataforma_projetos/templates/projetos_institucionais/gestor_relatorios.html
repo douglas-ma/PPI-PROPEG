@@ -136,11 +136,17 @@
               {% else %}
                 <span class="badge bg-primary bg-opacity-10 text-primary">Parcial</span>
               {% endif %}
+              {% if r.projeto.agencia_financiadora %}
+              <span class="badge bg-primary bg-opacity-10 text-primary border ms-1" style="font-size:.6rem;"><i class="bi bi-bank"></i> Financiado</span>
+              {% else %}
+              <span class="badge bg-secondary bg-opacity-10 text-secondary border ms-1" style="font-size:.6rem;">Institucional</span>
+              {% endif %}
             </td>
             <td class="text-center text-muted">{{ r.data_envio|date:"d/m/Y" }}</td>
             <td class="text-center">
               {% if r.projeto.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
               {% elif r.projeto.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
+              {% elif r.projeto.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Centro</span>
               {% elif r.projeto.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
               {% else %}<span class="badge bg-light text-muted">{{ r.projeto.get_status_display }}</span>{% endif %}
             </td>

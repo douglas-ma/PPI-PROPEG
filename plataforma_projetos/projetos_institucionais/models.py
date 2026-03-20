@@ -76,6 +76,30 @@ class Usuario(AbstractUser):
         ('inativo', 'Inativo'),
     )
 
+    # 19 programas de pós-graduação stricto sensu da UFAC (fonte: propeg.ufac.br, mar/2026)
+    PROGRAMA_POS_CHOICES = [
+        ('', 'Selecione o programa'),
+        ('PPGCA',      'Ciências Ambientais (PPGCA)'),
+        ('PPGCC',      'Ciência da Computação (PPGCC)'),
+        ('PPGCF',      'Ciência Florestal (PPGCF)'),
+        ('PPGCSA',     'Ciência da Saúde na Amazônia Ocidental (PPGCSA)'),
+        ('PPGCITA',    'Ciência, Inovação e Tecnologia para a Amazônia (PPGCITA)'),
+        ('PPGDR',      'Desenvolvimento Regional (PPGDR)'),
+        ('PPGECOL',    'Ecologia e Manejo de Recursos Naturais (PPGECOL)'),
+        ('PPGEDU',     'Educação (PPGEDU)'),
+        ('PPGEF',      'Ensino de Física — Mestrado Profissional (PPGEF)'),
+        ('PPGECM',     'Ensino de Ciências e Matemática — Mestrado Profissional (PPGECM)'),
+        ('PPEHL',      'Ensino de Humanidades e Linguagens (PPEHL)'),
+        ('PPGGEO',     'Geografia (PPGGEO)'),
+        ('PPGLL',      'Letras: Linguagem e Identidade (PPGLL)'),
+        ('PROFMAT',    'Matemática em Rede Nacional — Mestrado Profissional (PROFMAT)'),
+        ('PPGAPV',     'Agronomia: Produção Vegetal (PPGAPV)'),
+        ('PPGAC',      'Artes Cênicas (PPGAC)'),
+        ('PPGBIONORTE','Biodiversidade e Biotecnologia — Rede Bionorte (PPGBIONORTE)'),
+        ('PPGSC',      'Saúde Coletiva (PPGSC)'),
+        ('PPGSPA',     'Sanidade e Produção Animal (PPGSPA)'),
+    ]
+
     CNPQ_AREA_CHOICES = [
         ('', 'Selecione uma área'),
         ('Ciências Exatas e da Terra', (
@@ -145,7 +169,7 @@ class Usuario(AbstractUser):
     data_nascimento = models.DateField(blank=True, null=True, verbose_name="Data de Nascimento")
     siape = models.CharField(max_length=10, blank=True, null=True, verbose_name="SIAPE")
     matricula = models.CharField(max_length=20, blank=True, null=True, verbose_name="Nº de Matrícula")
-    lattes = models.CharField(max_length=50, blank=True, null=True, verbose_name="Nº Currículo Lattes")
+    lattes = models.URLField(max_length=200, blank=True, null=True, verbose_name="Link Currículo Lattes")
     cnpq_area = models.CharField(
         max_length=100,
         choices=CNPQ_AREA_CHOICES,
@@ -157,6 +181,18 @@ class Usuario(AbstractUser):
     perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
     regime_trabalho = models.CharField(max_length=3, blank=True, null=True, verbose_name="Regime de Trabalho")
     is_active = models.BooleanField(default=False, verbose_name="Ativo", help_text="Marque esta opção para ativar a conta do usuário.")
+
+    # Vínculo com pós-graduação (coordenador e aluno)
+    participa_pos_graduacao = models.BooleanField(
+        default=False, blank=True, null=True,
+        verbose_name="Vinculado a Programa de Pós-Graduação?",
+    )
+    programa_pos_vinculo = models.CharField(
+        max_length=20,
+        choices=PROGRAMA_POS_CHOICES,
+        blank=True, null=True,
+        verbose_name="Programa de Pós-Graduação",
+    )
 
     curso = models.ForeignKey(
         'CursoGraduacao',
@@ -397,7 +433,7 @@ class Projeto(models.Model):
     STATUS_CHOICES = [
         ('rascunho', 'Rascunho'),
         ('submetido', 'Submetido'),
-        ('aguardando_conselho', 'Aguardando aprovação do conselho'),
+        ('aguardando_conselho', 'Aguardando aprovação do Centro'),
         ('aprovado', 'Aprovado'),
         ('reprovado', 'Reprovado'),
         ('em_andamento', 'Em andamento'),
@@ -595,7 +631,7 @@ class Anexo(models.Model):
         ('imagens', 'Figuras, Imagens, etc.'),
         ('projeto_completo', 'Projeto Completo'),
         ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
-        ('ata_conselho', 'Ata de Aprovação do Conselho'),
+        ('ata_conselho', 'Ata de Aprovação do Centro'),
         ('relatorio_submissao', 'Relatório de Submissão (Automático)'),
         ('outro', 'Outro'),
     )

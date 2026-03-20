@@ -35,9 +35,9 @@
     <div class="col-6 col-md-4">
       <div class="card border-0 shadow-sm text-center py-3 h-100 {% if aba == 'conselho' %}border-bottom border-warning border-3{% endif %}"
            style="cursor:pointer;" onclick="location.href='?aba=conselho'">
-        <div class="display-6 fw-bold text-warning">{{ count_conselho }}</div>
-        <small class="text-muted">Ag. Conselho</small>
-        <small class="text-muted" style="font-size:.7rem;">Aguardam aprovação do conselho</small>
+        <div class="display-6 fw-bold text-warning">{{ count_aguardando_centro }}</div>
+        <small class="text-muted">Ag. Centro</small>
+        <small class="text-muted" style="font-size:.7rem;">Aguardam aprovação do centro</small>
       </div>
     </div>
     <div class="col-6 col-md-4">
@@ -64,9 +64,9 @@
     <li class="nav-item">
       <a class="nav-link {% if aba == 'conselho' %}active fw-semibold{% else %}text-muted{% endif %}"
          href="?aba=conselho">
-        Ag. Conselho
-        {% if count_conselho > 0 %}
-        <span class="badge bg-warning text-dark ms-1">{{ count_conselho }}</span>
+        Ag. Centro
+        {% if count_aguardando_centro > 0 %}
+        <span class="badge bg-warning text-dark ms-1">{{ count_aguardando_centro }}</span>
         {% endif %}
       </a>
     </li>
@@ -122,13 +122,13 @@
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
-              {# Projetos sem financiamento externo precisam de aprovação do conselho #}
+              {# Projetos sem financiamento externo precisam de aprovação do centro #}
               {% if not p.agencia_financiadora %}
               <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
                  class="btn btn-sm btn-outline-warning ms-1"
-                 title="Encaminhar para Conselho do Centro"
-                 onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para o Conselho?')">
-                <i class="bi bi-arrow-right-circle me-1"></i>Conselho
+                 title="Encaminhar para o Centro"
+                 onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para o Centro?')">
+                <i class="bi bi-arrow-right-circle me-1"></i>Centro
               </a>
               {% endif %}
               <button type="button" class="btn btn-sm btn-success ms-1"
@@ -161,12 +161,12 @@
   </div>
   {% endif %}
 
-  {# ── Aba: Aguardando Conselho ─────────────────────────────────────────── #}
+  {# ── Aba: Aguardando Centro ─────────────────────────────────────────── #}
   {% if aba == 'conselho' %}
   <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-      <strong><i class="bi bi-hourglass-split text-warning me-2"></i>Aguardando Aprovação do Conselho</strong>
-      <small class="text-muted">{{ count_conselho }} projeto{{ count_conselho|pluralize }}</small>
+      <strong><i class="bi bi-hourglass-split text-warning me-2"></i>Aguardando Aprovação do Centro</strong>
+      <small class="text-muted">{{ count_aguardando_centro }} projeto{{ count_aguardando_centro|pluralize }}</small>
     </div>
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
@@ -180,7 +180,7 @@
           </tr>
         </thead>
         <tbody>
-          {% for p in projetos_aguardando_conselho %}
+          {% for p in projetos_aguardando_centro %}
           <tr>
             <td>
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="fw-semibold text-decoration-none text-dark small">
@@ -189,6 +189,15 @@
             </td>
             <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
             <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
+            <td>
+              {% if p.agencia_financiadora %}
+              <span class="badge bg-primary bg-opacity-10 text-primary border" style="font-size:.65rem;">
+                <i class="bi bi-bank me-1"></i>Financiado
+              </span>
+              {% else %}
+              <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size:.65rem;">Institucional</span>
+              {% endif %}
+            </td>
             <td class="text-center small text-muted">
               {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
@@ -197,7 +206,7 @@
                 <i class="bi bi-eye"></i>
               </a>
               <a href="{% url 'anexar_ata_conselho' pk=p.pk %}"
-                 class="btn btn-sm btn-outline-secondary ms-1" title="Anexar Ata do Conselho">
+                 class="btn btn-sm btn-outline-secondary ms-1" title="Anexar Ata do Centro">
                 <i class="bi bi-paperclip me-1"></i>Ata
               </a>
               <button type="button" class="btn btn-sm btn-success ms-1"
@@ -221,7 +230,7 @@
           {% empty %}
           <tr><td colspan="5" class="text-center text-muted py-4">
             <i class="bi bi-hourglass display-6 opacity-25 d-block mb-2"></i>
-            Nenhum projeto aguardando aprovação do conselho.
+            Nenhum projeto aguardando aprovação do centro.
           </td></tr>
           {% endfor %}
         </tbody>
@@ -268,7 +277,7 @@
                 <i class="bi bi-bank me-1"></i>Financiado
               </span>
               {% else %}
-              <span class="badge bg-secondary bg-opacity-10 text-secondary me-1" title="Sem financiamento externo — requer aprovação do conselho para encerrar">
+              <span class="badge bg-secondary bg-opacity-10 text-secondary me-1" title="Sem financiamento externo — requer aprovação do centro para encerrar">
                 <i class="bi bi-building me-1"></i>Institucional
               </span>
               {% endif %}
@@ -286,12 +295,12 @@
                   <i class="bi bi-check-circle me-1"></i>Encerrar
                 </button>
               {% else %}
-                {# Sem financiamento: precisa passar pelo conselho novamente #}
+                {# Sem financiamento: precisa passar pelo centro novamente #}
                 <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
                    class="btn btn-sm btn-outline-warning ms-1"
-                   title="Encaminhar para aprovação do Conselho do Centro antes de encerrar"
-                   onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para aprovação do Conselho antes do encerramento?')">
-                  <i class="bi bi-arrow-right-circle me-1"></i>Conselho
+                   title="Encaminhar para aprovação do Centro antes de encerrar"
+                   onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para aprovação do Centro antes do encerramento?')">
+                  <i class="bi bi-arrow-right-circle me-1"></i>Centro
                 </a>
                 <button type="button" class="btn btn-sm btn-success ms-1"
                         data-bs-toggle="modal" data-bs-target="#modalConfirmar"

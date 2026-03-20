@@ -50,8 +50,22 @@
               <span class="fw-semibold">{{ usuario.siape|default:"Não informado" }}</span>
             </div>
             <div class="col-md-3">
-              <span class="text-muted small d-block">Nº Currículo Lattes</span>
-              <span class="fw-semibold">{{ usuario.lattes|default:"Não informado" }}</span>
+              <span class="text-muted small d-block">Currículo Lattes</span>
+              {% if usuario.lattes %}
+              <a href="{{ usuario.lattes }}" target="_blank" rel="noopener" class="fw-semibold text-decoration-none">
+                <i class="bi bi-box-arrow-up-right me-1 small"></i>Acessar Lattes
+              </a>
+              {% else %}
+              <span class="fw-semibold text-muted">Não informado</span>
+              {% endif %}
+            </div>
+            {% if usuario.participa_pos_graduacao %}
+            <div class="col-6 col-md-4">
+              <span class="text-muted small d-block">Vínculo Pós-Graduação</span>
+              <span class="fw-semibold">{{ usuario.get_programa_pos_vinculo_display|default:"Não especificado" }}</span>
+            </div>
+            {% endif %}
+            <div class="d-none">{# placeholder #}</div
             </div>
             <div class="col-md-3">
               <span class="text-muted small d-block">Grande Área CNPq</span>

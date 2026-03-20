@@ -28,7 +28,7 @@
       <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo UFAC" style="height:56px;">
     </a>
     <div style="width:1px;height:48px;background:#ddd;"></div>
-    <a href="{% url 'home' %}">
+    <a href="{% url 'consulta_publica' %}">
       <img src="{% static 'imagens/Logo-Propeg.png' %}" alt="Logo PROPEG" style="height:44px;">
     </a>
     <div class="d-none d-md-block ms-2">
@@ -38,7 +38,7 @@
   </div>
   <div class="d-flex align-items-center gap-2">
     {# Botão PDF — passa os filtros ativos #}
-    <a href="{% url 'consulta_publica_pdf' %}?q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}"
+    <a href="{% url 'consulta_publica_pdf' %}?q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}&ano={{ ano_filter }}&financiamento={{ financiamento_filter }}"
        class="btn btn-danger btn-sm" target="_blank">
       <i class="bi bi-file-earmark-pdf me-1"></i>Gerar Relatório PDF
     </a>
@@ -94,11 +94,28 @@
             {% endfor %}
           </select>
         </div>
+        <div class="col-md-1">
+          <label class="form-label small text-muted mb-1">Ano</label>
+          <select name="ano" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            {% for ano in anos %}
+            <option value="{{ ano|date:'Y' }}" {% if ano_filter == ano|date:'Y' %}selected{% endif %}>{{ ano|date:'Y' }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">Financiamento</label>
+          <select name="financiamento" class="form-select form-select-sm">
+            <option value="">Todos</option>
+            <option value="sim" {% if financiamento_filter == 'sim' %}selected{% endif %}>Com financiamento</option>
+            <option value="nao" {% if financiamento_filter == 'nao' %}selected{% endif %}>Sem financiamento</option>
+          </select>
+        </div>
         <div class="col-md-1 d-flex gap-1">
           <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
             <i class="bi bi-funnel"></i>
           </button>
-          {% if q or status_filter or centro_filter or curso_filter %}
+          {% if q or status_filter or centro_filter or curso_filter or ano_filter or financiamento_filter %}
           <a href="{% url 'consulta_publica' %}" class="btn btn-outline-secondary btn-sm" title="Limpar filtros">
             <i class="bi bi-x"></i>
           </a>
@@ -118,6 +135,9 @@
       {% if status_filter %}<span class="badge bg-primary bg-opacity-10 text-primary border small">{{ status_filter|title }}</span>{% endif %}
       {% for c in centros %}{% if centro_filter == c.pk|stringformat:"s" %}<span class="badge bg-info bg-opacity-10 text-info border small">{{ c.nome }}</span>{% endif %}{% endfor %}
       {% for c in cursos %}{% if curso_filter == c.pk|stringformat:"s" %}<span class="badge bg-success bg-opacity-10 text-success border small">{{ c.nome }}</span>{% endif %}{% endfor %}
+      {% if ano_filter %}<span class="badge bg-warning bg-opacity-10 text-warning border small">{{ ano_filter }}</span>{% endif %}
+      {% if financiamento_filter == "sim" %}<span class="badge bg-primary bg-opacity-10 text-primary border small">Com financiamento</span>{% endif %}
+      {% if financiamento_filter == "nao" %}<span class="badge bg-secondary bg-opacity-10 text-secondary border small">Sem financiamento</span>{% endif %}
     </div>
   </div>
 
@@ -149,6 +169,7 @@
               <small class="text-muted d-block">
                 <i class="bi bi-person me-1"></i>{{ p.coordenador.get_full_name|truncatechars:30 }}
               </small>
+              {% if p.agencia_financiadora %}<span class="badge bg-primary bg-opacity-10 text-primary border small me-1"><i class="bi bi-currency-dollar me-1"></i>Financiado</span>{% else %}<span class="badge bg-secondary bg-opacity-10 text-secondary border small me-1">Institucional</span>{% endif %}
               {% if p.centro_lotacao %}
               <small class="text-muted d-block">
                 <i class="bi bi-building me-1"></i>{{ p.centro_lotacao }}
@@ -168,7 +189,7 @@
     <ul class="pagination pagination-sm">
       {% if page_obj.has_previous %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">
+        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}&ano={{ ano_filter }}&financiamento={{ financiamento_filter }}">
           <i class="bi bi-chevron-left"></i>
         </a>
       </li>
@@ -178,13 +199,13 @@
           <li class="page-item active"><span class="page-link">{{ n }}</span></li>
         {% elif n > page_obj.number|add:'-3' and n < page_obj.number|add:'3' %}
           <li class="page-item">
-            <a class="page-link" href="?page={{ n }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">{{ n }}</a>
+            <a class="page-link" href="?page={{ n }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}&ano={{ ano_filter }}&financiamento={{ financiamento_filter }}">{{ n }}</a>
           </li>
         {% endif %}
       {% endfor %}
       {% if page_obj.has_next %}
       <li class="page-item">
-        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}">
+        <a class="page-link" href="?page={{ page_obj.next_page_number }}&q={{ q }}&status={{ status_filter }}&centro={{ centro_filter }}&curso={{ curso_filter }}&ano={{ ano_filter }}&financiamento={{ financiamento_filter }}">
           <i class="bi bi-chevron-right"></i>
         </a>
       </li>
@@ -197,7 +218,7 @@
   <div class="text-center py-5 text-muted">
     <i class="bi bi-folder2-open display-4 opacity-25 d-block mb-3"></i>
     <p>Nenhum projeto encontrado.</p>
-    {% if q or status_filter or centro_filter or curso_filter %}
+    {% if q or status_filter or centro_filter or curso_filter or ano_filter or financiamento_filter %}
     <a href="{% url 'consulta_publica' %}" class="btn btn-outline-secondary btn-sm mt-1">
       <i class="bi bi-x me-1"></i>Limpar filtros
     </a>

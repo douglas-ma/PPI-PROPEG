@@ -204,7 +204,7 @@ li { margin-bottom: 0; }
     <br><br>
     Coordenador(a): {{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
     {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
-    {% if coord.lattes %}<br>Lattes: {{ coord.lattes }}{% endif %}
+    {% if coord.lattes %}<br>Lattes: <span style="font-family:monospace;font-size:8pt;">{{ coord.lattes }}</span>{% endif %}
     {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
   </div>
 
@@ -249,7 +249,7 @@ li { margin-bottom: 0; }
       <td class="col-l">Coordenador(a)</td>
       <td>{{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
         {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
-        {% if coord.lattes %}<br>Lattes: {{ coord.lattes }}{% endif %}
+        {% if coord.lattes %}<br>Lattes: <span style="font-family:monospace;font-size:8pt;">{{ coord.lattes }}</span>{% endif %}
         {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
       </td>
     </tr>
