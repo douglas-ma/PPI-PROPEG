@@ -704,6 +704,41 @@ class ProjetoEtapa2Form(forms.ModelForm):
                 field.required = False
 
 
+class ProjetoEtapa2FinanciadoForm(forms.ModelForm):
+    """
+    Etapa 2 simplificada para projetos com financiamento externo.
+    Exige apenas resumo, palavras-chave e dois uploads obrigatórios:
+    o documento do projeto aprovado e o comprovante emitido pela agência.
+    """
+    documento_projeto = forms.FileField(
+        label="Documento do Projeto Aprovado",
+        required=True,
+        help_text="Anexe o projeto completo aprovado pela agência financiadora (PDF).",
+        widget=forms.FileInput(attrs={'accept': '.pdf'}),
+    )
+    comprovante_agencia = forms.FileField(
+        label="Comprovante de Aprovação da Agência",
+        required=True,
+        help_text="Anexe o documento emitido pela agência confirmando a aprovação do financiamento (PDF).",
+        widget=forms.FileInput(attrs={'accept': '.pdf'}),
+    )
+
+    class Meta:
+        model = Projeto
+        fields = ['resumo', 'palavras_chave']
+        widgets = {
+            'resumo':       forms.Textarea(attrs={'rows': 5, 'maxlength': 1500}),
+            'palavras_chave': forms.TextInput(attrs={'placeholder': 'Separe por vírgulas'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.is_draft = kwargs.pop('is_draft', False)
+        super().__init__(*args, **kwargs)
+        if self.is_draft:
+            for field in self.fields.values():
+                field.required = False
+
+
 class ProjetoEtapa4Form(forms.ModelForm):
     """Etapa 4 – Vínculo com ODS."""
 

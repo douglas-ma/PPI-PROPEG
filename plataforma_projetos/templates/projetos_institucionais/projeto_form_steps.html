@@ -527,6 +527,104 @@
                 <div class="alert alert-danger">{{ form.non_field_errors }}</div>
               {% endif %}
 
+              {% if is_financiado %}
+              {# ── Etapa 2 simplificada para projetos com financiamento externo ── #}
+              <div class="alert alert-primary border-0 mb-4 d-flex gap-2 align-items-start">
+                <i class="bi bi-bank fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                  <strong>Projeto com Financiamento Externo</strong><br>
+                  <span class="small">Por possuir financiamento externo, o processo de submissão é simplificado.
+                  Preencha o resumo, palavras-chave e anexe os dois documentos obrigatórios. O projeto será
+                  submetido diretamente à PROPEG, sem necessidade de aprovação pelo Centro.</span>
+                </div>
+              </div>
+
+              {# Campo Resumo #}
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="{{ form.resumo.id_for_label }}">
+                  Resumo <span class="text-danger">*</span>
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Apresente de forma sucinta os objetivos e resultados do projeto. Máximo de 1500 caracteres."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                </label>
+                <textarea name="{{ form.resumo.html_name }}" id="{{ form.resumo.id_for_label }}"
+                          class="form-control {% if form.resumo.errors %}is-invalid{% endif %}"
+                          rows="5" maxlength="1500">{{ form.resumo.value|default:'' }}</textarea>
+                <div class="form-text d-flex justify-content-between">
+                  <span>Máximo de 1500 caracteres.</span>
+                  <span id="resumo-count">{{ form.resumo.value|default:''|length }}/1500</span>
+                </div>
+                {% if form.resumo.errors %}<div class="invalid-feedback">{{ form.resumo.errors }}</div>{% endif %}
+              </div>
+
+              {# Campo Palavras-chave #}
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="{{ form.palavras_chave.id_for_label }}">
+                  Palavras-chave <span class="text-danger">*</span>
+                  <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                        data-bs-content="Informe de 3 a 6 palavras que representem os temas centrais do projeto. Separe por vírgulas."
+                        class="text-muted ms-1" style="cursor:help;"><i class="bi bi-question-circle"></i></span>
+                </label>
+                <input type="text" name="{{ form.palavras_chave.html_name }}" id="{{ form.palavras_chave.id_for_label }}"
+                       value="{{ form.palavras_chave.value|default:'' }}"
+                       class="form-control {% if form.palavras_chave.errors %}is-invalid{% endif %}"
+                       placeholder="Separe por vírgulas">
+                {% if form.palavras_chave.errors %}<div class="invalid-feedback">{{ form.palavras_chave.errors }}</div>{% endif %}
+              </div>
+
+              <hr class="my-4">
+              <h6 class="text-muted text-uppercase small fw-bold mb-3">
+                <i class="bi bi-file-earmark-arrow-up me-1"></i>Documentos Obrigatórios
+              </h6>
+
+              {# Documento do projeto aprovado #}
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_documento_projeto">
+                  Documento do Projeto Aprovado <span class="text-danger">*</span>
+                </label>
+                <input type="file" name="documento_projeto" id="id_documento_projeto"
+                       class="form-control {% if form.documento_projeto.errors %}is-invalid{% endif %}"
+                       accept=".pdf">
+                <div class="form-text">{{ form.documento_projeto.help_text }}</div>
+                {% if form.documento_projeto.errors %}<div class="invalid-feedback">{{ form.documento_projeto.errors }}</div>{% endif %}
+              </div>
+
+              {# Comprovante da agência #}
+              <div class="mb-4">
+                <label class="form-label fw-semibold" for="id_comprovante_agencia">
+                  Comprovante de Aprovação da Agência <span class="text-danger">*</span>
+                </label>
+                <input type="file" name="comprovante_agencia" id="id_comprovante_agencia"
+                       class="form-control {% if form.comprovante_agencia.errors %}is-invalid{% endif %}"
+                       accept=".pdf">
+                <div class="form-text">{{ form.comprovante_agencia.help_text }}</div>
+                {% if form.comprovante_agencia.errors %}<div class="invalid-feedback">{{ form.comprovante_agencia.errors }}</div>{% endif %}
+              </div>
+
+              {# Listar documentos já enviados #}
+              {% with anexos_fin=projeto.anexos.all %}
+              {% if anexos_fin %}
+              <div class="mb-3">
+                <p class="small text-muted mb-2">Documentos já enviados:</p>
+                <ul class="list-group list-group-flush">
+                  {% for anx in anexos_fin %}
+                  {% if anx.tipo_anexo == 'comprovante_aprovacao' or anx.tipo_anexo == 'outro' %}
+                  <li class="list-group-item d-flex align-items-center gap-2 py-2 px-0">
+                    <i class="bi bi-file-earmark-pdf text-danger"></i>
+                    <a href="{{ anx.arquivo.url }}" target="_blank" class="text-truncate flex-grow-1">
+                      {{ anx.descricao|default:anx.arquivo.name }}
+                    </a>
+                    <span class="badge bg-light text-muted border small">{{ anx.get_tipo_anexo_display }}</span>
+                  </li>
+                  {% endif %}
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+              {% endwith %}
+
+              {% else %}
+              {# ── Etapa 2 padrão para projetos institucionais ── #}
               <p class="text-muted mb-4">Preencha os campos abaixo com detalhes acadêmicos do projeto. Todos os campos podem ser preenchidos parcialmente e salvos como rascunho.</p>
 
               {% for field in form %}
@@ -668,6 +766,8 @@
                   </div>
                 </div>
               </form>
+              {% endif %}{# fim is_financiado #}
+
             {% elif step == 3 %}
 
               <p class="text-muted mb-3">Adicione os membros que participarão do projeto. Você pode salvar como rascunho com a equipe incompleta.</p>
@@ -966,7 +1066,7 @@
             <hr class="mt-4">
             <div class="d-flex justify-content-between align-items-center">
               <div>
-                {% if step > 1 %}
+                {% if step > 1 and not is_financiado %}
                 <a href="{% url 'projeto_etapa' pk=projeto.pk step=step|add:'-1' %}"
                    class="btn btn-outline-secondary">
                   <i class="bi bi-arrow-left me-1"></i>Etapa Anterior
@@ -974,7 +1074,7 @@
                 {% endif %}
               </div>
               <div class="d-flex gap-2">
-                {% if step < 5 %}
+                {% if step < step_total %}
                   <button type="submit" name="acao" value="rascunho"
                           class="btn btn-outline-success">
                     <i class="bi bi-floppy me-1"></i>Salvar Rascunho
@@ -999,7 +1099,7 @@
           </form>{# fim do form #}
 
           {# ── Modal de confirmação de submissão ── #}
-          {% if step == 5 %}
+          {% if step == step_total and is_financiado or step == 5 and not is_financiado %}
           <div class="modal fade" id="modalConfirmarSubmissao" tabindex="-1" aria-labelledby="modalSubmissaoLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
               <div class="modal-content border-0 shadow">

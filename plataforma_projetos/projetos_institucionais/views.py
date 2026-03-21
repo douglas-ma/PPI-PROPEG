@@ -17,7 +17,7 @@ from .models import Projeto, AdendoEdital
 from .forms import *
 from login.forms import *
 from .decorators import gestor_required, coordenador_required, aluno_required
-from .forms import ProjetoEtapa1Form, ProjetoEtapa2Form, ProjetoEtapa4Form
+from .forms import ProjetoEtapa1Form, ProjetoEtapa2Form, ProjetoEtapa2FinanciadoForm, ProjetoEtapa4Form
 from formtools.wizard.views import SessionWizardView
 from weasyprint import HTML
 import re
@@ -1004,6 +1004,15 @@ def encaminhar_para_conselho(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk)
     eh_encerramento = projeto.status == 'aguardando_encerramento'
 
+    # Projetos com financiamento externo não tramitam pelo Centro
+    if projeto.agencia_financiadora_id:
+        messages.warning(
+            request,
+            f'O projeto "{projeto.titulo}" possui financiamento externo e não requer '
+            f'encaminhamento ao Centro. Utilize a opção de Aprovar ou Encerrar diretamente.'
+        )
+        return redirect('gestor_dashboard')
+
     if projeto.status in ('submetido', 'aguardando_encerramento'):
         projeto.status = 'aguardando_conselho'
         projeto.save()
@@ -1677,6 +1686,11 @@ ETAPAS_INFO = [
     {'num': 5, 'nome': 'Revisão e Submissão',   'icon': 'bi-check-circle-fill'},
 ]
 
+ETAPAS_INFO_FINANCIADO = [
+    {'num': 1, 'nome': 'Informações Gerais',       'icon': 'bi-info-circle-fill'},
+    {'num': 2, 'nome': 'Documentação e Submissão', 'icon': 'bi-file-earmark-check-fill'},
+]
+
 
 @login_required
 @coordenador_required
@@ -1724,13 +1738,19 @@ def projeto_editar_iniciar(request, pk):
 def _checar_etapas(projeto):
     """
     Retorna um dict indicando quais etapas estão completas.
-    Usado para validar antes de submeter e para colorir o sidebar.
+    Para projetos com financiamento externo o fluxo é de 2 etapas
+    e a etapa 2 é validada no momento do POST.
     """
+    if projeto.agencia_financiadora_id:
+        return {
+            1: bool(projeto.titulo and projeto.data_inicio and projeto.data_fim and projeto.centro_lotacao),
+            2: True,
+        }
     return {
         1: bool(projeto.titulo and projeto.data_inicio and projeto.data_fim and projeto.centro_lotacao),
         2: bool(projeto.resumo and projeto.objetivo_geral and projeto.metodologia),
-        3: True,   # equipe é opcional
-        4: True,   # ODS é opcional
+        3: True,
+        4: True,
     }
 
 
@@ -1743,8 +1763,15 @@ def projeto_etapa_view(request, pk, step):
     """
     projeto = get_object_or_404(Projeto, pk=pk, coordenador=request.user)
     step = int(step)
+    is_financiado = bool(projeto.agencia_financiadora_id)
 
-    if step not in range(1, 6):
+    # Projetos financiados têm apenas 2 etapas
+    etapas_info = ETAPAS_INFO_FINANCIADO if is_financiado else ETAPAS_INFO
+    step_total  = 2 if is_financiado else 5
+
+    if is_financiado and step not in range(1, 3):
+        return redirect('projeto_etapa', pk=pk, step=1)
+    elif not is_financiado and step not in range(1, 6):
         return redirect('projeto_etapa', pk=pk, step=1)
 
     if projeto.status not in ('rascunho', 'reprovado'):
@@ -1790,24 +1817,87 @@ def projeto_etapa_view(request, pk, step):
 
         # ── Etapa 2 ──────────────────────────────────────────────────────────
         elif step == 2:
-            form = ProjetoEtapa2Form(request.POST, instance=projeto, is_draft=is_draft)
-            if form.is_valid():
-                form.save()
-                # Upload de anexo opcional da etapa 2
-                arquivo_etapa2 = request.FILES.get('arquivo_etapa2')
-                if arquivo_etapa2:
-                    tipo = request.POST.get('tipo_anexo_etapa2', 'outro')
-                    descricao = request.POST.get('descricao_anexo_etapa2', '').strip()
-                    Anexo.objects.create(
-                        projeto=projeto,
-                        tipo_anexo=tipo,
-                        arquivo=arquivo_etapa2,
-                        descricao=descricao or arquivo_etapa2.name,
+            if is_financiado:
+                # Fluxo simplificado: resumo + palavras-chave + 2 uploads obrigatórios
+                form = ProjetoEtapa2FinanciadoForm(request.POST, request.FILES,
+                                                   instance=projeto, is_draft=is_draft)
+                if form.is_valid():
+                    form.save()
+                    doc_projeto = request.FILES.get('documento_projeto')
+                    comp_agencia = request.FILES.get('comprovante_agencia')
+                    if doc_projeto:
+                        Anexo.objects.create(
+                            projeto=projeto,
+                            tipo_anexo='outro',
+                            arquivo=doc_projeto,
+                            descricao='Documento do projeto aprovado pela agência financiadora.',
+                        )
+                    if comp_agencia:
+                        Anexo.objects.create(
+                            projeto=projeto,
+                            tipo_anexo='comprovante_aprovacao',
+                            arquivo=comp_agencia,
+                            descricao='Comprovante de aprovação emitido pela agência financiadora.',
+                        )
+                    if is_draft:
+                        messages.success(request, 'Rascunho salvo com sucesso!')
+                        return redirect('projeto_etapa', pk=pk, step=2)
+                    # Submissão direta — projetos financiados não passam pelo Centro
+                    with transaction.atomic():
+                        projeto.status = 'submetido'
+                        projeto.save()
+                        html_string = render_to_string(
+                            'projetos_institucionais/projeto_pdf.html',
+                            {'projeto': projeto},
+                        )
+                        pdf_file = HTML(
+                            string=html_string,
+                            base_url=settings.STATIC_ROOT or settings.BASE_DIR,
+                        ).write_pdf()
+                        novo_anexo = Anexo(
+                            projeto=projeto,
+                            tipo_anexo='relatorio_submissao',
+                            descricao='Relatório de Submissão gerado automaticamente pelo sistema.',
+                        )
+                        novo_anexo.arquivo.save(
+                            f'submissao_projeto_{projeto.pk}.pdf',
+                            ContentFile(pdf_file),
+                            save=True,
+                        )
+                    _criar_notificacao(
+                        request.user,
+                        f'Projeto "{projeto.titulo}" submetido com sucesso. '
+                        f'Por possuir financiamento externo, o projeto aguarda avaliação pela PROPEG.',
                     )
-                if is_draft:
-                    messages.success(request, 'Rascunho salvo com sucesso!')
-                    return redirect('projeto_etapa', pk=pk, step=2)
-                return redirect('projeto_etapa', pk=pk, step=3)
+                    messages.success(
+                        request,
+                        f'Projeto "{projeto.titulo}" submetido com sucesso! '
+                        f'Por possuir financiamento externo, ele aguarda avaliação direta pela PROPEG.',
+                    )
+                    return render(
+                        request,
+                        'projetos_institucionais/projeto_wizard_done.html',
+                        {'projeto': projeto},
+                    )
+            else:
+                form = ProjetoEtapa2Form(request.POST, instance=projeto, is_draft=is_draft)
+                if form.is_valid():
+                    form.save()
+                    # Upload de anexo opcional da etapa 2
+                    arquivo_etapa2 = request.FILES.get('arquivo_etapa2')
+                    if arquivo_etapa2:
+                        tipo = request.POST.get('tipo_anexo_etapa2', 'outro')
+                        descricao = request.POST.get('descricao_anexo_etapa2', '').strip()
+                        Anexo.objects.create(
+                            projeto=projeto,
+                            tipo_anexo=tipo,
+                            arquivo=arquivo_etapa2,
+                            descricao=descricao or arquivo_etapa2.name,
+                        )
+                    if is_draft:
+                        messages.success(request, 'Rascunho salvo com sucesso!')
+                        return redirect('projeto_etapa', pk=pk, step=2)
+                    return redirect('projeto_etapa', pk=pk, step=3)
 
         # ── Etapa 3 ──────────────────────────────────────────────────────────
         elif step == 3:
@@ -1889,7 +1979,7 @@ def projeto_etapa_view(request, pk, step):
     if step == 1:
         form = ProjetoEtapa1Form(instance=projeto)
     elif step == 2:
-        form = ProjetoEtapa2Form(instance=projeto)
+        form = ProjetoEtapa2FinanciadoForm(instance=projeto) if is_financiado else ProjetoEtapa2Form(instance=projeto)
     elif step == 3:
         formset = EquipeProjetoFormSet(
             instance=projeto,
@@ -1899,17 +1989,18 @@ def projeto_etapa_view(request, pk, step):
         form = ProjetoEtapa4Form(instance=projeto)
     # etapa 5 não tem form – só exibe os dados para revisão
 
-    step_info = next(e for e in ETAPAS_INFO if e['num'] == step)
+    step_info = next(e for e in etapas_info if e['num'] == step)
 
     contexto = {
         'projeto':        projeto,
         'step':           step,
-        'step_total':     5,
-        'etapas_info':    ETAPAS_INFO,
+        'step_total':     step_total,
+        'etapas_info':    etapas_info,
         'step_info':      step_info,
         'form':           form,
         'formset':        formset,
         'etapas_status':  _checar_etapas(projeto),
+        'is_financiado':  is_financiado,
     }
     return render(request, 'projetos_institucionais/projeto_form_steps.html', contexto)
 
