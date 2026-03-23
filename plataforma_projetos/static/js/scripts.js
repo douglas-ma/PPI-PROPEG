@@ -1,3 +1,13 @@
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-dismiss para todos os alertas com a classe alert-dismissible
+    document.querySelectorAll('.alert.alert-dismissible.fade.show').forEach(function (alertEl) {
+        setTimeout(function () {
+            var bsAlert = bootstrap.Alert.getOrCreateInstance(alertEl);
+            if (bsAlert) bsAlert.close();
+        }, 5000); // 5 segundos
+    });
+});
+
 // Garante que o script rode após o carregamento da página
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -53,6 +63,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const cpfInput = cpfInputLogin || cpfInputRegistro;
 
     if (cpfInput) {
+        cpfInput.setAttribute('maxlength', '14');
         cpfInput.addEventListener("input", function (e) {
             let value = cpfInput.value.replace(/\D/g, "");
             value = value.substring(0, 11);
@@ -60,6 +71,34 @@ document.addEventListener("DOMContentLoaded", function () {
             value = value.replace(/(\d{3})(\d)/, "$1.$2");
             value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
             cpfInput.value = value;
+        });
+    }
+
+    // Máscara SIAPE — apenas números, máximo 7 dígitos
+    var siapeInput = document.getElementById('id_siape') || document.querySelector('[name="siape"]');
+    if (siapeInput) {
+        siapeInput.setAttribute('maxlength', '7');
+        siapeInput.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').substring(0, 7);
+        });
+    }
+
+    // Matrícula — apenas números, máximo 15 dígitos
+    var matriculaInput = document.getElementById('id_matricula') || document.querySelector('[name="matricula"]');
+    if (matriculaInput) {
+        matriculaInput.setAttribute('maxlength', '15');
+        matriculaInput.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').substring(0, 15);
+        });
+    }
+
+    // Estado / UF — apenas letras, máximo 2, maiúsculas
+    var estadoInput = document.getElementById('id_estado') || document.querySelector('[name="estado"]');
+    if (estadoInput) {
+        estadoInput.setAttribute('maxlength', '2');
+        estadoInput.setAttribute('style', (estadoInput.getAttribute('style') || '') + ';text-transform:uppercase;');
+        estadoInput.addEventListener('input', function () {
+            this.value = this.value.replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase();
         });
     }
 
@@ -221,7 +260,6 @@ document.addEventListener('DOMContentLoaded', function () {
         updateVisibility();
     }
 
-    // --- CORREÇÃO 2: Usar os IDs corretos ---
     // O prefixo '1-' é adicionado pelo form wizard
     setupConditionalField('1-etica_obrigatoria', '1-tipo_etica', 'True');
     setupConditionalField('1-participa_pos_graduacao', '1-programa_pos', 'True');

@@ -58,4 +58,32 @@
         </div>
     </div>
 </div>
+{% block extra_js %}
+<script>
+(function () {
+    // Máscara CEP — 00000-000
+    var cep = document.getElementById('id_cep');
+    if (cep) {
+        cep.setAttribute('maxlength', '9');
+        cep.setAttribute('placeholder', '00000-000');
+        cep.addEventListener('input', function () {
+            var v = this.value.replace(/\D/g, '').substring(0, 8);
+            if (v.length > 5) v = v.replace(/^(\d{5})(\d)/, '$1-$2');
+            this.value = v;
+        });
+    }
+
+    // Estado / UF — 2 letras maiúsculas
+    var uf = document.getElementById('id_estado');
+    if (uf) {
+        uf.setAttribute('maxlength', '2');
+        uf.setAttribute('placeholder', 'UF');
+        uf.style.textTransform = 'uppercase';
+        uf.addEventListener('input', function () {
+            this.value = this.value.replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase();
+        });
+    }
+})();
+</script>
+{% endblock %}
 {% endblock %}

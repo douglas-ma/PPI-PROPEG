@@ -78,4 +78,30 @@
         </div>
     </div>
 </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Auto-dismiss alertas após 5 segundos
+    document.querySelectorAll('.alert.alert-dismissible').forEach(function (el) {
+        setTimeout(function () {
+            el.classList.remove('show');
+            setTimeout(function () { el.style.display = 'none'; }, 300);
+        }, 5000);
+    });
+
+    // Máscara CPF (redundância segura)
+    var cpf = document.getElementById('id_cpf');
+    if (cpf) {
+        cpf.setAttribute('maxlength', '14');
+        cpf.setAttribute('placeholder', '000.000.000-00');
+        cpf.addEventListener('input', function () {
+            var v = this.value.replace(/\D/g, '').substring(0, 11);
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d)/, '$1.$2');
+            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+            this.value = v;
+        });
+    }
+});
+</script>
 {% endblock %}

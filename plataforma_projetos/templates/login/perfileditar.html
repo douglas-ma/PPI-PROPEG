@@ -115,7 +115,7 @@
             <input type="url" name="{{ user_form.lattes.html_name }}"
                    value="{{ user_form.lattes.value|default:'' }}"
                    class="form-control {% if user_form.lattes.errors %}is-invalid{% endif %}"
-                   placeholder="Ex: 1234567890123456">
+                   placeholder="https://lattes.cnpq.br/1234567890123456">
             <div class="form-text">URL completa do seu currículo na Plataforma Lattes (ex: https://lattes.cnpq.br/1234567890).</div>
             {% if user_form.lattes.errors %}<div class="invalid-feedback">{{ user_form.lattes.errors }}</div>{% endif %}
             </div>
@@ -332,6 +332,40 @@
   campo.closest('form').addEventListener('submit', function () {
     campo.value = campo.value.replace(/\D/g,'');
   });
+})();
+
+(function () {
+  // Máscara SIAPE — apenas números, máx 7 dígitos
+  var siape = document.querySelector('[name="siape"]');
+  if (siape) {
+    siape.setAttribute('maxlength', '7');
+    siape.addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').substring(0, 7);
+    });
+  }
+})();
+
+(function () {
+  // Matrícula — apenas números, máx 15 dígitos
+  var mat = document.querySelector('[name="matricula"]');
+  if (mat) {
+    mat.setAttribute('maxlength', '15');
+    mat.addEventListener('input', function () {
+      this.value = this.value.replace(/\D/g, '').substring(0, 15);
+    });
+  }
+})();
+
+(function () {
+  // Estado / UF — apenas letras, máx 2, maiúsculas
+  var uf = document.querySelector('[name="estado"]');
+  if (uf) {
+    uf.setAttribute('maxlength', '2');
+    uf.style.textTransform = 'uppercase';
+    uf.addEventListener('input', function () {
+      this.value = this.value.replace(/[^a-zA-Z]/g, '').substring(0, 2).toUpperCase();
+    });
+  }
 })();
 
 (function () {

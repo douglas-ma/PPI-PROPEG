@@ -29,6 +29,14 @@
 </main>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        // Auto-dismiss alertas
+        document.querySelectorAll('.alert').forEach(function (el) {
+            setTimeout(function () {
+                el.classList.remove('show');
+                setTimeout(function () { el.style.display = 'none'; }, 300);
+            }, 5000);
+        });
+
         const cpfInput = document.getElementById("cpf");
 
         cpfInput.addEventListener("input", function () {

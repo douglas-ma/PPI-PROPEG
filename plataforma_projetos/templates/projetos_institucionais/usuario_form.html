@@ -6,6 +6,15 @@
 {% block content %}
 <div class="container-fluid">
     <h2 class="mb-3">Editar Usuário</h2>
+
+    {% if messages %}
+    {% for message in messages %}
+    <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+    {% endif %}
     <p>Modificando o perfil de: <strong>{{ usuario_selecionado.get_full_name }}</strong></p>
     <hr>
 
@@ -23,4 +32,25 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // CPF readonly no form do gestor — apenas exibição
+    // SIAPE — apenas números
+    var siape = document.querySelector('[name="siape"]');
+    if (siape) {
+        siape.setAttribute('maxlength', '7');
+        siape.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').substring(0, 7);
+        });
+    }
+    // Matrícula — apenas números
+    var mat = document.querySelector('[name="matricula"]');
+    if (mat) {
+        mat.setAttribute('maxlength', '15');
+        mat.addEventListener('input', function () {
+            this.value = this.value.replace(/\D/g, '').substring(0, 15);
+        });
+    }
+});
+</script>
 {% endblock %}
