@@ -58,21 +58,20 @@ document.addEventListener("DOMContentLoaded", function () {
     setupPasswordToggle('id_password2', 'toggleSenha2');
 
 
-    const cpfInputLogin = document.getElementById("cpf");
-    const cpfInputRegistro = document.getElementById("id_cpf");
-    const cpfInput = cpfInputLogin || cpfInputRegistro;
-
-    if (cpfInput) {
-        cpfInput.setAttribute('maxlength', '14');
-        cpfInput.addEventListener("input", function (e) {
-            let value = cpfInput.value.replace(/\D/g, "");
-            value = value.substring(0, 11);
-            value = value.replace(/(\d{3})(\d)/, "$1.$2");
-            value = value.replace(/(\d{3})(\d)/, "$1.$2");
-            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-            cpfInput.value = value;
+    // Máscara CPF para a tela de login (id="cpf")
+    var cpfLogin = document.getElementById("cpf");
+    if (cpfLogin) {
+        cpfLogin.setAttribute('maxlength', '14');
+        cpfLogin.addEventListener("input", function () {
+            var v = this.value.replace(/\D/g, "").substring(0, 11);
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d)/, "$1.$2");
+            v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            this.value = v;
         });
     }
+    // Nota: a máscara do CPF na tela de REGISTRO fica no próprio registrar.html
+    // para garantir execução imediata sem concorrência de listeners.
 
     // Máscara SIAPE — apenas números, máximo 7 dígitos
     var siapeInput = document.getElementById('id_siape') || document.querySelector('[name="siape"]');

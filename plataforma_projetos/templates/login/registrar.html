@@ -80,28 +80,39 @@
 </main>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    // Auto-dismiss alertas após 5 segundos
-    document.querySelectorAll('.alert.alert-dismissible').forEach(function (el) {
-        setTimeout(function () {
-            el.classList.remove('show');
-            setTimeout(function () { el.style.display = 'none'; }, 300);
-        }, 5000);
-    });
-
-    // Máscara CPF (redundância segura)
-    var cpf = document.getElementById('id_cpf');
-    if (cpf) {
-        cpf.setAttribute('maxlength', '14');
-        cpf.setAttribute('placeholder', '000.000.000-00');
-        cpf.addEventListener('input', function () {
-            var v = this.value.replace(/\D/g, '').substring(0, 11);
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            this.value = v;
+// Auto-dismiss alertas
+(function () {
+    function dismissAlerts() {
+        document.querySelectorAll('.alert.alert-dismissible').forEach(function (el) {
+            setTimeout(function () {
+                el.classList.remove('show');
+                setTimeout(function () { el.style.display = 'none'; }, 300);
+            }, 5000);
         });
     }
-});
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', dismissAlerts);
+    } else {
+        dismissAlerts();
+    }
+})();
+
+// Máscara CPF — executa imediatamente (campo já existe no DOM aqui)
+(function () {
+    var cpf = document.getElementById('id_cpf');
+    if (!cpf) return;
+    cpf.setAttribute('maxlength', '14');
+    cpf.setAttribute('placeholder', '000.000.000-00');
+    function aplicarMascara() {
+        var v = cpf.value.replace(/\D/g, '').substring(0, 11);
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2');
+        v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        cpf.value = v;
+    }
+    cpf.addEventListener('input', aplicarMascara);
+    cpf.addEventListener('paste', function () { setTimeout(aplicarMascara, 0); });
+    cpf.addEventListener('keyup', aplicarMascara);
+})();
 </script>
 {% endblock %}
