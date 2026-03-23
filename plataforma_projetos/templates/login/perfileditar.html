@@ -116,7 +116,6 @@
                    value="{{ user_form.lattes.value|default:'' }}"
                    class="form-control {% if user_form.lattes.errors %}is-invalid{% endif %}"
                    placeholder="https://lattes.cnpq.br/1234567890123456">
-            <div class="form-text">URL completa do seu currículo na Plataforma Lattes (ex: https://lattes.cnpq.br/1234567890).</div>
             {% if user_form.lattes.errors %}<div class="invalid-feedback">{{ user_form.lattes.errors }}</div>{% endif %}
             </div>
             {% if user_form.participa_pos_graduacao %}
