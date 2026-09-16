@@ -2817,24 +2817,27 @@ def projeto_etapa_view(request, pk, step):
                     )
 
     # ── GET – inicializa os formulários ──────────────────────────────────────
-    if step == 1:
-        form = ProjetoEtapa1Form(
-            instance=projeto,
-            allow_closed_edital=modo_gestor,
-            modo_gestor=modo_gestor,
-        )
-    elif step == 2:
-        form = ProjetoEtapa2AgenciaFomentoForm(instance=projeto) if is_agencia_fomento else ProjetoEtapa2Form(instance=projeto)
-    elif step == 3:
-        formset = EquipeProjetoFormSet(
-            instance=projeto,
-            form_kwargs={'coordenador': projeto.coordenador},
-        )
-    elif step == 4:
-        form = ProjetoEtapa4Form(instance=projeto)
-    elif step == 5 and cadastro_historico:
-        form = GestorFinalizarCadastroProjetoForm(initial={'status': 'finalizado'})
-    # etapa 5 não tem form – só exibe os dados para revisão
+    # Em um POST inválido, preserve o formulário vinculado para mostrar erros e
+    # manter os valores que o usuário acabou de enviar.
+    if request.method == 'GET':
+        if step == 1:
+            form = ProjetoEtapa1Form(
+                instance=projeto,
+                allow_closed_edital=modo_gestor,
+                modo_gestor=modo_gestor,
+            )
+        elif step == 2:
+            form = ProjetoEtapa2AgenciaFomentoForm(instance=projeto) if is_agencia_fomento else ProjetoEtapa2Form(instance=projeto)
+        elif step == 3:
+            formset = EquipeProjetoFormSet(
+                instance=projeto,
+                form_kwargs={'coordenador': projeto.coordenador},
+            )
+        elif step == 4:
+            form = ProjetoEtapa4Form(instance=projeto)
+        elif step == 5 and cadastro_historico:
+            form = GestorFinalizarCadastroProjetoForm(initial={'status': 'finalizado'})
+        # etapa 5 não tem form – só exibe os dados para revisão
 
     step_info = next(e for e in etapas_info if e['num'] == step)
 

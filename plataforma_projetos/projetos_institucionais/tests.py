@@ -234,6 +234,23 @@ class ProjetoTipoFluxoFormTests(TestCase):
     def novo_projeto(self):
         return Projeto(coordenador=self.coordenador, status='rascunho')
 
+    def test_etapa_1_exibe_erros_quando_falta_comprovante_de_fomento(self):
+        projeto = Projeto.objects.create(coordenador=self.coordenador, status='rascunho')
+        self.client.force_login(self.coordenador)
+
+        resposta = self.client.post(
+            reverse('projeto_etapa', kwargs={'pk': projeto.pk, 'step': 1}),
+            self.dados_etapa_1(
+                Projeto.TIPO_PROJETO_AGENCIA_FOMENTO,
+                agencia_financiadora_nome='CNPq',
+            ),
+        )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Anexe o comprovante de aprovação do fomento.')
+        self.assertContains(resposta, 'Projeto de Teste')
+        self.assertFalse(Projeto.objects.get(pk=projeto.pk).titulo)
+
     def criar_projeto_publico(self, tipo_projeto, titulo):
         return Projeto.objects.create(
             coordenador=self.coordenador,
