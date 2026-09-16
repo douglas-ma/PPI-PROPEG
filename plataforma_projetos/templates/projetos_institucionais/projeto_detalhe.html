@@ -90,7 +90,7 @@
         {% endif %}
         {% if projeto.status != 'rascunho' and projeto.status != 'finalizado' and projeto.status != 'encerrado' %}
           <a href="{% url 'encerrar_projeto_sem_conclusao' projeto.pk %}" class="btn btn-outline-danger btn-sm"
-             data-confirmation-help="Encerrar excepcionalmente o projeto e registrar o motivo">
+             data-confirmation-help="Registrar o encerramento do projeto antes do término e informar o motivo">
             <i class="bi bi-x-octagon me-1"></i>Encerrar sem Conclusão
           </a>
         {% endif %}

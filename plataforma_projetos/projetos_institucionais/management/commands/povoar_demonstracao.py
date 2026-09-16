@@ -50,7 +50,7 @@ def formatar_cpf(cpf):
 
 class Command(BaseCommand):
     help = (
-        'Exclui usuários e projetos existentes e cria uma base local de demonstração. '
+        'Exclui usuários e projetos existentes e cria uma base local de homologação. '
         'Use somente em ambiente de desenvolvimento ou homologação.'
     )
 
@@ -180,8 +180,8 @@ class Command(BaseCommand):
             numero=1,
             ano=hoje.year,
             defaults={
-                'titulo': 'Apoio a Projetos Institucionais de Demonstração',
-                'descricao': 'Edital aberto destinado aos testes do fluxo UFAC com financiamento.',
+                'titulo': 'Apoio a Projetos Institucionais',
+                'descricao': 'Edital aberto para submissão de projetos UFAC com financiamento.',
                 'data_inicio_submissoes': hoje - timedelta(days=30),
                 'data_fim_submissoes': hoje + timedelta(days=120),
                 'status': 'aberto',
@@ -194,7 +194,7 @@ class Command(BaseCommand):
             ano=hoje.year - 1,
             defaults={
                 'titulo': 'Edital Encerrado para Consulta Histórica',
-                'descricao': 'Edital de demonstração utilizado nos testes de histórico.',
+                'descricao': 'Edital encerrado referente ao ciclo anterior de submissões.',
                 'data_inicio_submissoes': hoje - timedelta(days=400),
                 'data_fim_submissoes': hoje - timedelta(days=300),
                 'status': 'fechado',
@@ -296,7 +296,7 @@ class Command(BaseCommand):
                 'edital': edital_aberto,
                 'encerrado_em': agora - timedelta(days=10),
                 'encerrado_por': gestores[2],
-                'motivo_encerramento': 'Projeto encerrado antecipadamente para demonstrar o fluxo excepcional.',
+                'motivo_encerramento': 'Projeto encerrado antes do término do período previsto, conforme decisão registrada pela gestão.',
             },
         )
 
@@ -308,15 +308,15 @@ class Command(BaseCommand):
         )
         for indice, definicao in enumerate(definicoes):
             projeto = Projeto.objects.create(
-                descricao='Projeto de demonstração criado para validar as funcionalidades da plataforma.',
-                resumo='Exemplo de projeto institucional com dados suficientes para testes de navegação e fluxo.',
-                introducao='Contextualização e justificativa do projeto de demonstração.',
-                objetivo_geral='Validar o fluxo completo de gestão de projetos institucionais.',
-                objetivos_especificos='Cadastrar dados; acompanhar tramitação; verificar permissões e relatórios.',
-                metodologia='Execução organizada em etapas de planejamento, acompanhamento e avaliação.',
-                resultados='Fluxo validado e registros disponíveis para consulta pelos perfis autorizados.',
+                descricao='Proposta institucional vinculada às atividades de pesquisa, ensino e extensão da UFAC.',
+                resumo='Iniciativa voltada ao desenvolvimento de ações e resultados aplicáveis ao contexto universitário.',
+                introducao='Contextualização e justificativa da proposta no âmbito da Universidade Federal do Acre.',
+                objetivo_geral='Executar as ações previstas e acompanhar os resultados da proposta.',
+                objetivos_especificos='Organizar as atividades; acompanhar a execução; registrar os resultados e avaliar os impactos.',
+                metodologia='Planejamento das atividades, execução conforme cronograma e avaliação dos resultados.',
+                resultados='Atividades executadas, resultados registrados e informações disponíveis para acompanhamento.',
                 referencias='UNIVERSIDADE FEDERAL DO ACRE. Documentos institucionais.',
-                palavras_chave='UFAC, projeto institucional, demonstração',
+                palavras_chave='UFAC, projeto institucional, pesquisa',
                 parcerias='Unidades acadêmicas da UFAC',
                 data_inicio=hoje - timedelta(days=180 - indice * 15),
                 data_fim=hoje + timedelta(days=180 - indice * 10),
@@ -362,18 +362,18 @@ class Command(BaseCommand):
         Notificacao.objects.bulk_create([
             Notificacao(
                 destinatario=usuario,
-                mensagem='Conta de demonstração criada e pronta para os testes da plataforma.',
+                mensagem='Sua conta está habilitada para acesso à plataforma.',
                 link='/projetos/telaprincipal/',
             )
             for usuario in usuarios.values()
         ])
 
         self.stdout.write(self.style.SUCCESS(
-            f'Base de demonstração criada: {len(usuarios)} usuários, '
+            f'Base de homologação criada: {len(usuarios)} usuários, '
             f'{len(projetos)} projetos, {CentroLotacao.objects.count()} centros e '
             f'{CursoGraduacao.objects.count()} cursos.'
         ))
-        self.stdout.write('Credenciais de demonstração:')
+        self.stdout.write('Credenciais de homologação:')
         for cpf, nome, sobrenome, perfil, _email in USUARIOS_DEMO:
             self.stdout.write(
                 f'- {perfil}: {nome} {sobrenome} | CPF {formatar_cpf(cpf)} '

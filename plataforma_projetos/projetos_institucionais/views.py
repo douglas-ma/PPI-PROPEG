@@ -140,7 +140,7 @@ def _gerar_relatorio_submissao(projeto, request=None):
     novo_anexo = Anexo(
         projeto=projeto,
         tipo_anexo='relatorio_submissao',
-        descricao='Relatório de Submissão gerado automaticamente pelo sistema.',
+        descricao='Relatório de Submissão criado pelo sistema no envio do projeto.',
     )
     novo_anexo.arquivo.save(
         f'submissao_projeto_{projeto.pk}.pdf',
@@ -2974,7 +2974,7 @@ def _ajuda_dados():
         {'pergunta': 'Qual tipo de projeto devo selecionar?',                            'resposta': 'Use "1 - Projeto Aprovado (Agência de Fomento)" para aprovação externa já obtida e anexe o comprovante; "2 - UFAC (Sem Financiamento/Fluxo Contínuo)" para o fluxo que começa no Centro; e "3 - UFAC (Com Financiamento)" para projetos vinculados a edital UFAC aberto.'},
         {'pergunta': 'Como funciona a aprovação do Centro?',                             'resposta': 'No tipo UFAC sem financiamento, o coordenador submete o projeto diretamente ao Centro. O sistema envia um link restrito ao e-mail cadastrado, válido por 7 dias e de uso único. O responsável consulta o projeto, informa seus dados, aceita a aprovação e anexa a ata em PDF ou imagem. Depois disso, o projeto é encaminhado à PROPEG.'},
         {'pergunta': 'O que acontece se o link do Centro expirar ou já tiver sido usado?', 'resposta': 'O link deixa de exibir o projeto e não aceita novos envios. O coordenador pode abrir os detalhes do projeto e usar "Reenviar solicitação" para gerar um novo link, invalidando o anterior.'},
-        {'pergunta': 'Como gero o relatório de submissão?',                               'resposta': 'Ele é gerado automaticamente ao submeter na Etapa 5. O relatório segue a apresentação institucional em padrão ABNT, inclui a logo da UFAC na capa, incorpora imagens e páginas de PDFs válidos e mantém links para os arquivos originais.'},
+        {'pergunta': 'Como gero o relatório de submissão?',                               'resposta': 'Ele é criado pelo sistema no envio da Etapa 5. O relatório segue a apresentação institucional em padrão ABNT, inclui a logo da UFAC na capa, incorpora imagens e páginas de PDFs válidos e mantém links para os arquivos originais.'},
         {'pergunta': 'Quem avalia cada tipo de projeto?',                                'resposta': 'Agência de Fomento e UFAC com financiamento seguem para análise da PROPEG conforme o fluxo vigente. UFAC sem financiamento só chega ao gestor depois que o Centro registrar a ata pelo link restrito.'},
         {'pergunta': 'Como funciona o prazo da aprovação ética?',                    'resposta': 'Se na Etapa 1 for anexado apenas o comprovante de submissão ao comitê, o coordenador terá 90 dias para anexar a aprovação definitiva. O sistema envia alertas internos e por e-mail quando faltarem 60, 30, 15, 7, 3 e 1 dia. Enquanto o documento definitivo estiver pendente, o gestor não pode aprovar e o coordenador não pode iniciar o projeto.'},
         {'pergunta': 'Qual a diferença entre Finalizado e Encerrado?',                    'resposta': 'Finalizado identifica o projeto concluído com êxito após o relatório final. Encerrado identifica uma interrupção sem conclusão; o gestor deve registrar o motivo.'},

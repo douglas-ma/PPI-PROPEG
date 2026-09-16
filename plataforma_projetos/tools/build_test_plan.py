@@ -264,7 +264,7 @@ def build_document():
     metadata.rows[2].cells[0].text = 'Data de referência'
     metadata.rows[2].cells[1].text = '16 de setembro de 2026'
     metadata.rows[3].cells[0].text = 'Ambiente'
-    metadata.rows[3].cells[1].text = 'Desenvolvimento local com base demonstrativa'
+    metadata.rows[3].cells[1].text = 'Desenvolvimento local com base de homologação'
     format_table(metadata, [Inches(1.55), Inches(5.25)], header=False)
     for row in metadata.rows:
         set_cell_shading(row.cells[0], AZUL_CLARO)
@@ -276,7 +276,7 @@ def build_document():
     opening.add_run(
         'Este documento orienta a homologação manual de toda a plataforma, desde o cadastro '
         'e o login até a criação, tramitação, execução, finalização e consulta de projetos. '
-        'Os casos utilizam a base demonstrativa criada no projeto e cobrem os perfis Coordenador, '
+        'Os casos utilizam a base de homologação criada no projeto e cobrem os perfis Coordenador, '
         'Aluno, Gestor e o acesso restrito do Centro de Estudos.'
     )
     doc.add_page_break()
@@ -291,7 +291,7 @@ def build_document():
     add_bullet(doc, 'Acesse http://127.0.0.1:8000/.')
     add_bullet(doc, 'Para restaurar os dados, execute python manage.py povoar_demonstracao --confirmar.')
     add_bullet(doc, 'Use um navegador atualizado e, para responsividade, teste também uma largura próxima de 390 px.')
-    add_bullet(doc, 'As contas e senhas abaixo são exclusivas do ambiente de demonstração.')
+    add_bullet(doc, 'As contas e senhas abaixo são exclusivas do ambiente de homologação.')
 
     doc.add_heading('Critérios gerais de aprovação', level=2)
     criteria = [
@@ -301,7 +301,7 @@ def build_document():
     ]
     add_table(doc, ['Resultado', 'Critério'], criteria, [Inches(1.35), Inches(5.45)])
 
-    doc.add_heading('Credenciais da base demonstrativa', level=1)
+    doc.add_heading('Credenciais da base de homologação', level=1)
     doc.add_paragraph(
         'O CPF pode ser digitado com ou sem pontuação. As senhas diferem por perfil para facilitar '
         'a execução dos testes e não devem ser reutilizadas fora do ambiente local.'
@@ -358,18 +358,18 @@ def build_document():
 
     doc.add_heading('Dados para criar um projeto durante a homologação', level=2)
     new_project_data = [
-        ('Título', 'Inteligência Artificial para Apoio à Gestão Acadêmica'),
+        ('Título', 'Sistema de Indicadores para Gestão Acadêmica'),
         ('Período', '01/10/2026 a 30/09/2027'),
         ('Valor de fomento', 'R$ 50.000,00'),
         ('Agência', 'CNPq'),
-        ('Resumo', 'Projeto aplicado ao apoio de decisões acadêmicas com uso responsável de inteligência artificial.'),
+        ('Resumo', 'Projeto aplicado ao apoio de decisões acadêmicas por meio da organização e análise de indicadores.'),
         ('Introdução e justificativa', 'A gestão acadêmica produz dados que podem apoiar decisões, desde que tratados com segurança e transparência.'),
         ('Objetivo geral', 'Desenvolver e avaliar um protótipo de apoio à gestão acadêmica.'),
         ('Objetivos específicos', 'Mapear processos; estruturar dados; desenvolver o protótipo; avaliar resultados.'),
         ('Metodologia', 'Pesquisa aplicada, levantamento de requisitos, prototipação iterativa e avaliação com usuários.'),
         ('Resultados esperados', 'Protótipo funcional, documentação técnica e relatório de avaliação.'),
         ('Referências', 'UNIVERSIDADE FEDERAL DO ACRE. Documentos institucionais. 2026.'),
-        ('Palavras-chave', 'inteligência artificial, gestão acadêmica, inovação'),
+        ('Palavras-chave', 'indicadores, gestão acadêmica, inovação'),
         ('Membro manual', 'Marina Externa; CPF 529.982.247-25; Estudante Graduação; 8 h semanais; 192 h totais'),
     ]
     add_table(doc, ['Campo', 'Valor sugerido'], new_project_data, [Inches(1.75), Inches(5.05)])
@@ -395,13 +395,13 @@ def build_document():
         },
         {
             'id': 'CT-ACC-004', 'title': 'Impedir CPF ou e-mail duplicado', 'profile': 'Público',
-            'pre': 'Base demonstrativa carregada.', 'data': 'CPF ou e-mail de Ana Souza.',
+            'pre': 'Base de homologação carregada.', 'data': 'CPF ou e-mail de Ana Souza.',
             'steps': ['Tentar criar nova conta reutilizando o CPF existente.', 'Repetir o teste reutilizando apenas o e-mail existente.'],
             'expected': ['As duas tentativas são rejeitadas sem criar usuários duplicados.', 'O campo responsável apresenta mensagem de validação.'],
         },
         {
             'id': 'CT-ACC-005', 'title': 'Autenticar os três perfis', 'profile': 'Coordenador Aluno Gestor',
-            'pre': 'Base demonstrativa carregada.', 'data': 'Usar uma credencial de cada perfil da tabela.',
+            'pre': 'Base de homologação carregada.', 'data': 'Usar uma credencial de cada perfil da tabela.',
             'steps': ['Entrar como Coordenador e observar a tela principal.', 'Sair e repetir como Aluno.', 'Sair e repetir como Gestor.'],
             'expected': ['Cada credencial é aceita.', 'Menus, atalhos e painel inicial mudam conforme o perfil.'],
         },
@@ -458,7 +458,7 @@ def build_document():
         },
         {
             'id': 'CT-PER-004', 'title': 'Validar centros e cursos vinculados', 'profile': 'Coordenador Aluno',
-            'pre': 'Base demonstrativa carregada.',
+            'pre': 'Base de homologação carregada.',
             'steps': ['Abrir uma seleção de centro.', 'Confirmar os oito centros acadêmicos.', 'Na criação de projeto, selecionar CCET e abrir a lista de cursos.'],
             'expected': ['Não aparecem centros genéricos ou de teste.', 'Após escolher CCET, somente os quatro cursos vinculados ao centro são oferecidos.'],
         },
@@ -604,7 +604,7 @@ def build_document():
     center_cases = [
         {
             'id': 'CT-CEN-001', 'title': 'Abrir o link restrito do Centro', 'profile': 'Responsável do Centro',
-            'pre': 'Usar o link demonstrativo antes de consumi-lo.',
+            'pre': 'Usar o link de homologação antes de consumi-lo.',
             'steps': ['Abrir o link em janela anônima, sem autenticação.', 'Conferir o resumo do projeto.'],
             'expected': ['O acesso exibe apenas as informações necessárias.', 'Menus e funções internas da plataforma não ficam disponíveis.'],
         },
@@ -640,23 +640,23 @@ def build_document():
             'id': 'CT-GES-001', 'title': 'Consultar o painel do gestor', 'profile': 'Gestor',
             'pre': 'Entrar como Gabriela Costa.',
             'steps': ['Abrir o Painel do Gestor.', 'Conferir métricas e projetos que aguardam ação.'],
-            'expected': ['Os totais refletem a base demonstrativa.', 'A navegação permite acessar usuários, projetos, relatórios e editais.'],
+            'expected': ['Os totais refletem a base de homologação.', 'A navegação permite acessar usuários, projetos, relatórios e editais.'],
         },
         {
             'id': 'CT-GES-002', 'title': 'Pesquisar e consultar usuários', 'profile': 'Gestor',
-            'pre': 'Base demonstrativa carregada.',
+            'pre': 'Base de homologação carregada.',
             'steps': ['Abrir Gerenciar Usuários.', 'Pesquisar por nome, CPF e perfil.', 'Abrir os detalhes de um resultado.'],
             'expected': ['Os filtros retornam usuários compatíveis.', 'Detalhes pessoais e institucionais aparecem conforme o cadastro.'],
         },
         {
             'id': 'CT-GES-003', 'title': 'Ativar inativar e editar usuário', 'profile': 'Gestor',
-            'pre': 'Usuário de demonstração selecionado.',
+            'pre': 'Usuário de homologação selecionado.',
             'steps': ['Usar a ação de inativar e confirmar.', 'Tentar login com a conta.', 'Reativar e editar os campos permitidos.'],
             'expected': ['Conta inativa não autentica.', 'A reativação e a edição ficam registradas e o usuário é notificado.'],
         },
         {
             'id': 'CT-GES-004', 'title': 'Excluir usuário sem vínculos e proteger usuário vinculado', 'profile': 'Gestor',
-            'pre': 'Criar uma conta temporária sem projetos; manter usuários demonstrativos vinculados.',
+            'pre': 'Criar uma conta temporária sem projetos; manter os usuários de homologação vinculados.',
             'steps': ['Excluir a conta temporária após confirmar.', 'Tentar excluir coordenador ou aluno com projeto.'],
             'expected': ['A conta sem vínculos é excluída.', 'Vínculos protegidos impedem exclusão inconsistente e geram orientação.'],
         },
@@ -698,7 +698,7 @@ def build_document():
         },
         {
             'id': 'CT-GES-011', 'title': 'Filtrar e ordenar o histórico de projetos', 'profile': 'Gestor',
-            'pre': 'Base demonstrativa carregada.',
+            'pre': 'Base de homologação carregada.',
             'steps': ['Combinar busca textual, status, centro, curso, datas, tipo e múltiplos ODS.', 'Testar o modo Todas as ODS (AND) e depois Qualquer ODS (OR).', 'Alterar ordenação e itens por página.'],
             'expected': ['Filtros são combinados sem perder parâmetros na paginação; AND exige todas as ODS e OR aceita qualquer uma.', 'A tabela e os totais correspondem aos critérios escolhidos.'],
         },
@@ -819,7 +819,7 @@ def build_document():
     notification_cases = [
         {
             'id': 'CT-NOT-001', 'title': 'Visualizar e excluir notificações', 'profile': 'Qualquer usuário autenticado',
-            'pre': 'Usuário possui a notificação demonstrativa.',
+            'pre': 'Usuário possui a notificação de homologação.',
             'steps': ['Abrir o sino e a central de notificações.', 'Pesquisar por texto ou data.', 'Excluir uma notificação e depois excluir múltiplas selecionadas.'],
             'expected': ['Contador e estado de leitura são atualizados.', 'Somente notificações do usuário autenticado são alteradas.'],
         },
@@ -866,7 +866,7 @@ def build_document():
         },
         {
             'id': 'CT-SEG-005', 'title': 'Validar token do Centro contra alteração', 'profile': 'Público',
-            'pre': 'Link demonstrativo disponível.',
+            'pre': 'Link de homologação disponível.',
             'steps': ['Alterar um ou mais caracteres do token na URL.', 'Tentar consultar e enviar dados.'],
             'expected': ['O token alterado não localiza a solicitação.', 'Nenhum dado do projeto é exposto.'],
         },
@@ -944,7 +944,7 @@ def build_document():
         ('Migrations pendentes', 'python manage.py makemigrations --check --dry-run', 'Nenhuma alteração detectada.'),
         ('Testes automatizados', 'python manage.py test', 'Todos os testes concluídos com OK.'),
         ('Alertas éticos', 'python manage.py notificar_prazos_etica', 'Alertas aplicáveis processados sem duplicidade.'),
-        ('Restaurar demonstração', 'python manage.py povoar_demonstracao --confirmar', '9 usuários, 9 projetos, 8 centros e 49 cursos.'),
+        ('Restaurar base de homologação', 'python manage.py povoar_demonstracao --confirmar', '9 usuários, 9 projetos, 8 centros e 49 cursos.'),
     ]
     add_table(doc, ['Objetivo', 'Comando', 'Resultado esperado'], automated, [Inches(1.5), Inches(3.2), Inches(2.1)])
 
