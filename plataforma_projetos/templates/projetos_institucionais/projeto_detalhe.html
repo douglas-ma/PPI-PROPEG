@@ -24,9 +24,10 @@
         {% elif projeto.status == 'submetido' %}<span class="badge bg-primary">Submetido</span>
         {% elif projeto.status == 'aprovado' %}<span class="badge bg-success">Aprovado</span>
         {% elif projeto.status == 'reprovado' %}<span class="badge bg-danger">Reprovado</span>
-        {% elif projeto.status == 'aguardando_conselho' %}<span class="badge bg-warning text-dark">Ag. Conselho</span>
-        {% elif projeto.status == 'aguardando_encerramento' %}<span class="badge bg-warning text-dark">Ag. Encerramento</span>
-        {% elif projeto.status == 'encerrado' %}<span class="badge bg-secondary">Encerrado</span>
+        {% elif projeto.status == 'aguardando_conselho' %}<span class="badge bg-warning text-dark">Aguardando Centro</span>
+        {% elif projeto.status == 'aguardando_encerramento' %}<span class="badge bg-warning text-dark">Ag. Finalização</span>
+        {% elif projeto.status == 'finalizado' %}<span class="badge bg-success">Finalizado</span>
+        {% elif projeto.status == 'encerrado' %}<span class="badge bg-secondary">Encerrado sem conclusão</span>
         {% elif projeto.status == 'rascunho' %}<span class="badge bg-warning text-dark">Rascunho</span>
         {% endif %}
         {% if projeto.centro_lotacao %}<span class="text-muted small"><i class="bi bi-building me-1"></i>{{ projeto.centro_lotacao }}</span>{% endif %}
@@ -34,14 +35,15 @@
     </div>
     {# Ações conforme perfil e status #}
     <div class="d-flex flex-wrap gap-2">
-      {% if user == projeto.coordenador and projeto.status in "submetido,reprovado" %}
+      {% if user == projeto.coordenador and projeto.status == 'reprovado' %}
         <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-warning btn-sm">
           <i class="bi bi-pencil-square me-1"></i>Editar e Ressubmeter
         </a>
       {% endif %}
       {% if user == projeto.coordenador and projeto.status == 'aprovado' %}
         <form action="{% url 'iniciar_projeto' projeto.pk %}" method="post" class="d-inline"
-              onsubmit="return confirm('Iniciar o projeto? Toda a equipe será notificada.')">
+              onsubmit="return confirm('Iniciar o projeto? Toda a equipe será notificada.')"
+              data-confirmation-help="Confirmar o início do projeto e notificar toda a equipe">
           {% csrf_token %}
           <button type="submit" class="btn btn-success btn-sm">
             <i class="bi bi-play-circle-fill me-1"></i>Iniciar Projeto
@@ -49,7 +51,11 @@
         </form>
       {% endif %}
       {% if user.perfil == 'gestor' %}
-        {% if projeto.status == 'submetido' %}
+        <a href="{% url 'projeto_editar' projeto.pk %}" class="btn btn-outline-primary btn-sm"
+           data-confirmation-help="Corrigir dados ou documentos e registrar a alteração da gestão">
+          <i class="bi bi-pencil-square me-1"></i>Editar Projeto
+        </a>
+        {% if projeto.status == 'submetido' and projeto.requer_tramitacao_centro %}
           <form action="{% url 'encaminhar_para_conselho' projeto.pk %}" method="post" class="d-inline"
                 onsubmit="return confirm('Encaminhar para o Centro?')">
             {% csrf_token %}
@@ -58,25 +64,34 @@
             </button>
           </form>
         {% endif %}
-        {% if projeto.status in "submetido,aguardando_conselho" %}
-          <a href="{% url 'aprovar_projeto' projeto.pk %}" class="btn btn-success btn-sm"
-             onclick="return confirm('Aprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')">
+        {% if projeto.status == 'submetido' or projeto.status == 'aguardando_conselho' and projeto.requer_tramitacao_centro %}
+          <a href="{% url 'aprovar_projeto' projeto.pk %}" class="btn btn-success btn-sm {% if projeto.etica_pendente %}disabled{% endif %}"
+             onclick="return confirm('Aprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')"
+             data-confirmation-help="Confirmar a aprovação do projeto na PROPEG">
             <i class="bi bi-check-lg me-1"></i>Aprovar
           </a>
           <a href="{% url 'reprovar_projeto' projeto.pk %}" class="btn btn-danger btn-sm"
-             onclick="return confirm('Reprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')">
+             onclick="return confirm('Reprovar o projeto {{ projeto.titulo|truncatechars:30 }}?')"
+             data-confirmation-help="Confirmar a reprovação e devolver o projeto ao coordenador">
             <i class="bi bi-x-lg me-1"></i>Reprovar
           </a>
         {% endif %}
-        {% if projeto.status == 'aguardando_conselho' %}
+        {% if projeto.status == 'aguardando_conselho' and projeto.requer_tramitacao_centro %}
           <a href="{% url 'anexar_ata_conselho' pk=projeto.pk %}" class="btn btn-outline-secondary btn-sm">
             <i class="bi bi-paperclip me-1"></i>Anexar Ata do Centro
           </a>
         {% endif %}
         {% if projeto.status == 'aguardando_encerramento' %}
           <a href="{% url 'encerrar_projeto' projeto.pk %}" class="btn btn-success btn-sm"
-             onclick="return confirm('Encerrar o projeto?')">
-            <i class="bi bi-check-circle me-1"></i>Encerrar Projeto
+             onclick="return confirm('Finalizar o projeto com êxito?')"
+             data-confirmation-help="Confirmar a conclusão bem-sucedida do projeto">
+            <i class="bi bi-check-circle me-1"></i>Finalizar Projeto
+          </a>
+        {% endif %}
+        {% if projeto.status != 'rascunho' and projeto.status != 'finalizado' and projeto.status != 'encerrado' %}
+          <a href="{% url 'encerrar_projeto_sem_conclusao' projeto.pk %}" class="btn btn-outline-danger btn-sm"
+             data-confirmation-help="Encerrar excepcionalmente o projeto e registrar o motivo">
+            <i class="bi bi-x-octagon me-1"></i>Encerrar sem Conclusão
           </a>
         {% endif %}
         {% if relatorio_submissao %}
@@ -85,8 +100,23 @@
           </a>
         {% endif %}
       {% endif %}
+      {% if user == projeto.coordenador and projeto.status == 'aguardando_conselho' and projeto.requer_ata_conselho %}
+        <form action="{% url 'reenviar_solicitacao_centro' projeto.pk %}" method="post" class="d-inline"
+              onsubmit="return confirm('Gerar um novo link e invalidar o anterior?')"
+              data-confirmation-help="Reenviar o convite ao Centro e invalidar o link anterior">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-envelope-arrow-up me-1"></i>Reenviar solicitação ao Centro
+          </button>
+        </form>
+      {% endif %}
+      {% if projeto.etica_pendente and user == projeto.coordenador %}
+        <a href="{% url 'anexar_aprovacao_etica' projeto.pk %}" class="btn btn-warning btn-sm">
+          <i class="bi bi-shield-exclamation me-1"></i>Anexar Aprovação Ética
+        </a>
+      {% endif %}
       {# Certificados — visível para coordenador e gestor #}
-      {% if projeto.status == 'em_andamento' or projeto.status == 'encerrado' %}
+      {% if projeto.status == 'em_andamento' or projeto.status == 'finalizado' %}
         {% if user == projeto.coordenador or user.perfil == 'gestor' %}
         <a href="{% url 'listar_certificados' pk=projeto.pk %}" class="btn btn-outline-primary btn-sm">
           <i class="bi bi-award me-1"></i>Certificados
@@ -95,6 +125,50 @@
       {% endif %}
     </div>
   </div>
+
+  {% if user == projeto.coordenador and projeto.status == 'aguardando_conselho' and projeto.requer_ata_conselho %}
+  <div class="alert alert-info border-0 shadow-sm d-flex gap-3 align-items-start">
+    <i class="bi bi-hourglass-split fs-4 flex-shrink-0"></i>
+    <div>
+      <strong>Aguardando a ata do Centro de Estudos</strong>
+      <div class="small mt-1">
+        A solicitação foi encaminhada para <strong>{{ projeto.centro_lotacao.email }}</strong>.
+        {% if solicitacao_centro %}
+          O link atual é válido até {{ solicitacao_centro.expira_em|date:"d/m/Y \à\s H:i" }} e será invalidado após o envio da ata.
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if projeto.etica_pendente and visao_completa %}
+  <div class="alert alert-danger border-0 shadow-sm d-flex gap-3 align-items-start">
+    <i class="bi bi-shield-exclamation fs-4 flex-shrink-0"></i>
+    <div class="flex-grow-1">
+      <strong>Aprovação ética pendente</strong>
+      <div class="small mt-1">
+        O projeto possui apenas comprovante de submissão e não pode ser aprovado nem iniciado sem o documento definitivo.
+        {% if projeto.prazo_aprovacao_etica %}
+          Prazo: <strong>{{ projeto.prazo_aprovacao_etica|date:"d/m/Y" }}</strong>
+          {% if projeto.dias_restantes_etica != None %}— {{ projeto.dias_restantes_etica }} dia{{ projeto.dias_restantes_etica|pluralize }} restante{{ projeto.dias_restantes_etica|pluralize }}.{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    <a href="{% url 'anexar_aprovacao_etica' projeto.pk %}" class="btn btn-danger btn-sm flex-shrink-0">Anexar aprovação</a>
+  </div>
+  {% elif projeto.etica_obrigatoria and aprovacao_etica and visao_completa %}
+  <div class="alert alert-success border-0 shadow-sm d-flex gap-2 align-items-center">
+    <i class="bi bi-shield-check fs-4"></i>
+    <div><strong>Aprovação ética comprovada.</strong> O documento definitivo consta no projeto.</div>
+  </div>
+  {% endif %}
+
+  {% if projeto.status == 'encerrado' and projeto.motivo_encerramento %}
+  <div class="alert alert-secondary border-0 shadow-sm">
+    <strong><i class="bi bi-x-octagon me-1"></i>Encerrado sem conclusão</strong>
+    <div class="small mt-1">{{ projeto.motivo_encerramento|linebreaksbr }}</div>
+  </div>
+  {% endif %}
 
   {% if visao_completa %}
   {# ════════════════════════════════════ VISÃO COMPLETA ════════════════════════════════════ #}
@@ -107,10 +181,10 @@
         <div class="card-header bg-white border-bottom py-3">
           <ul class="nav nav-tabs card-header-tabs" id="tab-conteudo">
             <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#tab-resumo">Resumo</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-intro">Introdução</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-intro">Introdução e Justificativa</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-obj">Objetivos</a></li>
             <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-met">Metodologia</a></li>
-            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-res">Resultados</a></li>
+            <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-res">Resultados Esperados</a></li>
             {% if projeto.referencias %}<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#tab-ref">Referências</a></li>{% endif %}
           </ul>
         </div>
@@ -156,8 +230,8 @@
             <tbody>
               {% for m in projeto.equipe.all %}
               <tr>
-                <td class="fw-semibold">{{ m.membro.get_full_name }}</td>
-                <td class="text-muted">{{ m.membro.get_perfil_display }}</td>
+                <td class="fw-semibold">{{ m.nome_exibicao }}</td>
+                <td class="text-muted">{{ m.perfil_exibicao }}</td>
                 <td>{{ m.get_funcao_display }}</td>
                 <td class="text-center">{{ m.carga_horaria_semanal }}h</td>
                 <td class="text-center">{{ m.carga_horaria_total }}h</td>
@@ -177,8 +251,20 @@
           <strong>Anexos</strong>
         </div>
         <div class="card-body p-0">
-          {% if comprovante or ata_conselho or outros_anexos %}
+          {% if comprovante or comprovante_fomento or ata_conselho or aprovacao_etica or submissao_etica or outros_anexos %}
           <ul class="list-group list-group-flush">
+            {% if comprovante_fomento %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-bank text-primary fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">Comprovante de Aprovação do Fomento</span>
+                <div class="text-muted" style="font-size:.75rem;">{{ comprovante_fomento.data_upload|date:"d/m/Y" }} às {{ comprovante_fomento.data_upload|date:"H:i" }}</div>
+              </div>
+              <a href="{{ comprovante_fomento.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-download me-1"></i>Baixar
+              </a>
+            </li>
+            {% endif %}
             {% if comprovante %}
             <li class="list-group-item d-flex align-items-center gap-3">
               <i class="bi bi-file-earmark-check-fill text-success fs-5"></i>
@@ -195,12 +281,34 @@
             <li class="list-group-item d-flex align-items-center gap-3">
               <i class="bi bi-file-earmark-text-fill text-warning fs-5"></i>
               <div class="flex-grow-1">
-                <span class="fw-semibold small">Ata de Aprovação do Centro</span>
+                <span class="fw-semibold small">
+                  {% if projeto.requer_ata_conselho %}Ata de Aprovação do Conselho{% else %}Ata de Aprovação do Centro{% endif %}
+                </span>
                 <div class="text-muted" style="font-size:.75rem;">{{ ata_conselho.data_upload|date:"d/m/Y" }} às {{ ata_conselho.data_upload|date:"H:i" }}</div>
               </div>
               <a href="{{ ata_conselho.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-warning">
                 <i class="bi bi-download me-1"></i>Baixar
               </a>
+            </li>
+            {% endif %}
+            {% if submissao_etica %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-shield-exclamation text-warning fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">Comprovante de Submissão Ética</span>
+                <div class="text-muted" style="font-size:.75rem;">{{ submissao_etica.data_upload|date:"d/m/Y" }} às {{ submissao_etica.data_upload|date:"H:i" }}</div>
+              </div>
+              <a href="{{ submissao_etica.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-warning"><i class="bi bi-eye me-1"></i>Ver</a>
+            </li>
+            {% endif %}
+            {% if aprovacao_etica %}
+            <li class="list-group-item d-flex align-items-center gap-3">
+              <i class="bi bi-shield-check text-success fs-5"></i>
+              <div class="flex-grow-1">
+                <span class="fw-semibold small">Aprovação Definitiva do Comitê de Ética</span>
+                <div class="text-muted" style="font-size:.75rem;">{{ aprovacao_etica.data_upload|date:"d/m/Y" }} às {{ aprovacao_etica.data_upload|date:"H:i" }}</div>
+              </div>
+              <a href="{{ aprovacao_etica.arquivo.url }}" target="_blank" class="btn btn-sm btn-outline-success"><i class="bi bi-eye me-1"></i>Ver</a>
             </li>
             {% endif %}
             {% for anx in outros_anexos %}
@@ -234,7 +342,14 @@
           <div class="row g-2">
             {% for ods in projeto.ods.all %}
             <div class="col-3 col-md-2">
+              {% if ods.imagem %}
               <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid rounded" title="{{ ods.titulo }}">
+              {% else %}
+              <div class="border rounded bg-light text-center p-2 h-100" title="{{ ods.titulo }}">
+                <i class="bi bi-globe2 text-secondary d-block fs-4"></i>
+                <small class="text-muted">{{ ods.titulo }}</small>
+              </div>
+              {% endif %}
             </div>
             {% endfor %}
           </div>
@@ -254,6 +369,7 @@
         </div>
         <div class="card-body p-0">
           <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Tipo do Projeto</span><span class="fw-semibold">{{ projeto.get_tipo_projeto_display|default:"—" }}</span></li>
             <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
             <li class="list-group-item"><span class="text-muted d-block">E-mail</span>{{ projeto.coordenador.email }}</li>
             <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
@@ -261,6 +377,13 @@
             <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
             {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
             {% if projeto.programa_pos %}<li class="list-group-item"><span class="text-muted d-block">Programa de Pós-Graduação</span>{{ projeto.programa_pos }}</li>{% endif %}
+            {% if projeto.ultima_alteracao_gestor_em %}
+            <li class="list-group-item bg-warning bg-opacity-10">
+              <span class="text-muted d-block">Última alteração pela gestão</span>
+              <span class="fw-semibold">{{ projeto.ultima_alteracao_gestor_em|date:"d/m/Y à\s H:i" }}</span>
+              {% if projeto.ultima_alteracao_gestor_por %}<div>por {{ projeto.ultima_alteracao_gestor_por.get_full_name|default:projeto.ultima_alteracao_gestor_por.username }}</div>{% endif %}
+            </li>
+            {% endif %}
           </ul>
         </div>
       </div>
@@ -274,10 +397,20 @@
         <div class="card-body p-0">
           <ul class="list-group list-group-flush small">
             <li class="list-group-item"><span class="text-muted d-block">Financiamento</span>
-              {% if projeto.agencia_financiadora %}{{ projeto.agencia_financiadora }} — R$ {{ projeto.valor_fomento }}{% else %}Não possui{% endif %}
+              {% if projeto.tipo_projeto == 'agencia_fomento' %}
+                Agência de Fomento{% if projeto.agencia_financiadora %}: {{ projeto.agencia_financiadora }}{% endif %}{% if projeto.valor_fomento %} — R$ {{ projeto.valor_fomento }}{% endif %}
+              {% elif projeto.tipo_projeto == 'ufac_com_financiamento' %}
+                Financiamento UFAC{% if projeto.edital %} — {{ projeto.edital.titulo_completo }}{% endif %}
+              {% else %}
+                Sem financiamento / fluxo contínuo
+              {% endif %}
             </li>
             <li class="list-group-item"><span class="text-muted d-block">Aspectos Éticos</span>
-              {% if projeto.etica_obrigatoria %}Sim{% if projeto.tipo_etica %} ({{ projeto.tipo_etica }}){% endif %}{% else %}Não{% endif %}
+              {% if projeto.etica_obrigatoria %}
+                Sim{% if projeto.tipo_etica %} ({{ projeto.tipo_etica }}){% endif %}<br>
+                {% if aprovacao_etica %}<span class="badge bg-success mt-1">Aprovação comprovada</span>
+                {% else %}<span class="badge bg-danger mt-1">Aprovação pendente</span>{% endif %}
+              {% else %}Não{% endif %}
             </li>
             {% if projeto.grupos_pesquisa.all %}
             <li class="list-group-item"><span class="text-muted d-block">Grupos de Pesquisa</span>
@@ -368,6 +501,7 @@
         </div>
         <div class="card-body p-0">
           <ul class="list-group list-group-flush small">
+            <li class="list-group-item"><span class="text-muted d-block">Tipo do Projeto</span><span class="fw-semibold">{{ projeto.get_tipo_projeto_display|default:"—" }}</span></li>
             <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
             <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
             <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
@@ -401,7 +535,7 @@
           <ul class="list-group list-group-flush small">
             {% for m in projeto.equipe.all %}
             <li class="list-group-item d-flex justify-content-between align-items-center">
-              <span>{{ m.membro.get_full_name }}</span>
+              <span>{{ m.nome_exibicao }}</span>
               <span class="badge bg-light text-muted border">{{ m.get_funcao_display }}</span>
             </li>
             {% empty %}
@@ -419,7 +553,14 @@
           <div class="row g-2">
             {% for ods in projeto.ods.all %}
             <div class="col-3 col-md-2">
+              {% if ods.imagem %}
               <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid rounded" title="{{ ods.titulo }}">
+              {% else %}
+              <div class="border rounded bg-light text-center p-2 h-100" title="{{ ods.titulo }}">
+                <i class="bi bi-globe2 text-secondary d-block fs-4"></i>
+                <small class="text-muted">{{ ods.titulo }}</small>
+              </div>
+              {% endif %}
             </div>
             {% endfor %}
           </div>

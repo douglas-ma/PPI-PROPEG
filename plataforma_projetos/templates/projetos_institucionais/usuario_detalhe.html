@@ -199,7 +199,8 @@
                   <td class="text-center">
                     {% if p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
                     {% elif p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
-                    {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% elif p.status == 'finalizado' %}<span class="badge bg-success bg-opacity-10 text-success">Finalizado</span>
+                    {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado sem conclusão</span>
                     {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
                     {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
                     {% elif p.status == 'rascunho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Rascunho</span>
@@ -247,7 +248,8 @@
                   <td>{{ part.get_funcao_display }}</td>
                   <td class="text-center">
                     {% if part.projeto.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
-                    {% elif part.projeto.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                    {% elif part.projeto.status == 'finalizado' %}<span class="badge bg-success bg-opacity-10 text-success">Finalizado</span>
+                    {% elif part.projeto.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado sem conclusão</span>
                     {% else %}<span class="badge bg-light text-muted">{{ part.projeto.get_status_display }}</span>{% endif %}
                   </td>
                 </tr>

@@ -1,0 +1,181 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Aprovação do Centro - PROPEG/UFAC</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+</head>
+<body class="bg-light">
+  <header class="bg-white border-bottom shadow-sm py-3">
+    <div class="container d-flex align-items-center justify-content-center gap-3">
+      <img src="{% static 'imagens/logo_ufac.png' %}" alt="Logo da UFAC" style="height:58px;width:auto;">
+      <div class="border-start ps-3">
+        <div class="fw-bold">PROPEG / UFAC</div>
+        <div class="small text-muted">Aprovação pelo Centro de Estudos</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container py-5" style="max-width:780px;">
+    {% if motivo_invalido %}
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body p-5">
+          <i class="bi bi-link-45deg text-danger" style="font-size:3rem;"></i>
+          <h3 class="mt-3">Link indisponível</h3>
+          <p class="text-muted mb-0">{{ motivo_invalido }}</p>
+        </div>
+      </div>
+    {% elif concluido %}
+      <div class="card border-0 shadow-sm text-center">
+        <div class="card-body p-5">
+          <i class="bi bi-check-circle-fill text-success" style="font-size:3rem;"></i>
+          <h3 class="mt-3">Ata registrada com sucesso</h3>
+          <p class="text-muted mb-2">
+            A aprovação do projeto <strong>“{{ projeto.titulo }}”</strong> foi registrada.
+          </p>
+          <p class="text-muted mb-0">
+            O projeto foi encaminhado automaticamente à PROPEG. Este link não poderá ser utilizado novamente.
+          </p>
+        </div>
+      </div>
+    {% else %}
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom p-4">
+          <div class="d-flex align-items-start gap-3">
+            <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                 style="width:48px;height:48px;">
+              <i class="bi bi-building-check fs-4"></i>
+            </div>
+            <div>
+              <h4 class="mb-1">Registro da aprovação do Conselho</h4>
+              <p class="text-muted small mb-0">
+                Esta página permite somente consultar os dados essenciais do projeto e anexar a ata da assembleia.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="bg-light rounded p-3 mb-4">
+            <dl class="row small mb-0">
+              <dt class="col-sm-4 text-muted">Projeto</dt>
+              <dd class="col-sm-8 fw-semibold">{{ projeto.titulo }}</dd>
+              <dt class="col-sm-4 text-muted">Coordenador(a)</dt>
+              <dd class="col-sm-8">{{ projeto.coordenador.get_full_name }}</dd>
+              <dt class="col-sm-4 text-muted">Centro</dt>
+              <dd class="col-sm-8">{{ projeto.centro_lotacao }}</dd>
+              <dt class="col-sm-4 text-muted">Período</dt>
+              <dd class="col-sm-8 mb-0">{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</dd>
+            </dl>
+          </div>
+
+          <a href="{% url 'aprovacao_centro_documento' token=token %}" target="_blank" rel="noopener"
+             class="btn btn-outline-danger w-100 mb-4">
+            <i class="bi bi-file-earmark-pdf me-1"></i>Consultar projeto completo em PDF
+          </a>
+
+          <form method="post" enctype="multipart/form-data" id="form-aprovacao-centro" novalidate>
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="mb-3">
+              <label for="{{ form.responsavel_nome.id_for_label }}" class="form-label fw-semibold">
+                {{ form.responsavel_nome.label }} <span class="text-danger">*</span>
+              </label>
+              <input type="text" name="{{ form.responsavel_nome.html_name }}"
+                     id="{{ form.responsavel_nome.id_for_label }}"
+                     value="{{ form.responsavel_nome.value|default:'' }}"
+                     class="form-control {% if form.responsavel_nome.errors %}is-invalid{% endif %}"
+                     maxlength="255" autocomplete="name" required>
+              {% if form.responsavel_nome.errors %}<div class="invalid-feedback">{{ form.responsavel_nome.errors }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.responsavel_cargo.id_for_label }}" class="form-label fw-semibold">
+                {{ form.responsavel_cargo.label }} <span class="text-danger">*</span>
+              </label>
+              <input type="text" name="{{ form.responsavel_cargo.html_name }}"
+                     id="{{ form.responsavel_cargo.id_for_label }}"
+                     value="{{ form.responsavel_cargo.value|default:'' }}"
+                     class="form-control {% if form.responsavel_cargo.errors %}is-invalid{% endif %}"
+                     maxlength="255" placeholder="Ex.: Diretor(a) do Centro" required>
+              {% if form.responsavel_cargo.errors %}<div class="invalid-feedback">{{ form.responsavel_cargo.errors }}</div>{% endif %}
+            </div>
+
+            <div class="mb-3">
+              <label for="{{ form.ata_assembleia.id_for_label }}" class="form-label fw-semibold">
+                {{ form.ata_assembleia.label }} <span class="text-danger">*</span>
+                <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                      data-bs-content="Anexe a ata oficial que contenha a aprovação do projeto. São aceitos somente PDF, PNG, JPG e JPEG."
+                      class="text-muted ms-1" style="cursor:help;">
+                  <i class="bi bi-question-circle"></i>
+                </span>
+              </label>
+              <input type="file" name="{{ form.ata_assembleia.html_name }}"
+                     id="{{ form.ata_assembleia.id_for_label }}"
+                     class="form-control {% if form.ata_assembleia.errors %}is-invalid{% endif %}"
+                     accept=".pdf,.png,.jpg,.jpeg" required>
+              <div class="form-text">{{ form.ata_assembleia.help_text }}</div>
+              {% if form.ata_assembleia.errors %}<div class="invalid-feedback">{{ form.ata_assembleia.errors }}</div>{% endif %}
+            </div>
+
+            <div class="form-check border rounded p-3 ps-5 mb-4">
+              <input type="checkbox" name="{{ form.confirma_aprovacao.html_name }}"
+                     id="{{ form.confirma_aprovacao.id_for_label }}"
+                     class="form-check-input {% if form.confirma_aprovacao.errors %}is-invalid{% endif %}"
+                     {% if form.confirma_aprovacao.value %}checked{% endif %} required>
+              <label class="form-check-label" for="{{ form.confirma_aprovacao.id_for_label }}">
+                {{ form.confirma_aprovacao.label }}
+              </label>
+              {% if form.confirma_aprovacao.errors %}<div class="invalid-feedback">{{ form.confirma_aprovacao.errors }}</div>{% endif %}
+            </div>
+
+            <button type="button" class="btn btn-success btn-lg w-100"
+                    data-bs-toggle="modal" data-bs-target="#modalConfirmarAta"
+                    title="Revisar e confirmar o envio definitivo da ata">
+              <i class="bi bi-send-check me-1"></i>Registrar aprovação e enviar à PROPEG
+            </button>
+          </form>
+        </div>
+      </div>
+    {% endif %}
+  </main>
+
+  {% if form %}
+  <div class="modal fade" id="modalConfirmarAta" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-body text-center p-4">
+          <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size:2.5rem;"></i>
+          <h5 class="mt-3">Confirmar aprovação?</h5>
+          <p class="text-muted small">
+            Após o envio, a ata será incorporada ao projeto, ele seguirá para a análise da PROPEG e este link será invalidado.
+          </p>
+          <div class="d-flex justify-content-center gap-2">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success" form="form-aprovacao-centro">
+              Sim, registrar aprovação
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    document.querySelectorAll('[data-bs-toggle="popover"]').forEach(function (elemento) {
+      new bootstrap.Popover(elemento, {container: 'body'});
+    });
+  </script>
+</body>
+</html>

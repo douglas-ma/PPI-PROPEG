@@ -1,0 +1,27 @@
+{% extends "base2.html" %}
+{% block title %}Anexar Aprovação Ética{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:720px;">
+  <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-outline-secondary btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3"><strong>Anexar aprovação ética definitiva</strong></div>
+    <div class="card-body p-4">
+      <p class="text-muted">Projeto: <strong>{{ projeto.titulo }}</strong></p>
+      {% if projeto.prazo_aprovacao_etica %}
+      <div class="alert {% if projeto.dias_restantes_etica < 0 %}alert-danger{% else %}alert-warning{% endif %}">
+        Prazo: {{ projeto.prazo_aprovacao_etica|date:"d/m/Y" }}
+        {% if projeto.dias_restantes_etica != None %} ({{ projeto.dias_restantes_etica }} dia{{ projeto.dias_restantes_etica|pluralize }} restante{{ projeto.dias_restantes_etica|pluralize }}){% endif %}
+      </div>
+      {% endif %}
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label class="form-label fw-semibold" for="{{ form.comprovante.id_for_label }}">{{ form.comprovante.label }}</label>
+        {{ form.comprovante }}
+        {% if form.comprovante.errors %}<div class="text-danger small mt-1">{{ form.comprovante.errors|striptags }}</div>{% endif %}
+        <div class="form-text mb-4">{{ form.comprovante.help_text }}</div>
+        <button class="btn btn-success" type="submit"><i class="bi bi-upload me-1"></i>Anexar aprovação</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

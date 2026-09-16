@@ -1,0 +1,110 @@
+{% with origem=equipe_form.origem_membro.value|default:'sistema' %}
+<tr class="equipe-form-row {% if equipe_form.instance.pk %}table-light{% endif %}"
+    data-origin="{{ origem }}">
+  {{ equipe_form.id }}
+  <td style="min-width:310px;">
+    {% if equipe_form.non_field_errors %}
+      <div class="alert alert-danger py-1 px-2 mb-2 small">{{ equipe_form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="btn-group btn-group-sm w-100 mb-2 member-origin-toggle" role="group" aria-label="Forma de inclusão do membro">
+      <input type="radio" class="btn-check member-origin" name="{{ equipe_form.origem_membro.html_name }}"
+             id="{{ equipe_form.prefix }}-origem-sistema" value="sistema"
+             {% if origem != 'manual' %}checked{% endif %}>
+      <label class="btn btn-outline-primary" for="{{ equipe_form.prefix }}-origem-sistema">
+        <i class="bi bi-person-check me-1"></i>Do sistema
+      </label>
+      <input type="radio" class="btn-check member-origin" name="{{ equipe_form.origem_membro.html_name }}"
+             id="{{ equipe_form.prefix }}-origem-manual" value="manual"
+             {% if origem == 'manual' %}checked{% endif %}>
+      <label class="btn btn-outline-primary" for="{{ equipe_form.prefix }}-origem-manual">
+        <i class="bi bi-pencil me-1"></i>Manual
+      </label>
+    </div>
+
+    <div class="member-system-block">
+      <div class="member-search-wrapper">
+        <input type="search" class="form-control form-control-sm member-search"
+               name="{{ equipe_form.busca_membro.html_name }}"
+               placeholder="Nome, curso ou CPF" autocomplete="off"
+               value="{{ equipe_form.busca_membro.value|default:'' }}"
+               aria-label="Pesquisar usuário do sistema">
+        <input type="hidden" name="{{ equipe_form.membro.html_name }}"
+               class="member-id" value="{{ equipe_form.membro.value|default:'' }}">
+        <div class="member-search-results list-group mt-1 d-none" role="listbox"></div>
+      </div>
+      <div class="form-text">Digite ao menos 2 caracteres e selecione um resultado.</div>
+      {% if equipe_form.membro.errors %}
+        <div class="invalid-feedback d-block">{{ equipe_form.membro.errors|striptags }}</div>
+      {% endif %}
+    </div>
+
+    <div class="member-manual-block">
+      <input type="text" name="{{ equipe_form.nome_membro_manual.html_name }}"
+             value="{{ equipe_form.nome_membro_manual.value|default:'' }}"
+             class="form-control form-control-sm {% if equipe_form.nome_membro_manual.errors %}is-invalid{% endif %}"
+             maxlength="255" placeholder="Nome completo">
+      {% if equipe_form.nome_membro_manual.errors %}
+        <div class="invalid-feedback">{{ equipe_form.nome_membro_manual.errors|striptags }}</div>
+      {% endif %}
+    </div>
+  </td>
+
+  <td style="min-width:175px;">
+    <div class="member-system-block">
+      <input type="text" class="form-control form-control-sm member-cpf-display"
+             value="{% if equipe_form.instance.membro_id %}{{ equipe_form.instance.cpf_exibicao }}{% endif %}"
+             placeholder="Preenchido pela busca" readonly tabindex="-1">
+    </div>
+    <div class="member-manual-block">
+      <input type="text" name="{{ equipe_form.cpf_manual.html_name }}"
+             value="{{ equipe_form.cpf_manual.value|default:'' }}"
+             class="form-control form-control-sm cpf-manual {% if equipe_form.cpf_manual.errors %}is-invalid{% endif %}"
+             maxlength="14" inputmode="numeric" placeholder="000.000.000-00">
+      {% if equipe_form.cpf_manual.errors %}
+        <div class="invalid-feedback">{{ equipe_form.cpf_manual.errors|striptags }}</div>
+      {% endif %}
+    </div>
+  </td>
+
+  <td style="min-width:220px;">
+    <select name="{{ equipe_form.funcao.html_name }}"
+            class="form-select form-select-sm {% if equipe_form.funcao.errors %}is-invalid{% endif %}">
+      {% for val, label in equipe_form.fields.funcao.choices %}
+        <option value="{{ val }}" {% if equipe_form.funcao.value|default:'coordenador' == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    {% if equipe_form.funcao.errors %}
+      <div class="invalid-feedback">{{ equipe_form.funcao.errors|striptags }}</div>
+    {% endif %}
+  </td>
+
+  <td style="min-width:155px;">
+    <input type="number" name="{{ equipe_form.carga_horaria_semanal.html_name }}"
+           value="{{ equipe_form.carga_horaria_semanal.value|default:'' }}"
+           class="form-control form-control-sm {% if equipe_form.carga_horaria_semanal.errors %}is-invalid{% endif %}"
+           min="1" max="40" placeholder="Horas/semana">
+    {% if equipe_form.carga_horaria_semanal.errors %}
+      <div class="invalid-feedback">{{ equipe_form.carga_horaria_semanal.errors|striptags }}</div>
+    {% endif %}
+  </td>
+
+  <td style="min-width:145px;">
+    <input type="number" name="{{ equipe_form.carga_horaria_total.html_name }}"
+           value="{{ equipe_form.carga_horaria_total.value|default:'' }}"
+           class="form-control form-control-sm {% if equipe_form.carga_horaria_total.errors %}is-invalid{% endif %}"
+           min="1" placeholder="Horas totais">
+    {% if equipe_form.carga_horaria_total.errors %}
+      <div class="invalid-feedback">{{ equipe_form.carga_horaria_total.errors|striptags }}</div>
+    {% endif %}
+  </td>
+
+  <td class="text-center" style="width:80px;">
+    <div class="d-none">{{ equipe_form.DELETE }}</div>
+    <button type="button" class="btn btn-outline-danger btn-sm remove-equipe-row"
+            title="Remover membro" aria-label="Remover membro">
+      <i class="bi bi-trash"></i>
+    </button>
+  </td>
+</tr>
+{% endwith %}

@@ -11,6 +11,9 @@
         <h4 class="mb-1"><i class="bi bi-question-circle text-primary me-2"></i>Central de Ajuda</h4>
         <p class="text-muted mb-0">Guia completo da Plataforma de Projetos Institucionais — PROPEG/UFAC</p>
       </div>
+      <span class="badge bg-primary bg-opacity-10 text-primary border align-self-start">
+        <i class="bi bi-check2-circle me-1"></i>Atualizado em {{ data_atualizacao|date:"d/m/Y" }}
+      </span>
     </div>
     {# Busca principal #}
     <div class="mt-3 position-relative" style="max-width:540px;">
@@ -64,6 +67,7 @@
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-tela" data-label="Coordenador Tela Principal">Tela Principal</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-criar" data-label="Coordenador Criar Projeto">Criar Projeto</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-etapas" data-label="Coordenador Etapas do Projeto">Etapas do Projeto</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-documentos" data-label="Coordenador Documento e Anexos">Documento e Anexos</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-meus" data-label="Coordenador Meus Projetos">Meus Projetos</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-relatorio" data-label="Coordenador Relatórios de Atividades">Relatórios de Atividades</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#coord-editais" data-label="Coordenador Editais">Editais</a>
@@ -84,6 +88,7 @@
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#notificacoes" data-label="Notificações">Notificações</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#fluxo-projeto" data-label="Fluxo de um Projeto">Fluxo de um Projeto</a>
             <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#faq" data-label="Perguntas Frequentes FAQ">Perguntas Frequentes</a>
+            <a class="nav-link py-1 px-2 rounded small ajuda-item" href="#sobre-sistema" data-label="Sobre o Sistema e o Desenvolvedor">Sobre o Sistema</a>
           </nav>
         </div>
       </div>
@@ -130,6 +135,10 @@
                 </div>
               </div>
             </div>
+          </div>
+          <div class="alert alert-info d-flex gap-2 py-2 mt-3 mb-0">
+            <i class="bi bi-building flex-shrink-0 mt-1"></i>
+            <span class="small"><strong>Centro de Estudos/Lotação:</strong> participa do fluxo de projetos UFAC sem financiamento por um link restrito enviado por e-mail. O responsável não precisa criar uma conta; o link permite somente consultar o projeto e registrar a ata de aprovação.</span>
           </div>
         </div>
       </section>
@@ -251,7 +260,46 @@
             </div>
             {% endfor %}
           </div>
-          <p class="mb-0 small">Ao clicar em <strong>"Confirmar e Submeter"</strong>, um relatório de submissão em PDF é gerado automaticamente e o projeto passa para status <span class="badge bg-primary">Submetido</span>.</p>
+          <div class="alert alert-light border mb-0 small">
+            <strong>Fluxo conforme o tipo:</strong>
+            <ul class="mb-0 mt-1">
+              <li><strong>Agência de Fomento:</strong> segue diretamente para análise da PROPEG após o comprovante de aprovação.</li>
+              <li><strong>UFAC sem financiamento / fluxo contínuo:</strong> segue primeiro ao Centro de Lotação. O Centro recebe um link restrito e temporário para anexar a ata; somente então o projeto é encaminhado à PROPEG.</li>
+              <li><strong>UFAC com financiamento:</strong> segue o fluxo do edital selecionado.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="coord-documentos" class="mb-0">
+        <div class="py-2 border-bottom mb-2"><h6 class="mb-0 fw-semibold"><i class="bi bi-file-earmark-richtext me-2 text-primary"></i>Documento Digital, Anexos e Relatório</h6></div>
+        <div class="small pb-3">
+          <h6 class="fw-semibold">Preenchimento automático da Etapa 2</h6>
+          <ol>
+            <li>O envio do documento é <strong>opcional</strong>. Se optar por enviar, use somente um PDF <strong>nativamente digital</strong>, com texto selecionável; PDF digitalizado como imagem não é processado.</li>
+            <li>Depois do upload, confirme se deseja preencher automaticamente os campos da Etapa 2.</li>
+            <li>O sistema identifica os títulos e os limites das seções para preencher resumo, palavras-chave, introdução e justificativa, objetivos, metodologia, resultados esperados, parcerias e referências.</li>
+            <li>Revise o conteúdo preenchido antes de avançar. O documento enviado pode ser excluído pela própria lista de arquivos.</li>
+          </ol>
+
+          <h6 class="fw-semibold">Campos e anexos</h6>
+          <ul>
+            <li>Os campos textuais quebram linhas e aumentam de altura conforme você escreve.</li>
+            <li>Cada campo possui limite de <strong>4.000 caracteres</strong>; o contador mostra o total usado e o limite restante.</li>
+            <li>Os nomes atuais são <strong>Introdução e Justificativa</strong> e <strong>Resultados Esperados</strong>.</li>
+            <li>Na seção de anexos, envie PDFs ou imagens adicionais, como cronogramas, figuras e mapas. Arquivos já enviados podem ser visualizados ou removidos.</li>
+          </ul>
+
+          <div class="alert alert-info d-flex gap-2 py-2 mb-0">
+            <i class="bi bi-file-earmark-pdf flex-shrink-0 mt-1"></i>
+            <span>O relatório de submissão é gerado automaticamente ao enviar o projeto. Ele utiliza formato institucional em padrão ABNT, traz a logo da UFAC centralizada na capa, incorpora imagens e páginas de PDFs válidos na seção de anexos e mantém um link para o arquivo original.</span>
+          </div>
+          <h6 class="fw-semibold mt-3">Comprovação de aspectos éticos</h6>
+          <ul>
+            <li>Ao marcar <strong>Sim</strong>, informe se o documento é uma aprovação definitiva ou apenas um comprovante de submissão ao comitê.</li>
+            <li>Com apenas a submissão, o prazo para anexar a aprovação é de <strong>90 dias</strong>. Há alertas internos e por e-mail quando faltarem 60, 30, 15, 7, 3 e 1 dia.</li>
+            <li>Enquanto a aprovação definitiva estiver pendente, o gestor não pode aprovar o projeto e o coordenador não pode iniciá-lo.</li>
+          </ul>
         </div>
       </section>
 
@@ -264,7 +312,7 @@
             <li><strong>Rascunhos:</strong> projetos não submetidos. Clique em "Continuar" para retomar.</li>
             <li><strong>Em Andamento:</strong> projetos aprovados e em execução.</li>
             <li><strong>Em Revisão:</strong> projetos submetidos ou aguardando centro.</li>
-            <li><strong>Aprovados/Rejeitados</strong> e <strong>Finalizados.</strong></li>
+            <li><strong>Aprovados/Rejeitados</strong>, <strong>Finalizados</strong> e <strong>Encerrados sem conclusão.</strong></li>
           </ul>
           <p>Em todas as abas (exceto Visão Geral) há uma <strong>barra de busca e filtros</strong> por título, centro de lotação, ano de início e quantidade de itens por página.</p>
         </div>
@@ -354,8 +402,8 @@
           <ul>
             <li><span class="badge bg-danger bg-opacity-10 text-danger">Cadastros Pendentes</span> — usuários que precisam de atenção.</li>
             <li><span class="badge bg-primary bg-opacity-10 text-primary">Projetos Submetidos</span> — aguardando avaliação inicial.</li>
-            <li><span class="badge bg-warning bg-opacity-10 text-warning">Ag. Centro</span> — encaminhados para análise do centro.</li>
-            <li><span class="badge bg-success bg-opacity-10 text-success">Para Encerramento</span> — relatório final enviado, aguardando encerramento.</li>
+            <li><span class="badge bg-warning bg-opacity-10 text-warning">Ag. Centro</span> — projetos UFAC com financiamento encaminhados pelo gestor para análise do centro.</li>
+            <li><span class="badge bg-success bg-opacity-10 text-success">Para Finalização</span> — relatório final enviado, aguardando conclusão formal.</li>
           </ul>
           <p>Abaixo dos cards há um <strong>Resumo Geral</strong> com estatísticas e uma tabela de projetos recentes.</p>
         </div>
@@ -387,10 +435,11 @@
           </div>
 
           <div class="mb-0">
-            <h6 class="fw-semibold"><span class="badge bg-success me-2">Ag. Encerramento</span>Aguardando Encerramento</h6>
-            <p>Projetos com relatório final enviado pelo coordenador, aguardando encerramento formal.</p>
+            <h6 class="fw-semibold"><span class="badge bg-success me-2">Ag. Finalização</span>Aguardando Finalização</h6>
+            <p>Projetos com relatório final enviado pelo coordenador, aguardando a confirmação de conclusão.</p>
             <ul class="mb-0">
-              <li><strong>Encerrar:</strong> confirmar o encerramento do projeto. O status passa para <span class="badge bg-secondary">Encerrado</span>.</li>
+              <li><strong>Finalizar:</strong> confirmar que o projeto terminou com êxito. O status passa para <span class="badge bg-success">Finalizado</span>.</li>
+              <li><strong>Encerrar sem conclusão:</strong> interromper excepcionalmente um projeto, registrando o motivo e notificando o coordenador.</li>
             </ul>
           </div>
         </div>
@@ -428,10 +477,15 @@
             <li><strong>Status:</strong> selecione um ou mais status simultaneamente.</li>
             <li><strong>Centro de Lotação:</strong> filtre por um ou mais centros.</li>
             <li><strong>Curso:</strong> filtre por um ou mais cursos.</li>
-            <li><strong>Ano:</strong> select único por ano de início.</li>
+            <li><strong>Vínculo com ODS:</strong> selecione um ou mais Objetivos de Desenvolvimento Sustentável.</li>
             <li><strong>Busca:</strong> por título ou coordenador.</li>
           </ul>
           <p>Após aplicar os filtros, clique em <strong>"Gerar Relatório PDF"</strong> para exportar a tabela atual em PDF (A4 paisagem, com logos e filtros ativos identificados no documento).</p>
+          <h6 class="fw-semibold">Correção e acervo histórico</h6>
+          <ul>
+            <li>Nos detalhes de qualquer projeto, use <strong>Editar Projeto</strong> para corrigir dados, equipe, ODS ou documentos. A data, a hora e o gestor responsável ficam visíveis no projeto.</li>
+            <li>Use <strong>Cadastrar Projeto Existente</strong> para inserir dados anteriores à plataforma. Selecione o coordenador, preencha as cinco etapas e informe o status atual na revisão.</li>
+          </ul>
         </div>
       </section>
 
@@ -465,7 +519,7 @@
           <ul>
             <li><strong>Abrir / Fechar:</strong> botão de toggle para controlar se o edital está visível para coordenadores.</li>
             <li><strong>Adendos:</strong> publique esclarecimentos ou modificações com título, descrição e arquivo opcional. Adendos ficam visíveis para coordenadores na página de editais abertos.</li>
-            <li><strong>Projetos vinculados:</strong> veja quais projetos foram submetidos vinculados a este edital.</li>
+            <li><strong>Projetos concorrentes:</strong> veja a quantidade de projetos UFAC com financiamento submetidos ao edital, o resumo por status e pesquise por projeto, coordenador ou CPF.</li>
           </ul>
         </div>
       </section>
@@ -480,7 +534,7 @@
         <div class="small pb-3">
           <p>A consulta pública é uma área <strong>aberta a qualquer pessoa</strong>, sem necessidade de login. Acesse pelo botão <strong>"Consulta Pública de Projetos"</strong> na tela de login.</p>
           <ul>
-            <li>Exibe apenas projetos com status Aprovado, Em Andamento ou Encerrado.</li>
+            <li>Exibe projetos com status Aprovado, Em Andamento, Finalizado ou Encerrado sem conclusão.</li>
             <li>Filtros por status, centro de lotação e curso.</li>
             <li>Campo de busca por título, resumo ou coordenador.</li>
             <li>Botão <strong>"Gerar Relatório PDF"</strong> que exporta os resultados filtrados.</li>
@@ -501,6 +555,7 @@
           <ul>
             <li>Quando um projeto seu é <strong>aprovado ou reprovado</strong> pelo gestor.</li>
             <li>Quando um projeto é <strong>iniciado</strong> (notificação para todos os membros da equipe).</li>
+            <li>Nos marcos de 60, 30, 15, 7, 3 e 1 dia do prazo para anexar a aprovação ética.</li>
             <li>Quando sua conta é <strong>ativada ou inativada</strong> pelo gestor.</li>
           </ul>
           <h6 class="fw-semibold">Gerenciar notificações</h6>
@@ -565,6 +620,19 @@
             {% endfor %}
 
           </div>
+        </div>
+      </section>
+
+      {# ── Sobre o Sistema ─────────────────────────────────────────── #}
+      <section style="scroll-margin-top:80px;border-bottom:1px solid #f0f0f0;" class="pb-2 mb-2" id="sobre-sistema">
+        <div class="d-flex align-items-center gap-2 py-2 border-bottom mb-2">
+          <i class="bi bi-person-badge text-primary fs-5"></i>
+          <h5 class="mb-0 fw-semibold">Sobre o Sistema e o Desenvolvedor</h5>
+        </div>
+        <div class="small pb-3">
+          <p>Este sistema foi desenvolvido por <strong>Douglas Moura Araújo</strong>, bacharel em Sistemas de Informação pela Universidade Federal do Acre, no contexto da disciplina de Estágio Supervisionado.</p>
+          <p>O projeto foi criado para centralizar e tornar mais claro o cadastro, a tramitação, o acompanhamento e a gestão dos projetos institucionais vinculados à PROPEG/UFAC. A plataforma reúne em um mesmo ambiente as atividades de coordenadores, alunos, centros acadêmicos e gestores, reduzindo a dispersão de documentos e facilitando o acompanhamento de cada etapa.</p>
+          <p class="text-muted mb-0">A evolução da plataforma considera as necessidades observadas nos fluxos acadêmicos e administrativos da Universidade Federal do Acre.</p>
         </div>
       </section>
 

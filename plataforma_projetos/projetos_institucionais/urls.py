@@ -25,6 +25,10 @@ urlpatterns = [
     path('projetos/<int:pk>/editar/', views.projeto_editar_iniciar, name='projeto_editar'),
     path('projetos/<int:pk>/deletar/', views.projeto_deletar, name='projeto_deletar'),
     path('projetos/meusprojetos/', views.projeto_dashboard, name='projeto_dashboard'),
+    path('projetos/<int:pk>/reenviar-aprovacao-centro/', views.reenviar_solicitacao_centro, name='reenviar_solicitacao_centro'),
+
+    path('centro/aprovacao/<str:token>/', views.aprovacao_centro, name='aprovacao_centro'),
+    path('centro/aprovacao/<str:token>/projeto/', views.aprovacao_centro_documento, name='aprovacao_centro_documento'),
 
     path('gestor/dashboard/', views.gestor_dashboard, name='gestor_dashboard'),
     path('gestor/usuarios/', views.gerenciar_usuarios, name='gerenciar_usuarios'),
@@ -34,6 +38,7 @@ urlpatterns = [
     path('gestor/usuarios/<int:pk>/deletar/', views.usuario_deletar, name='usuario_deletar'),
     path('gestor/relatorios/', views.listar_relatorios_gestor, name='gestor_relatorios'),
     path('gestor/projetos/historico/', views.historico_projetos, name='historico_projetos'),
+    path('gestor/projetos/cadastrar-existente/', views.gestor_projeto_criar, name='gestor_projeto_criar'),
     path('gestor/projetos/historico/pdf/', views.historico_projetos_pdf, name='historico_projetos_pdf'),
     path('gestor/editais/', views.gestor_listar_editais, name='gestor_listar_editais'),
     path('gestor/editais/novo/', views.gestor_criar_edital, name='gestor_criar_edital'),
@@ -57,6 +62,8 @@ urlpatterns = [
     path('projetos/<int:pk>/anexos/', views.projeto_anexos, name='projeto_anexos'),
     path('projetos/<int:pk>/iniciar/', views.iniciar_projeto, name='iniciar_projeto'),
     path('projetos/<int:pk>/encerrar/', views.encerrar_projeto, name='encerrar_projeto'),
+    path('projetos/<int:pk>/encerrar-sem-conclusao/', views.encerrar_projeto_sem_conclusao, name='encerrar_projeto_sem_conclusao'),
+    path('projetos/<int:pk>/aprovacao-etica/', views.anexar_aprovacao_etica, name='anexar_aprovacao_etica'),
     path('projetos/<int:pk>/encaminhar-conselho/', views.encaminhar_para_conselho, name='encaminhar_para_conselho'),
     path('projetos/anexo/<int:anexo_id>/deletar/', views.deletar_anexo, name='deletar_anexo'),
     path('projetos/relatorios/selecionar/', views.listar_projetos_para_relatorio, name='relatorio_lista_projetos'),
@@ -65,6 +72,7 @@ urlpatterns = [
     path('projetos/<int:pk>/certificado/<int:membro_pk>/', views.gerar_certificado, name='gerar_certificado'),
     path('projetos/<int:pk>/certificados/', views.listar_certificados, name='listar_certificados'),
     path('ajax/load-cursos/', views.load_cursos, name='ajax_load_cursos'),
+    path('ajax/buscar-membros/', views.buscar_membros_equipe, name='ajax_buscar_membros'),
 ]   
 
 if settings.DEBUG:

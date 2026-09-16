@@ -48,7 +48,8 @@
         <thead class="table-light">
           <tr>
             <th>Edital</th>
-            <th class="text-center">Submissões</th>
+            <th class="text-center">Período</th>
+            <th class="text-center">Projetos submetidos</th>
             <th class="text-center">Adendos</th>
             <th class="text-center">Anexos</th>
             <th class="text-center">Ações</th>
@@ -65,6 +66,11 @@
             </td>
             <td class="text-center small text-muted">
               {{ e.data_inicio_submissoes|date:"d/m/Y" }}<br>{{ e.data_fim_submissoes|date:"d/m/Y" }}
+            </td>
+            <td class="text-center">
+              <a href="{% url 'gestor_detalhe_edital' pk=e.pk %}#submissoes" class="badge bg-primary text-decoration-none" title="Visualizar projetos concorrentes">
+                {{ e.total_submissoes }}
+              </a>
             </td>
             <td class="text-center">
               <span class="badge bg-light text-dark border">{{ e.adendos.count }}</span>

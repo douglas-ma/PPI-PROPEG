@@ -10,7 +10,7 @@
   <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
       <h4 class="mb-0">Painel do Gestor</h4>
-      <small class="text-muted">Gerencie projetos que aguardam avaliação ou encerramento</small>
+      <small class="text-muted">Gerencie projetos que aguardam avaliação ou finalização</small>
     </div>
     <div class="d-flex gap-2">
       <a href="{% url 'historico_projetos' %}" class="btn btn-outline-secondary btn-sm">
@@ -44,7 +44,7 @@
       <div class="card border-0 shadow-sm text-center py-3 h-100 {% if aba == 'encerramento' %}border-bottom border-success border-3{% endif %}"
            style="cursor:pointer;" onclick="location.href='?aba=encerramento'">
         <div class="display-6 fw-bold text-success">{{ count_encerramento }}</div>
-        <small class="text-muted">Ag. Encerramento</small>
+        <small class="text-muted">Ag. Finalização</small>
         <small class="text-muted" style="font-size:.7rem;">Relatório final enviado</small>
       </div>
     </div>
@@ -73,7 +73,7 @@
     <li class="nav-item">
       <a class="nav-link {% if aba == 'encerramento' %}active fw-semibold{% else %}text-muted{% endif %}"
          href="?aba=encerramento">
-        Ag. Encerramento
+        Ag. Finalização
         {% if count_encerramento > 0 %}
         <span class="badge bg-success ms-1">{{ count_encerramento }}</span>
         {% endif %}
@@ -113,17 +113,14 @@
               {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
             <td class="text-end">
-              {# Badge de financiamento #}
-              {% if p.agencia_financiadora %}
-              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="Possui financiamento externo: {{ p.agencia_financiadora }}">
-                <i class="bi bi-bank me-1"></i>Financiado
+              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="{{ p.get_tipo_projeto_display }}">
+                <i class="bi bi-diagram-3 me-1"></i>{{ p.get_tipo_projeto_display|truncatechars:28 }}
               </span>
-              {% endif %}
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
-              {# Projetos sem financiamento externo precisam de aprovação do centro #}
-              {% if not p.agencia_financiadora %}
+              {# Apenas o fluxo UFAC com financiamento tramita pelo Centro nesta etapa #}
+              {% if p.requer_tramitacao_centro %}
               <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
                  class="btn btn-sm btn-outline-warning ms-1"
                  title="Encaminhar para o Centro"
@@ -175,6 +172,7 @@
             <th>Título</th>
             <th>Coordenador</th>
             <th>Centro</th>
+            <th>Tipo</th>
             <th class="text-center">Data de Início</th>
             <th class="text-end">Ações</th>
           </tr>
@@ -190,13 +188,9 @@
             <td class="small text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
             <td class="small text-muted">{{ p.centro_lotacao|default:"—" }}</td>
             <td>
-              {% if p.agencia_financiadora %}
-              <span class="badge bg-primary bg-opacity-10 text-primary border" style="font-size:.65rem;">
-                <i class="bi bi-bank me-1"></i>Financiado
+              <span class="badge bg-primary bg-opacity-10 text-primary border" style="font-size:.65rem;" title="{{ p.get_tipo_projeto_display }}">
+                <i class="bi bi-diagram-3 me-1"></i>{{ p.get_tipo_projeto_display|truncatechars:28 }}
               </span>
-              {% else %}
-              <span class="badge bg-secondary bg-opacity-10 text-secondary border" style="font-size:.65rem;">Institucional</span>
-              {% endif %}
             </td>
             <td class="text-center small text-muted">
               {% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}
@@ -228,7 +222,7 @@
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="5" class="text-center text-muted py-4">
+          <tr><td colspan="6" class="text-center text-muted py-4">
             <i class="bi bi-hourglass display-6 opacity-25 d-block mb-2"></i>
             Nenhum projeto aguardando aprovação do centro.
           </td></tr>
@@ -243,7 +237,7 @@
   {% if aba == 'encerramento' %}
   <div class="card border-0 shadow-sm">
     <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-      <strong><i class="bi bi-flag-fill text-success me-2"></i>Aguardando Encerramento</strong>
+      <strong><i class="bi bi-flag-fill text-success me-2"></i>Aguardando Finalização</strong>
       <small class="text-muted">{{ count_encerramento }} projeto{{ count_encerramento|pluralize }}</small>
     </div>
     <div class="table-responsive">
@@ -271,36 +265,29 @@
               {% if p.data_fim %}{{ p.data_fim|date:"d/m/Y" }}{% else %}—{% endif %}
             </td>
             <td class="text-end">
-              {# Badge de financiamento #}
-              {% if p.agencia_financiadora %}
-              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="Possui financiamento externo: {{ p.agencia_financiadora }}">
-                <i class="bi bi-bank me-1"></i>Financiado
+              <span class="badge bg-primary bg-opacity-10 text-primary me-1" title="{{ p.get_tipo_projeto_display }}">
+                <i class="bi bi-diagram-3 me-1"></i>{{ p.get_tipo_projeto_display|truncatechars:28 }}
               </span>
-              {% else %}
-              <span class="badge bg-secondary bg-opacity-10 text-secondary me-1" title="Sem financiamento externo — requer aprovação do centro para encerrar">
-                <i class="bi bi-building me-1"></i>Institucional
-              </span>
-              {% endif %}
               <a href="{% url 'projeto_detalhe' pk=p.pk %}" class="btn btn-sm btn-outline-secondary" title="Ver detalhes">
                 <i class="bi bi-eye"></i>
               </a>
-              {% if p.agencia_financiadora %}
-                {# Com financiamento: encerra diretamente #}
+              {% if not p.requer_tramitacao_centro %}
+                {# Agência de fomento e fluxo contínuo finalizam diretamente #}
                 <button type="button" class="btn btn-sm btn-success ms-1"
                         data-bs-toggle="modal" data-bs-target="#modalConfirmar"
                         data-titulo="{{ p.titulo }}"
                         data-url="{% url 'encerrar_projeto' pk=p.pk %}"
-                        data-acao="Encerrar"
+                        data-acao="Finalizar"
                         data-cor="success">
-                  <i class="bi bi-check-circle me-1"></i>Encerrar
+                  <i class="bi bi-check-circle me-1"></i>Finalizar
                 </button>
               {% else %}
-                {# Sem financiamento: precisa passar pelo centro novamente #}
-                {% if not p.agencia_financiadora %}
+                {# Fluxo UFAC com financiamento pode passar pelo Centro novamente #}
+                {% if p.requer_tramitacao_centro %}
                 <a href="{% url 'encaminhar_para_conselho' pk=p.pk %}"
                    class="btn btn-sm btn-outline-warning ms-1"
-                   title="Encaminhar para aprovação do Centro antes de encerrar"
-                   onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para aprovação do Centro antes do encerramento?')">
+                   title="Encaminhar para aprovação do Centro antes de finalizar"
+                   onclick="return confirm('Encaminhar &quot;{{ p.titulo|truncatechars:40 }}&quot; para aprovação do Centro antes da finalização?')">
                   <i class="bi bi-arrow-right-circle me-1"></i>Centro
                 </a>
                 {% endif %}
@@ -308,9 +295,9 @@
                         data-bs-toggle="modal" data-bs-target="#modalConfirmar"
                         data-titulo="{{ p.titulo }}"
                         data-url="{% url 'encerrar_projeto' pk=p.pk %}"
-                        data-acao="Encerrar"
+                        data-acao="Finalizar"
                         data-cor="success">
-                  <i class="bi bi-check-circle me-1"></i>Encerrar
+                  <i class="bi bi-check-circle me-1"></i>Finalizar
                 </button>
               {% endif %}
             </td>
@@ -318,7 +305,7 @@
           {% empty %}
           <tr><td colspan="5" class="text-center text-muted py-4">
             <i class="bi bi-flag display-6 opacity-25 d-block mb-2"></i>
-            Nenhum projeto aguardando encerramento.
+            Nenhum projeto aguardando finalização.
           </td></tr>
           {% endfor %}
         </tbody>

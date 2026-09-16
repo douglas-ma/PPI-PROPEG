@@ -6,7 +6,7 @@ from django.conf import settings
 from .models import (
     Usuario, Endereco, Titulacao, CentroLotacao, CursoGraduacao, 
     ProgramaPos, TipoEtico, ODS, GrupoPesquisa, AgenciaFinanciadora,
-    Projeto, Documento, Ata, Relatorio, Anexo
+    Projeto, Documento, Ata, Relatorio, Anexo, SolicitacaoAprovacaoCentro
 )
 
 @admin.action(description="Aprovar usuários selecionados e notificar por e-mail")
@@ -62,3 +62,4 @@ admin.site.register(Projeto)
 admin.site.register(Documento)
 admin.site.register(Ata)
 admin.site.register(Relatorio)
+admin.site.register(SolicitacaoAprovacaoCentro)

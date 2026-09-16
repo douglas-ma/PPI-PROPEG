@@ -72,7 +72,7 @@
       <input type="hidden" name="acao" value="novo">
       <button type="button" class="btn btn-outline-secondary w-100"
               data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
-        <i class="bi bi-plus-lg me-2"></i>Criar um projeto novo do zero
+        <i class="bi bi-plus-lg me-2"></i>Iniciar um novo projeto
       </button>
     </form>
 
@@ -100,7 +100,8 @@
     </div>
   </div>
 
-  <div class="alert alert-info border-0 shadow-sm d-flex gap-2 align-items-start mb-4">
+  <div class="alert alert-info border-0 shadow-sm d-flex gap-2 align-items-start mb-4 rascunhos-info-alert"
+       style="height: auto !important; min-height: 0; flex: 0 0 auto;">
     <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
     <div class="small">
       Você tem <strong>{{ total_rascunhos }} rascunhos</strong> no total. Para continuar um rascunho específico,
@@ -125,7 +126,7 @@
     {# Criar novo #}
     <button type="button" class="btn btn-outline-secondary w-100"
             data-bs-toggle="modal" data-bs-target="#modalNovoProjeto">
-      <i class="bi bi-plus-lg me-2"></i>Criar um projeto novo do zero
+      <i class="bi bi-plus-lg me-2"></i>Iniciar um novo projeto
     </button>
 
     {# Cancelar #}
@@ -148,12 +149,10 @@
              style="width:56px; height:56px;">
           <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size:1.5rem;"></i>
         </div>
-        <h5 class="mb-2">Criar projeto novo?</h5>
+        <h5 class="mb-2">Iniciar um novo projeto?</h5>
         <p class="text-muted small mb-4">
-          Seus rascunho{{ total_rascunhos|pluralize }} existente{{ total_rascunhos|pluralize }}
-          continuará{{ total_rascunhos|pluralize:"ão,á" }} salvo{{ total_rascunhos|pluralize }} e
-          poderá{{ total_rascunhos|pluralize:"ão,á" }} ser acessado{{ total_rascunhos|pluralize }}
-          na aba de Rascunhos. Deseja continuar?
+          O novo projeto será iniciado sem utilizar nenhum dos rascunhos existentes.<br>
+          Seus rascunhos existentes continuarão salvos e poderão ser acessados na aba de Rascunhos. Deseja continuar?
         </p>
         <div class="d-flex justify-content-center gap-3">
           <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">

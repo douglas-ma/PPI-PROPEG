@@ -4,8 +4,18 @@ html, body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.d-flex {
+/* Mantém apenas o layout principal ocupando toda a altura da janela.
+   Aplicar height: 100% a todo .d-flex também estica alertas, cards e linhas
+   internas que deveriam manter a altura natural do conteúdo. */
+body > .d-flex {
     height: 100%;
+}
+
+/* Avisos devem acompanhar o conteúdo, mesmo quando usam display flex. */
+.rascunhos-info-alert {
+    height: auto !important;
+    min-height: 0;
+    flex: 0 0 auto;
 }
 
 #sidebar {

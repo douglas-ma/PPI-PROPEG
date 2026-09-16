@@ -170,5 +170,8 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
+# Convites de uso único enviados aos Centros de Estudos (7 dias).
+APROVACAO_CENTRO_LINK_HORAS = 168
+
 import mimetypes
 mimetypes.add_type("application/pdf", ".pdf")

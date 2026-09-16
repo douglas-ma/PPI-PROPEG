@@ -39,6 +39,7 @@ table.dados tbody td { padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; verti
 .b-andamento { background: #d1fae5; color: #065f46; }
 .b-aprovado  { background: #dbeafe; color: #1e40af; }
 .b-encerrado { background: #f3f4f6; color: #374151; }
+.b-finalizado { background: #dcfce7; color: #166534; }
 
 .rodape { margin-top: 10pt; font-size: 7.5pt; color: #aaa; text-align: right; }
 </style>
@@ -71,10 +72,11 @@ table.dados tbody td { padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; verti
   <thead>
     <tr>
       <th style="width:4%;">#</th>
-      <th style="width:28%;">Título</th>
-      <th style="width:16%;">Coordenador</th>
-      <th style="width:16%;">Centro de Lotação</th>
-      <th style="width:12%;">Curso</th>
+      <th style="width:22%;">Título</th>
+      <th style="width:13%;">Coordenador</th>
+      <th style="width:17%;">Tipo do Projeto</th>
+      <th style="width:11%;">Centro de Lotação</th>
+      <th style="width:9%;">Curso</th>
       <th style="width:8%;">Início</th>
       <th style="width:8%;">Fim</th>
       <th style="width:8%;">Status</th>
@@ -86,6 +88,7 @@ table.dados tbody td { padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; verti
       <td>{{ forloop.counter }}</td>
       <td><strong>{{ p.titulo }}</strong></td>
       <td>{{ p.coordenador.get_full_name }}</td>
+      <td>{{ p.get_tipo_projeto_display|default:"—" }}</td>
       <td>{{ p.centro_lotacao|default:"—" }}</td>
       <td>{{ p.curso|default:"—" }}</td>
       <td>{% if p.data_inicio %}{{ p.data_inicio|date:"d/m/Y" }}{% else %}—{% endif %}</td>
@@ -93,11 +96,12 @@ table.dados tbody td { padding: 4pt 6pt; border-bottom: 1px solid #e5e5e5; verti
       <td>
         {% if p.status == 'em_andamento' %}<span class="badge b-andamento">Em andamento</span>
         {% elif p.status == 'aprovado' %}<span class="badge b-aprovado">Aprovado</span>
-        {% else %}<span class="badge b-encerrado">Encerrado</span>{% endif %}
+        {% elif p.status == 'finalizado' %}<span class="badge b-finalizado">Finalizado</span>
+        {% else %}<span class="badge b-encerrado">Encerrado sem conclusão</span>{% endif %}
       </td>
     </tr>
     {% empty %}
-    <tr><td colspan="8" style="text-align:center;padding:12pt;color:#888;">Nenhum projeto encontrado.</td></tr>
+    <tr><td colspan="9" style="text-align:center;padding:12pt;color:#888;">Nenhum projeto encontrado.</td></tr>
     {% endfor %}
   </tbody>
 </table>

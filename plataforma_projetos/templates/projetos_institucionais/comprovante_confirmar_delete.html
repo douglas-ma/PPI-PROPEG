@@ -16,7 +16,8 @@
                 {% csrf_token %}
                 <div class="mt-4">
                     <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-secondary">Cancelar</a>
-                    <button type="submit" class="btn btn-danger float-end">Sim, Excluir</button>
+                    <button type="submit" class="btn btn-danger float-end"
+                            data-confirmation-help="Confirmar a exclusão definitiva deste comprovante">Sim, Excluir</button>
                 </div>
             </form>
         </div>

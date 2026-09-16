@@ -102,6 +102,7 @@ else:
 EMAIL_BACKEND      = 'django.core.mail.backends.dummy.EmailBackend'
 BREVO_API_KEY      = config('BREVO_API_KEY', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@propeg.ufac.br')
+APROVACAO_CENTRO_LINK_HORAS = config('APROVACAO_CENTRO_LINK_HORAS', default=168, cast=int)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Segurança HTTPS

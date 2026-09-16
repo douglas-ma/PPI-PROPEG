@@ -16,7 +16,8 @@
     <form method="post">
         {% csrf_token %}
         <a href="{% url 'gerenciar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
-        <button type="submit" class="btn btn-danger float-end">Sim, excluir usuário</button>
+        <button type="submit" class="btn btn-danger float-end"
+                data-confirmation-help="Confirmar a exclusão definitiva deste usuário">Sim, excluir usuário</button>
     </form>
 </div>
 {% endblock %}

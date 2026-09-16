@@ -148,32 +148,59 @@
         {% endif %}
       </div>
 
-      {# Projetos vinculados #}
-      <div class="card border-0 shadow-sm">
+      {# Indicador de concorrência #}
+      <div class="card border-0 shadow-sm" id="submissoes">
         <div class="card-header bg-white border-bottom py-3 d-flex justify-content-between align-items-center">
-          <strong><i class="bi bi-folder2 text-primary me-2"></i>Projetos Vinculados</strong>
-          <span class="badge bg-primary bg-opacity-10 text-primary">{{ edital.projeto_set.count }}</span>
+          <strong><i class="bi bi-bar-chart text-primary me-2"></i>Projetos concorrentes</strong>
+          <span class="badge bg-primary">{{ total_submissoes }}</span>
         </div>
-        {% with projetos=edital.projeto_set.all %}
-        {% if projetos %}
-        <ul class="list-group list-group-flush small">
-          {% for p in projetos %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ p.titulo|truncatechars:40 }}</span>
-            {% if p.status == 'em_andamento' %}<span class="badge bg-success bg-opacity-10 text-success">Em andamento</span>
-            {% elif p.status == 'submetido' %}<span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
-            {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
-            {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
-          </li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <div class="card-body text-center text-muted small py-3">Nenhum projeto vinculado.</div>
-        {% endif %}
-        {% endwith %}
+        <div class="card-body">
+          <p class="small text-muted">Projetos UFAC com financiamento efetivamente submetidos a este edital. Rascunhos não entram na contagem.</p>
+          <div class="row g-2 text-center small">
+            <div class="col-4"><div class="border rounded p-2"><strong class="d-block text-primary">{{ resumo_status.submetido }}</strong>Submetidos</div></div>
+            <div class="col-4"><div class="border rounded p-2"><strong class="d-block text-success">{{ resumo_status.aprovado }}</strong>Aprovados</div></div>
+            <div class="col-4"><div class="border rounded p-2"><strong class="d-block text-danger">{{ resumo_status.reprovado }}</strong>Reprovados</div></div>
+          </div>
+        </div>
       </div>
 
     </div>
+  </div>
+
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white py-3"><strong><i class="bi bi-people me-2 text-primary"></i>Submissões para o edital</strong></div>
+    <div class="card-body border-bottom">
+      <form method="get" class="row g-2">
+        <div class="col-md-7"><input type="search" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por projeto, coordenador ou CPF"></div>
+        <div class="col-md-3"><select name="status" class="form-select"><option value="">Todos os status</option>{% for value, label in status_choices %}<option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+        <div class="col-md-2"><button class="btn btn-primary w-100" type="submit"><i class="bi bi-search me-1"></i>Buscar</button></div>
+      </form>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0 small">
+        <thead class="table-light"><tr><th>Projeto</th><th>Coordenador</th><th>Centro</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          {% for p in page_obj %}
+          <tr>
+            <td class="fw-semibold">{{ p.titulo }}</td>
+            <td>{{ p.coordenador.get_full_name|default:p.coordenador.username }}</td>
+            <td>{{ p.centro_lotacao|default:"—" }}</td>
+            <td><span class="badge {% if p.status == 'aprovado' or p.status == 'em_andamento' or p.status == 'finalizado' %}bg-success{% elif p.status == 'reprovado' %}bg-danger{% elif p.status == 'submetido' %}bg-primary{% else %}bg-secondary{% endif %}">{{ p.get_status_display }}</span></td>
+            <td><a href="{% url 'projeto_detalhe' p.pk %}" class="btn btn-sm btn-outline-primary" title="Abrir detalhes"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% empty %}<tr><td colspan="5" class="text-center text-muted py-4">Nenhuma submissão encontrada.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if page_obj.has_other_pages %}
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center small">
+      <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+      <div class="btn-group btn-group-sm">
+        {% if page_obj.has_previous %}<a class="btn btn-outline-secondary" href="?q={{ q|urlencode }}&status={{ status_filter }}&page={{ page_obj.previous_page_number }}#submissoes">Anterior</a>{% endif %}
+        {% if page_obj.has_next %}<a class="btn btn-outline-secondary" href="?q={{ q|urlencode }}&status={{ status_filter }}&page={{ page_obj.next_page_number }}#submissoes">Próxima</a>{% endif %}
+      </div>
+    </div>
+    {% endif %}
   </div>
 
 </div>

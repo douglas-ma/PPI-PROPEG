@@ -110,7 +110,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const addFormBtn = document.getElementById('add-form-btn');
     const totalFormsInput = document.querySelector('input[name="form-TOTAL_FORMS"]'); // Seletor mais robusto
-    const emptyFormTemplate = document.getElementById('empty-form-template').querySelector('tr');
+    const emptyFormElement = document.getElementById('empty-form-template');
+    if (!addFormBtn || !totalFormsInput || !emptyFormElement) return;
+    const emptyFormTemplate = emptyFormElement.querySelector('tr');
+    if (!emptyFormTemplate) return;
 
     // --- LÓGICA PARA ADICIONAR ---
     addFormBtn.addEventListener('click', function() {
@@ -189,11 +192,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const addFormBtn = document.getElementById('add-form-btn');
     const formsetContainer = document.getElementById('equipe-formset-container');
-    const emptyFormTemplate = document.getElementById('empty-form-template').innerHTML;
+    const emptyFormElement = document.getElementById('empty-form-template');
+    const emptyFormTemplate = emptyFormElement ? emptyFormElement.innerHTML : '';
     const totalFormsInput = document.querySelector('#id_form-TOTAL_FORMS');
 
     if (formsetContainer){
-        if (addFormBtn) {
+        if (addFormBtn && emptyFormTemplate && totalFormsInput) {
             addFormBtn.addEventListener('click', function() {
                 let currentFormCount = formsetContainer.children.length;
                 let newFormHtml = emptyFormTemplate.replace(/__prefix__/g, currentFormCount);
@@ -262,4 +266,42 @@ document.addEventListener('DOMContentLoaded', function () {
     // O prefixo '1-' é adicionado pelo form wizard
     setupConditionalField('1-etica_obrigatoria', '1-tipo_etica', 'True');
     setupConditionalField('1-participa_pos_graduacao', '1-programa_pos', 'True');
+});
+
+// Dica visual padronizada para ações que pedem confirmação.
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return;
+
+    var seletores = [
+        '[data-confirmation-help]',
+        '[onclick*="confirm("]',
+        'form[onsubmit*="confirm("]',
+        '[data-bs-target*="Confirm"]',
+        '[data-bs-target*="confirm"]',
+        '[data-bs-target*="Excluir"]',
+        '[data-bs-target="#modalNovoProjeto"]'
+    ].join(',');
+
+    document.querySelectorAll(seletores).forEach(function (elemento) {
+        var alvo = elemento;
+        if (elemento.tagName === 'FORM') {
+            alvo = elemento.querySelector('button[type="submit"], input[type="submit"]');
+        }
+        if (!alvo || alvo.dataset.confirmationTooltipReady === 'true') return;
+
+        var mensagem = elemento.getAttribute('data-confirmation-help')
+            || alvo.getAttribute('data-confirmation-help')
+            || alvo.getAttribute('title');
+        if (!mensagem && elemento.dataset.acao) {
+            mensagem = 'Confirmar a ação: ' + elemento.dataset.acao.toLowerCase() + '.';
+        }
+        mensagem = mensagem || 'Esta ação solicitará confirmação antes de continuar.';
+        alvo.dataset.confirmationTooltipReady = 'true';
+        alvo.setAttribute('aria-label', alvo.getAttribute('aria-label') || mensagem);
+        new bootstrap.Tooltip(alvo, {
+            title: mensagem,
+            trigger: 'hover focus',
+            container: 'body'
+        });
+    });
 });

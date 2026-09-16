@@ -32,8 +32,8 @@
     </div>
     <div class="col-6 col-md-4">
       <div class="card border-0 shadow-sm text-center py-3">
-        <div class="display-6 fw-bold text-secondary">{{ encerrados }}</div>
-        <small class="text-muted">Encerrados</small>
+        <div class="display-6 fw-bold text-success">{{ finalizados }}</div>
+        <small class="text-muted">Finalizados</small>
       </div>
     </div>
   </div>
@@ -58,7 +58,8 @@
             <option value="em_andamento" {% if status_f == 'em_andamento' %}selected{% endif %}>Em Andamento</option>
             <option value="submetido"    {% if status_f == 'submetido'    %}selected{% endif %}>Submetido</option>
             <option value="aprovado"     {% if status_f == 'aprovado'     %}selected{% endif %}>Aprovado</option>
-            <option value="encerrado"    {% if status_f == 'encerrado'    %}selected{% endif %}>Encerrado</option>
+            <option value="finalizado"   {% if status_f == 'finalizado'   %}selected{% endif %}>Finalizado</option>
+            <option value="encerrado"    {% if status_f == 'encerrado'    %}selected{% endif %}>Encerrado sem conclusão</option>
           </select>
         </div>
         <div class="col-md-2 d-flex gap-1">
@@ -114,8 +115,10 @@
                 <span class="badge bg-primary bg-opacity-10 text-primary">Submetido</span>
               {% elif part.projeto.status == 'aprovado' %}
                 <span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
+              {% elif part.projeto.status == 'finalizado' %}
+                <span class="badge bg-success bg-opacity-10 text-success">Finalizado</span>
               {% elif part.projeto.status == 'encerrado' %}
-                <span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+                <span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado sem conclusão</span>
               {% elif part.projeto.status == 'aguardando_conselho' %}
                 <span class="badge bg-warning bg-opacity-10 text-warning">Ag. Centro</span>
               {% else %}

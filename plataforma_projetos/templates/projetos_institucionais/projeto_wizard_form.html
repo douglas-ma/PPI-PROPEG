@@ -40,7 +40,11 @@
                 <div class="col-6 col-md-4 col-lg-3">
                     <label class="ods-card">
                         <input type="checkbox" name="{{ wizard.form.ods.html_name }}" value="{{ ods.id }}" {% if ods.id|stringformat:"s" in wizard.form.ods.value|stringformat:"s" %}checked{% endif %}>
+                        {% if ods.imagem %}
                         <img src="{{ ods.imagem.url }}" alt="{{ ods.titulo }}" class="img-fluid">
+                        {% else %}
+                        <span class="d-flex align-items-center justify-content-center bg-light text-muted" style="min-height:72px;">{{ ods.titulo }}</span>
+                        {% endif %}
                         <span>{{ ods.titulo }}</span>
                     </label>
                 </div>
@@ -68,7 +72,7 @@
                     <tr class="equipe-form-row">
                         {{ form.id }}
                         <td>{{ form.membro }}</td>
-                        <td>{{ form.instance.membro.get_perfil_display }}</td>
+                        <td>{{ form.instance.perfil_exibicao }}</td>
                         <td>{{ form.carga_horaria_semanal }}</td>
                         <td>{{ form.carga_horaria_total }}</td>
                         <td class="text-center">

@@ -12,7 +12,7 @@
       <h4 class="mb-0">Certificados</h4>
       <small class="text-muted">{{ projeto.titulo|truncatechars:70 }}</small>
     </div>
-    {% if projeto.status == 'encerrado' %}
+    {% if projeto.status == 'finalizado' %}
     <span class="badge bg-success py-2 px-3"><i class="bi bi-check-circle me-1"></i>Projeto Concluído</span>
     {% else %}
     <span class="badge bg-warning text-dark py-2 px-3"><i class="bi bi-hourglass-split me-1"></i>Em Andamento</span>
@@ -22,7 +22,7 @@
   <div class="alert alert-info d-flex gap-2 py-2 mb-4">
     <i class="bi bi-info-circle-fill flex-shrink-0 mt-1"></i>
     <span class="small">
-      {% if projeto.status == 'encerrado' %}
+      {% if projeto.status == 'finalizado' %}
         Os certificados abaixo são de <strong>conclusão</strong>. Clique em "Gerar Certificado" para baixar o PDF individual de cada participante.
       {% else %}
         Os certificados abaixo são de <strong>participação</strong> (projeto em andamento). O certificado indica que o projeto ainda está em execução.
@@ -43,7 +43,7 @@
           <i class="bi bi-person text-primary"></i>
         </div>
         <div class="flex-grow-1">
-          <div class="fw-semibold">{{ m.usuario.get_full_name }}</div>
+          <div class="fw-semibold">{{ m.nome }}</div>
           <div class="small text-muted">
             <span class="badge bg-light text-dark border me-1">{{ m.funcao }}</span>
             {% if m.carga_horaria_total %}
@@ -51,12 +51,16 @@
             {% endif %}
           </div>
         </div>
-        <a href="{% url 'gerar_certificado' pk=projeto.pk membro_pk=m.pk %}"
-           target="_blank"
-           class="btn btn-sm {% if projeto.status == 'encerrado' %}btn-success{% else %}btn-outline-primary{% endif %} flex-shrink-0">
-          <i class="bi bi-award me-1"></i>
-          {% if projeto.status == 'encerrado' %}Certificado de Conclusão{% else %}Certificado de Participação{% endif %}
-        </a>
+        {% if m.pk %}
+          <a href="{% url 'gerar_certificado' pk=projeto.pk membro_pk=m.pk %}"
+             target="_blank"
+             class="btn btn-sm {% if projeto.status == 'finalizado' %}btn-success{% else %}btn-outline-primary{% endif %} flex-shrink-0">
+            <i class="bi bi-award me-1"></i>
+            {% if projeto.status == 'finalizado' %}Certificado de Conclusão{% else %}Certificado de Participação{% endif %}
+          </a>
+        {% else %}
+          <span class="badge bg-light text-muted border">Sem conta no sistema</span>
+        {% endif %}
       </li>
       {% endfor %}
     </ul>

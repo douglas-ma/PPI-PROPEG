@@ -109,14 +109,14 @@
                                 
                                 {% for membro_equipe in projeto.equipe.all %}
                                 <tr>
-                                    <td>{{ membro_equipe.membro.get_full_name }}</td>
+                                    <td>{{ membro_equipe.nome_exibicao }}</td>
                                     <td><span class="badge bg-secondary">Membro da Equipe</span></td>
-                                    <td>{{ membro_equipe.membro.cpf }}</td>
-                                    <td>{{ membro_equipe.membro.curso|default:"Não informado" }}</td>
+                                    <td>{{ membro_equipe.cpf_exibicao }}</td>
+                                    <td>{{ membro_equipe.curso_exibicao }}</td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center text-muted">Nenhum aluno vinculado à equipe.</td>
+                                    <td colspan="4" class="text-center text-muted">Nenhum membro vinculado à equipe.</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

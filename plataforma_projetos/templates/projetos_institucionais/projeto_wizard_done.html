@@ -18,19 +18,34 @@
         </div>
       </div>
 
-      <h3 class="fw-bold mb-2">Projeto Submetido com Sucesso!</h3>
+      <h3 class="fw-bold mb-2">
+        {% if encaminhado_centro %}Projeto enviado ao Centro!{% else %}Projeto Submetido com Sucesso!{% endif %}
+      </h3>
       <p class="text-muted mb-4">
-        O projeto <strong>"{{ projeto.titulo }}"</strong> foi enviado para análise.<br>
-        Você receberá uma notificação quando houver uma atualização de status.
+        {% if encaminhado_centro %}
+          O projeto <strong>"{{ projeto.titulo }}"</strong> foi encaminhado ao Centro de Lotação.<br>
+          O responsável receberá um link restrito para anexar a ata de aprovação. Depois, o projeto seguirá automaticamente para a PROPEG.
+        {% else %}
+          O projeto <strong>"{{ projeto.titulo }}"</strong> foi enviado para análise.<br>
+          Você receberá uma notificação quando houver uma atualização de status.
+        {% endif %}
       </p>
 
       {# Linha de status do fluxo #}
       <div class="d-flex justify-content-center align-items-center gap-2 mb-4 flex-wrap">
+        {% if encaminhado_centro %}
+        <span class="badge bg-warning text-dark px-3 py-2">
+          <i class="bi bi-building me-1"></i>Aguardando Centro
+        </span>
+        <i class="bi bi-arrow-right text-muted"></i>
+        <span class="badge bg-light text-muted border px-3 py-2">Análise PROPEG</span>
+        {% else %}
         <span class="badge bg-success px-3 py-2">
           <i class="bi bi-check-lg me-1"></i>Submetido
         </span>
         <i class="bi bi-arrow-right text-muted"></i>
         <span class="badge bg-light text-muted border px-3 py-2">Em análise</span>
+        {% endif %}
         <i class="bi bi-arrow-right text-muted"></i>
         <span class="badge bg-light text-muted border px-3 py-2">Aprovado</span>
         <i class="bi bi-arrow-right text-muted"></i>
@@ -40,6 +55,10 @@
       {# Resumo do projeto #}
       <div class="text-start bg-light rounded p-3 mb-4 small">
         <div class="row g-2">
+          <div class="col-sm-6">
+            <span class="text-muted">Tipo do Projeto</span><br>
+            <strong>{{ projeto.get_tipo_projeto_display|default:"—" }}</strong>
+          </div>
           {% if projeto.centro_lotacao %}
           <div class="col-sm-6">
             <span class="text-muted">Centro de Lotação</span><br>

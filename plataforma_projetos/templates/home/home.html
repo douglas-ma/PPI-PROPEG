@@ -510,8 +510,11 @@
     }
     mascaraCPF(document.getElementById('cpf'));
     mascaraCPF(document.getElementById('cpf-senha'));
-    var cpfReg = document.querySelector('[name="cpf"]');
-    if (cpfReg && cpfReg !== document.getElementById('cpf') && cpfReg !== document.getElementById('cpf-senha')) mascaraCPF(cpfReg);
+    var cpfReg = document.getElementById('id_cpf');
+    if (cpfReg) {
+      cpfReg.setAttribute('maxlength', '14');
+      mascaraCPF(cpfReg);
+    }
   </script>
 </body>
 </html>

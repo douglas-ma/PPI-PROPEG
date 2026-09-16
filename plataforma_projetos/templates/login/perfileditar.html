@@ -194,7 +194,7 @@
       <div class="card-body">
         <div class="row g-3">
           <div class="col-md-6">
-            <label class="form-label fw-semibold">Titulação</label>
+            <label class="form-label fw-semibold">Titulação Máxima</label>
             <select name="{{ user_form.titulacao.html_name }}"
                     class="form-select {% if user_form.titulacao.errors %}is-invalid{% endif %}">
               <option value="">Selecione a titulação</option>
@@ -208,10 +208,13 @@
           </div>
           <div class="col-md-6">
             <label class="form-label fw-semibold">Regime de Trabalho</label>
-            <input type="text" name="{{ user_form.regime_trabalho.html_name }}"
-                   value="{{ user_form.regime_trabalho.value|default:'' }}"
-                   class="form-control {% if user_form.regime_trabalho.errors %}is-invalid{% endif %}"
-                   placeholder="Ex: 20h, 40h, DE">
+            <select name="{{ user_form.regime_trabalho.html_name }}"
+                    id="{{ user_form.regime_trabalho.id_for_label }}"
+                    class="form-select {% if user_form.regime_trabalho.errors %}is-invalid{% endif %}">
+              {% for val, label in user_form.fields.regime_trabalho.choices %}
+                <option value="{{ val }}" {% if user_form.regime_trabalho.value|stringformat:"s" == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
             {% if user_form.regime_trabalho.errors %}<div class="invalid-feedback">{{ user_form.regime_trabalho.errors }}</div>{% endif %}
           </div>
         </div>

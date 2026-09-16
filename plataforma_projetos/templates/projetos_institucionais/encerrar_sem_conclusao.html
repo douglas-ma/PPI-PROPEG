@@ -1,0 +1,20 @@
+{% extends "base2.html" %}
+{% block title %}Encerrar Projeto sem Conclusão{% endblock %}
+{% block content %}
+<div class="container py-4" style="max-width:720px;">
+  <a href="{% url 'projeto_detalhe' projeto.pk %}" class="btn btn-outline-secondary btn-sm mb-3"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+  <div class="card border-danger shadow-sm">
+    <div class="card-header bg-danger bg-opacity-10 text-danger py-3"><strong>Encerrar projeto sem conclusão</strong></div>
+    <div class="card-body p-4">
+      <p>Esta ação marcará <strong>{{ projeto.titulo }}</strong> como encerrado sem conclusão. O motivo ficará registrado no histórico e o coordenador será notificado.</p>
+      <form method="post" onsubmit="return confirm('Confirmar o encerramento sem conclusão?')" data-confirmation-help="Registrar o encerramento excepcional e notificar o coordenador">
+        {% csrf_token %}
+        <label class="form-label fw-semibold" for="{{ form.motivo.id_for_label }}">{{ form.motivo.label }}</label>
+        <textarea name="{{ form.motivo.html_name }}" id="{{ form.motivo.id_for_label }}" rows="5" maxlength="2000" class="form-control {% if form.motivo.errors %}is-invalid{% endif %}" required>{{ form.motivo.value|default:'' }}</textarea>
+        {% if form.motivo.errors %}<div class="invalid-feedback">{{ form.motivo.errors|striptags }}</div>{% endif %}
+        <button class="btn btn-danger mt-4" type="submit"><i class="bi bi-x-octagon me-1"></i>Confirmar encerramento</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

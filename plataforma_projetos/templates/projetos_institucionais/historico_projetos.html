@@ -11,34 +11,43 @@
       <h4 class="mb-0">Histórico de Projetos</h4>
       <small class="text-muted">Todos os projetos submetidos na plataforma</small>
     </div>
-    {# Botão gerar PDF — preserva todos os filtros ativos #}
-    <a href="{% url 'historico_projetos_pdf' %}?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for s in status_filters %}&status={{ s }}{% endfor %}{% for c in centro_filters %}&centro={{ c }}{% endfor %}{% for c in curso_filters %}&curso={{ c }}{% endfor %}&financiamento={{ financiamento_filter }}"
-       class="btn btn-danger btn-sm" target="_blank">
-      <i class="bi bi-file-earmark-pdf me-1"></i>Gerar Relatório PDF
-    </a>
+    <div class="d-flex gap-2">
+      <a href="{% url 'gestor_projeto_criar' %}" class="btn btn-primary btn-sm"><i class="bi bi-database-add me-1"></i>Cadastrar Projeto Existente</a>
+      {# Botão gerar PDF — preserva todos os filtros ativos #}
+      <a href="{% url 'historico_projetos_pdf' %}?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for s in status_filters %}&status={{ s }}{% endfor %}{% for c in centro_filters %}&centro={{ c }}{% endfor %}{% for c in curso_filters %}&curso={{ c }}{% endfor %}{% for ods in ods_filters %}&ods={{ ods }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}"
+         class="btn btn-danger btn-sm" target="_blank">
+        <i class="bi bi-file-earmark-pdf me-1"></i>Gerar Relatório PDF
+      </a>
+    </div>
   </div>
 
   {# Contadores #}
   <div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md">
       <div class="card border-0 shadow-sm text-center py-3">
         <div class="fs-3 fw-bold text-primary">{{ contadores.total }}</div>
         <small class="text-muted">Total de Projetos</small>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md">
       <div class="card border-0 shadow-sm text-center py-3">
         <div class="fs-3 fw-bold text-success">{{ contadores.andamento }}</div>
         <small class="text-muted">Em Andamento</small>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md">
       <div class="card border-0 shadow-sm text-center py-3">
-        <div class="fs-3 fw-bold text-secondary">{{ contadores.encerrados }}</div>
-        <small class="text-muted">Encerrados</small>
+        <div class="fs-3 fw-bold text-success">{{ contadores.finalizados }}</div>
+        <small class="text-muted">Finalizados</small>
       </div>
     </div>
-    <div class="col-6 col-md-3">
+    <div class="col-6 col-md">
+      <div class="card border-0 shadow-sm text-center py-3">
+        <div class="fs-3 fw-bold text-secondary">{{ contadores.encerrados }}</div>
+        <small class="text-muted">Encerrados sem conclusão</small>
+      </div>
+    </div>
+    <div class="col-6 col-md">
       <div class="card border-0 shadow-sm text-center py-3">
         <div class="fs-3 fw-bold text-warning">{{ contadores.submetidos }}</div>
         <small class="text-muted">Submetidos</small>
@@ -152,13 +161,45 @@
           </div>
         </div>
 
-        {# Financiamento #}
+        {# Tipo do projeto #}
         <div class="col-md-2">
-          <label class="form-label small text-muted mb-1">Financiamento</label>
-          <select name="financiamento" class="form-select form-select-sm">
+          <label class="form-label small text-muted mb-1">Tipo do Projeto</label>
+          <select name="tipo_projeto" class="form-select form-select-sm">
             <option value="">Todos</option>
-            <option value="sim" {% if financiamento_filter == 'sim' %}selected{% endif %}>Com financiamento</option>
-            <option value="nao" {% if financiamento_filter == 'nao' %}selected{% endif %}>Sem financiamento</option>
+            {% for valor, rotulo in tipo_projeto_choices %}
+            <option value="{{ valor }}" {% if tipo_projeto_filter == valor %}selected{% endif %}>{{ rotulo }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# ODS — multi-select dropdown #}
+        <div class="col-md-2">
+          <label class="form-label small text-muted mb-1">
+            Vínculo com ODS
+            {% if ods_filters %}<span class="badge bg-primary ms-1" style="font-size:.65rem;">{{ ods_filters|length }}</span>{% endif %}
+          </label>
+          <div class="dropdown w-100">
+            <button type="button"
+                    class="btn btn-sm btn-outline-secondary dropdown-toggle w-100 d-flex justify-content-between align-items-center"
+                    data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"
+                    style="font-size:.8rem;">
+              {% if ods_filters %}{{ ods_filters|length }} selecionado{{ ods_filters|length|pluralize }}{% else %}Todos{% endif %}
+            </button>
+            <ul class="dropdown-menu w-100 p-2" style="max-height:260px;overflow-y:auto;min-width:280px;">
+              {% for ods in ods_disponiveis %}
+              <li>
+                <label class="dropdown-item d-flex align-items-center gap-2 py-1 px-2" style="cursor:pointer;white-space:normal;">
+                  <input type="checkbox" name="ods" value="{{ ods.pk }}" class="form-check-input m-0"
+                         {% if ods.pk|stringformat:"s" in ods_filters %}checked{% endif %}>
+                  <span style="font-size:.82rem;">{{ ods.titulo }}</span>
+                </label>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+          <select name="ods_match" class="form-select form-select-sm mt-1" title="Escolha como combinar as ODS selecionadas">
+            <option value="all" {% if ods_match == 'all' %}selected{% endif %}>Todas as ODS (AND)</option>
+            <option value="any" {% if ods_match == 'any' %}selected{% endif %}>Qualquer ODS (OR)</option>
           </select>
         </div>
 
@@ -179,7 +220,7 @@
           <button type="submit" class="btn btn-primary btn-sm flex-grow-1">
             <i class="bi bi-funnel"></i>
           </button>
-          {% if query or status_filters or data_inicio_filter or centro_filters or curso_filters or financiamento_filter %}
+          {% if query or status_filters or data_inicio_filter or centro_filters or curso_filters or tipo_projeto_filter_label or ods_filters %}
           <a href="{% url 'historico_projetos' %}{% if per_page != 10 %}?per_page={{ per_page }}{% endif %}"
              class="btn btn-outline-secondary btn-sm" title="Limpar filtros">
             <i class="bi bi-x"></i>
@@ -189,7 +230,7 @@
       </div>
 
       {# Tags dos filtros ativos #}
-      {% if status_filters or centro_filters or curso_filters or data_inicio_filter or query or financiamento_filter %}
+      {% if status_filters or centro_filters or curso_filters or ods_filters or data_inicio_filter or query or tipo_projeto_filter_label %}
       <div class="d-flex flex-wrap gap-1 mt-2">
         {% if query %}
         <span class="badge bg-light text-dark border small">
@@ -216,6 +257,19 @@
           <span class="badge bg-success bg-opacity-10 text-success border small">{{ c.nome }}</span>
           {% endif %}
         {% endfor %}
+        {% if tipo_projeto_filter_label %}
+        <span class="badge bg-primary bg-opacity-10 text-primary border small">{{ tipo_projeto_filter_label }}</span>
+        {% endif %}
+        {% for ods in ods_disponiveis %}
+          {% if ods.pk|stringformat:"s" in ods_filters %}
+          <span class="badge bg-success bg-opacity-10 text-success border small">
+            <i class="bi bi-globe2 me-1"></i>{{ ods.titulo }}
+          </span>
+          {% endif %}
+        {% endfor %}
+        {% if ods_filters %}
+        <span class="badge bg-light text-dark border small">{% if ods_match == 'any' %}Qualquer ODS (OR){% else %}Todas as ODS (AND){% endif %}</span>
+        {% endif %}
       </div>
       {% endif %}
 
@@ -234,32 +288,32 @@
           <tr>
             {% with pp=per_page|stringformat:"s" %}
             <th>
-              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={% if sort_by == 'titulo' %}-titulo{% else %}titulo{% endif %}"
+              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={% if sort_by == 'titulo' %}-titulo{% else %}titulo{% endif %}"
                  class="text-decoration-none text-dark d-flex align-items-center gap-1">
                 Título <i class="bi bi-arrow-{% if sort_by == 'titulo' %}up{% elif sort_by == '-titulo' %}down{% else %}up-down text-muted{% endif %} small"></i>
               </a>
             </th>
             <th>
-              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={% if sort_by == 'coordenador__first_name' %}-coordenador__first_name{% else %}coordenador__first_name{% endif %}"
+              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={% if sort_by == 'coordenador__first_name' %}-coordenador__first_name{% else %}coordenador__first_name{% endif %}"
                  class="text-decoration-none text-dark d-flex align-items-center gap-1">
                 Coordenador <i class="bi bi-arrow-{% if sort_by == 'coordenador__first_name' %}up{% elif sort_by == '-coordenador__first_name' %}down{% else %}up-down text-muted{% endif %} small"></i>
               </a>
             </th>
             <th>Centro / Curso</th>
             <th>
-              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={% if sort_by == 'data_inicio' %}-data_inicio{% else %}data_inicio{% endif %}"
+              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={% if sort_by == 'data_inicio' %}-data_inicio{% else %}data_inicio{% endif %}"
                  class="text-decoration-none text-dark d-flex align-items-center gap-1">
                 Início <i class="bi bi-arrow-{% if sort_by == 'data_inicio' %}up{% elif sort_by == '-data_inicio' %}down{% else %}up-down text-muted{% endif %} small"></i>
               </a>
             </th>
             <th>
-              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={% if sort_by == 'data_fim' %}-data_fim{% else %}data_fim{% endif %}"
+              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={% if sort_by == 'data_fim' %}-data_fim{% else %}data_fim{% endif %}"
                  class="text-decoration-none text-dark d-flex align-items-center gap-1">
                 Fim <i class="bi bi-arrow-{% if sort_by == 'data_fim' %}up{% elif sort_by == '-data_fim' %}down{% else %}up-down text-muted{% endif %} small"></i>
               </a>
             </th>
             <th class="text-center">
-              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}"
+              <a href="?q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={% if sort_by == 'status' %}-status{% else %}status{% endif %}"
                  class="text-decoration-none text-dark d-flex align-items-center justify-content-center gap-1">
                 Status <i class="bi bi-arrow-{% if sort_by == 'status' %}up{% elif sort_by == '-status' %}down{% else %}up-down text-muted{% endif %} small"></i>
               </a>
@@ -289,8 +343,9 @@
               {% elif p.status == 'aprovado' %}<span class="badge bg-success bg-opacity-10 text-success">Aprovado</span>
               {% elif p.status == 'reprovado' %}<span class="badge bg-danger bg-opacity-10 text-danger">Reprovado</span>
               {% elif p.status == 'aguardando_conselho' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Conselho</span>
-              {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Encerramento</span>
-              {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado</span>
+              {% elif p.status == 'aguardando_encerramento' %}<span class="badge bg-warning bg-opacity-10 text-warning">Ag. Finalização</span>
+              {% elif p.status == 'finalizado' %}<span class="badge bg-success bg-opacity-10 text-success">Finalizado</span>
+              {% elif p.status == 'encerrado' %}<span class="badge bg-secondary bg-opacity-10 text-secondary">Encerrado sem conclusão</span>
               {% else %}<span class="badge bg-light text-muted">{{ p.get_status_display }}</span>{% endif %}
             </td>
             <td class="text-end">
@@ -319,7 +374,7 @@
         {% with pp=per_page|stringformat:"s" %}
         {% if pagina_de_projetos.has_previous %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ pagina_de_projetos.previous_page_number }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={{ sort_by }}">
+          <a class="page-link" href="?page={{ pagina_de_projetos.previous_page_number }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={{ sort_by }}">
             <i class="bi bi-chevron-left"></i>
           </a>
         </li>
@@ -329,13 +384,13 @@
             <li class="page-item active"><span class="page-link">{{ n }}</span></li>
           {% elif n > pagina_de_projetos.number|add:'-3' and n < pagina_de_projetos.number|add:'3' %}
             <li class="page-item">
-              <a class="page-link" href="?page={{ n }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={{ sort_by }}">{{ n }}</a>
+            <a class="page-link" href="?page={{ n }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={{ sort_by }}">{{ n }}</a>
             </li>
           {% endif %}
         {% endfor %}
         {% if pagina_de_projetos.has_next %}
         <li class="page-item">
-          <a class="page-link" href="?page={{ pagina_de_projetos.next_page_number }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}&financiamento={{ financiamento_filter }}&per_page={{ pp }}&sort={{ sort_by }}">
+          <a class="page-link" href="?page={{ pagina_de_projetos.next_page_number }}&q={{ query }}&data_inicio={{ data_inicio_filter }}&data_fim={{ data_fim_filter }}{% for sf in status_filters %}&status={{ sf }}{% endfor %}{% for cf in centro_filters %}&centro={{ cf }}{% endfor %}{% for cf2 in curso_filters %}&curso={{ cf2 }}{% endfor %}{% for of in ods_filters %}&ods={{ of }}{% endfor %}&ods_match={{ ods_match }}&tipo_projeto={{ tipo_projeto_filter }}&per_page={{ pp }}&sort={{ sort_by }}">
             <i class="bi bi-chevron-right"></i>
           </a>
         </li>

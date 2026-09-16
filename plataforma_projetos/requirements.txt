@@ -26,6 +26,7 @@ djangorestframework==3.16.1
 
 # Geração de PDF
 weasyprint==66.0
+pypdf==6.18.1
 pydyf==0.11.0
 pyphen==0.17.2
 cssselect2==0.8.0

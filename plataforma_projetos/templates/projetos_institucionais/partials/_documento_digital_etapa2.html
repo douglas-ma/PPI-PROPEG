@@ -1,0 +1,72 @@
+<div class="card border-primary-subtle bg-primary bg-opacity-10 mb-4">
+  <div class="card-body">
+    <div class="d-flex align-items-start gap-2 mb-3">
+      <i class="bi bi-file-earmark-text text-primary fs-4"></i>
+      <div>
+        <h6 class="mb-1">
+          Documento Digital do Projeto
+          <span class="badge bg-light text-primary border ms-1">Opcional</span>
+          <span tabindex="0" data-bs-toggle="popover" data-bs-trigger="hover focus"
+                data-bs-content="O arquivo precisa ser um PDF criado digitalmente, com texto selecionável. PDFs digitalizados, fotografias de páginas e documentos sem texto selecionável não são aceitos para o preenchimento automático."
+                class="text-muted ms-1 fw-normal" style="cursor:help;">
+            <i class="bi bi-question-circle"></i>
+          </span>
+        </h6>
+        <p class="small text-muted mb-0">
+          Você pode preencher os campos manualmente. Se enviar um PDF digital, o sistema perguntará se deseja
+          identificar as seções e preencher os campos automaticamente.
+        </p>
+      </div>
+    </div>
+
+    {% with documentos=projeto.anexos.all %}
+      {% for anx in documentos %}
+        {% if anx.tipo_anexo == 'projeto_completo' %}
+        <div class="d-flex align-items-center gap-2 small mb-2">
+          <i class="bi bi-file-earmark-check text-success"></i>
+          <a href="{{ anx.arquivo.url }}" target="_blank" class="text-truncate flex-grow-1">
+            {{ anx.descricao|default:anx.arquivo.name }}
+          </a>
+          <span class="badge bg-white text-muted border">Já enviado</span>
+          <button type="submit"
+                  class="btn btn-link btn-sm text-danger p-0"
+                  formaction="{% url 'deletar_anexo' anexo_id=anx.pk %}"
+                  formmethod="post"
+                  formnovalidate
+                  title="Excluir documento"
+                  aria-label="Excluir documento {{ anx.descricao|default:anx.arquivo.name }}"
+                  onclick="return confirm('Excluir este documento digital do projeto?');">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+        {% endif %}
+      {% endfor %}
+    {% endwith %}
+
+    <div class="row g-2 align-items-end">
+      <div class="col-md-9">
+        <label class="form-label fw-semibold" for="{{ form.documento_projeto.id_for_label }}">
+          Selecionar PDF digital
+        </label>
+        <input type="file" name="{{ form.documento_projeto.html_name }}"
+               id="{{ form.documento_projeto.id_for_label }}"
+               class="form-control {% if form.documento_projeto.errors %}is-invalid{% endif %}"
+               accept=".pdf,application/pdf">
+        <div class="form-text">PDF nativamente digital, com texto selecionável, de até 20 MB.</div>
+        <button type="button" id="limpar-documento-selecionado"
+                class="btn btn-link btn-sm text-danger px-0 d-none">
+          <i class="bi bi-x-circle me-1"></i>Remover arquivo selecionado
+        </button>
+        {% if form.documento_projeto.errors %}
+        <div class="invalid-feedback">{{ form.documento_projeto.errors }}</div>
+        {% endif %}
+      </div>
+      <div class="col-md-3">
+        <button type="button" id="btn-enviar-documento" class="btn btn-outline-primary w-100"
+                data-bs-toggle="modal" data-bs-target="#modalDocumentoDigital" disabled>
+          <i class="bi bi-upload me-1"></i>Enviar documento
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

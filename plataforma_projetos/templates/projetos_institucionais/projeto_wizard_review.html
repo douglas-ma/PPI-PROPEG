@@ -93,7 +93,11 @@
         <ul class="list-group list-group-flush">
             {% for ods in ods_selecionados %}
                 <li class="list-group-item">
+                    {% if ods.imagem %}
                     <img src="{{ ods.imagem.url }}" style="height:40px; margin-right:8px;">
+                    {% else %}
+                    <i class="bi bi-globe2 text-secondary me-2"></i>
+                    {% endif %}
                     {{ ods.titulo }}
                 </li>
             {% empty %}
@@ -107,7 +111,8 @@
             <i class="bi bi-arrow-left"></i> Voltar à Edição
         </button>
         
-        <button type="submit" class="btn btn-success btn-lg">
+        <button type="submit" class="btn btn-success btn-lg"
+                data-confirmation-help="Confirmar a submissão definitiva do projeto">
             <i class="bi bi-check-circle-fill"></i> Confirmar e Submeter Projeto
         </button>
     </div>

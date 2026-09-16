@@ -1,6 +1,10 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+import hashlib
+import secrets
 
 def _raw_storage():
     """
@@ -74,6 +78,12 @@ class Usuario(AbstractUser):
         ('pendente', 'Pendente'),
         ('ativo', 'Ativo'),
         ('inativo', 'Inativo'),
+    )
+
+    REGIME_TRABALHO_CHOICES = (
+        ('20h', '20h'),
+        ('40h', '40h'),
+        ('DE', 'DE (Dedicação Exclusiva)'),
     )
 
     # 19 programas de pós-graduação stricto sensu da UFAC (fonte: propeg.ufac.br, mar/2026)
@@ -179,7 +189,13 @@ class Usuario(AbstractUser):
     )
     cnpq = models.CharField(max_length=20, blank=True, null=True, verbose_name="Nº Currículo Lattes/CNPq")
     perfil = models.CharField(max_length=20, choices=PERFIL_CHOICES)
-    regime_trabalho = models.CharField(max_length=3, blank=True, null=True, verbose_name="Regime de Trabalho")
+    regime_trabalho = models.CharField(
+        max_length=3,
+        choices=REGIME_TRABALHO_CHOICES,
+        blank=True,
+        null=True,
+        verbose_name="Regime de Trabalho",
+    )
     is_active = models.BooleanField(default=False, verbose_name="Ativo", help_text="Marque esta opção para ativar a conta do usuário.")
 
     # Vínculo com pós-graduação (coordenador e aluno)
@@ -430,6 +446,16 @@ class AdendoEdital(models.Model):
 
 # Entidade Principal
 class Projeto(models.Model):
+    TIPO_PROJETO_AGENCIA_FOMENTO = 'agencia_fomento'
+    TIPO_PROJETO_UFAC_SEM_FINANCIAMENTO = 'ufac_sem_financiamento'
+    TIPO_PROJETO_UFAC_COM_FINANCIAMENTO = 'ufac_com_financiamento'
+
+    TIPO_PROJETO_CHOICES = [
+        (TIPO_PROJETO_AGENCIA_FOMENTO, '1 - Projeto Aprovado (Agência de Fomento)'),
+        (TIPO_PROJETO_UFAC_SEM_FINANCIAMENTO, '2 - UFAC (Sem Financiamento/Fluxo Contínuo)'),
+        (TIPO_PROJETO_UFAC_COM_FINANCIAMENTO, '3 - UFAC (Com Financiamento)'),
+    ]
+
     STATUS_CHOICES = [
         ('rascunho', 'Rascunho'),
         ('submetido', 'Submetido'),
@@ -437,25 +463,68 @@ class Projeto(models.Model):
         ('aprovado', 'Aprovado'),
         ('reprovado', 'Reprovado'),
         ('em_andamento', 'Em andamento'),
-        ('aguardando_encerramento', 'Aguardando Encerramento'),
-        ('encerrado', 'Encerrado'),
+        ('aguardando_encerramento', 'Aguardando Finalização'),
+        ('finalizado', 'Finalizado'),
+        ('encerrado', 'Encerrado sem conclusão'),
+    ]
+
+    SITUACAO_ETICA_CHOICES = [
+        ('aprovado', 'Comprovante de aprovação'),
+        ('submetido', 'Comprovante de submissão'),
     ]
     
     titulo = models.CharField(max_length=255, blank=True, null=True)
     descricao = models.TextField(verbose_name="Descrição", blank=True, null=True)
-    resumo = models.TextField(blank=True, null=True)
-    introducao = models.TextField(verbose_name="Introdução", blank=True, null=True)
-    objetivo_geral = models.TextField(blank=True, null=True, verbose_name="Objetivo Geral")
-    objetivos_especificos = models.TextField(blank=True, null=True, verbose_name="Objetivos Específicos")
+    resumo = models.TextField(max_length=4000, blank=True, null=True)
+    introducao = models.TextField(max_length=4000, verbose_name="Introdução e Justificativa", blank=True, null=True)
+    objetivo_geral = models.TextField(max_length=4000, blank=True, null=True, verbose_name="Objetivo Geral")
+    objetivos_especificos = models.TextField(max_length=4000, blank=True, null=True, verbose_name="Objetivos Específicos")
     objetivos = models.TextField(blank=True, null=True)  # mantido para compatibilidade
-    metodologia = models.TextField(blank=True, null=True)
-    resultados = models.TextField(blank=True, null=True)
-    referencias = models.TextField(blank=True, null=True)
+    metodologia = models.TextField(max_length=4000, blank=True, null=True)
+    resultados = models.TextField(max_length=4000, verbose_name="Resultados Esperados", blank=True, null=True)
+    referencias = models.TextField(max_length=4000, blank=True, null=True)
     data_inicio = models.DateField(verbose_name="Data de Início", blank=True, null=True)
     data_fim = models.DateField(verbose_name="Data de Fim", blank=True, null=True)
+    tipo_projeto = models.CharField(
+        max_length=40,
+        choices=TIPO_PROJETO_CHOICES,
+        blank=True,
+        default='',
+        verbose_name="Tipo de Projeto",
+    )
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='rascunho')
     valor_fomento = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     etica_obrigatoria = models.BooleanField(default=False, verbose_name="Envolve Aspectos Éticos?", blank=True, null=True)
+    situacao_etica = models.CharField(
+        max_length=20,
+        choices=SITUACAO_ETICA_CHOICES,
+        blank=True,
+        default='',
+        verbose_name='Situação do documento ético',
+    )
+    etica_submetida_em = models.DateField(blank=True, null=True)
+    prazo_aprovacao_etica = models.DateField(blank=True, null=True)
+
+    # Auditoria de correções feitas pela gestão e importação do acervo legado.
+    importado_legado = models.BooleanField(default=False)
+    ultima_alteracao_gestor_em = models.DateTimeField(blank=True, null=True)
+    ultima_alteracao_gestor_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='projetos_alterados_como_gestor',
+    )
+    finalizado_em = models.DateTimeField(blank=True, null=True)
+    encerrado_em = models.DateTimeField(blank=True, null=True)
+    encerrado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='projetos_encerrados_sem_conclusao',
+    )
+    motivo_encerramento = models.TextField(blank=True)
 
     eh_docente = models.BooleanField(default=False, verbose_name="É docente?", blank=True, null=True)
     eh_pesquisador = models.BooleanField(default=False, verbose_name="É pesquisador?", blank=True, null=True)
@@ -517,8 +586,8 @@ class Projeto(models.Model):
         verbose_name="Programa de Pós-Graduação"
     )
 
-    palavras_chave = models.CharField(max_length=255, blank=True, null=True, help_text="Separe por vírgulas. Ex.: Tecnologia, Educação, Web")
-    parcerias = models.TextField(blank=True, null=True)
+    palavras_chave = models.TextField(max_length=4000, blank=True, null=True, help_text="Separe por vírgulas. Ex.: Tecnologia, Educação, Web")
+    parcerias = models.TextField(max_length=4000, blank=True, null=True)
 
     imagem_capa = models.ImageField(
         upload_to='projetos_capas/',
@@ -538,6 +607,55 @@ class Projeto(models.Model):
 
     def __str__(self):
         return self.titulo or f"Projeto Rascunho (ID: {self.id})"
+
+    @property
+    def eh_agencia_fomento(self):
+        return self.tipo_projeto == self.TIPO_PROJETO_AGENCIA_FOMENTO
+
+    @property
+    def possui_financiamento(self):
+        return self.tipo_projeto in (
+            self.TIPO_PROJETO_AGENCIA_FOMENTO,
+            self.TIPO_PROJETO_UFAC_COM_FINANCIAMENTO,
+        )
+
+    @property
+    def requer_edital_ufac(self):
+        return self.tipo_projeto == self.TIPO_PROJETO_UFAC_COM_FINANCIAMENTO
+
+    @property
+    def requer_ata_conselho(self):
+        return self.tipo_projeto == self.TIPO_PROJETO_UFAC_SEM_FINANCIAMENTO
+
+    @property
+    def requer_tramitacao_centro(self):
+        return self.tipo_projeto == self.TIPO_PROJETO_UFAC_COM_FINANCIAMENTO
+
+    @property
+    def anexos_documentais(self):
+        """Anexos exibíveis no PDF, sem incluir o próprio relatório automático."""
+        return self.anexos.exclude(tipo_anexo='relatorio_submissao')
+
+    @property
+    def comprovante_etica_aprovado(self):
+        return self.anexos.filter(tipo_anexo='comite_etica').order_by('-data_upload').first()
+
+    @property
+    def comprovante_submissao_etica(self):
+        return self.anexos.filter(tipo_anexo='submissao_comite_etica').order_by('-data_upload').first()
+
+    @property
+    def etica_pendente(self):
+        return bool(
+            self.etica_obrigatoria
+            and not self.anexos.filter(tipo_anexo='comite_etica').exists()
+        )
+
+    @property
+    def dias_restantes_etica(self):
+        if not self.etica_pendente or not self.prazo_aprovacao_etica:
+            return None
+        return (self.prazo_aprovacao_etica - timezone.localdate()).days
     
     class Meta:
         ordering = ['-data_inicio']
@@ -550,35 +668,90 @@ class EquipeProjeto(models.Model):
     Modelo intermediário para registrar os membros da equipe de um projeto
     e suas informações específicas, como carga horária.
     """
+    ORIGEM_SISTEMA = 'sistema'
+    ORIGEM_MANUAL = 'manual'
+    ORIGEM_CHOICES = [
+        (ORIGEM_SISTEMA, 'Usuário do sistema'),
+        (ORIGEM_MANUAL, 'Preenchimento manual'),
+    ]
+
     FUNCAO_CHOICES = [
-        ('coordenador_auxiliar', 'Coordenador Auxiliar'),
-        ('pesquisador', 'Pesquisador'),
-        ('aluno_bolsista', 'Aluno Bolsista'),
-        ('aluno_voluntario', 'Aluno Voluntário'),
-        ('aluno_pesquisador', 'Aluno Pesquisador'),
-        ('tecnico', 'Técnico'),
-        ('colaborador', 'Colaborador'),
-        ('outro', 'Outro'),
+        ('coordenador', 'Coordenador'),
+        ('estudante_graduacao', 'Estudante Graduação'),
+        ('estudante_pos_mestrado', 'Estudante Pós (Mestrado)'),
+        ('estudante_pos_doutorado', 'Estudante Pós (Doutorado)'),
+        ('estudante_pos_especializacao', 'Estudante Pós (Especialização)'),
+        ('estudante_ensino_medio', 'Estudante Ensino Médio'),
+        ('estudante_ensino_fundamental', 'Estudante Ensino Fundamental'),
     ]
 
     projeto = models.ForeignKey(Projeto, on_delete=models.CASCADE, related_name='equipe')
-    membro = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='participa_em')
+    origem_membro = models.CharField(
+        max_length=10,
+        choices=ORIGEM_CHOICES,
+        default=ORIGEM_SISTEMA,
+        verbose_name='Forma de cadastro',
+    )
+    membro = models.ForeignKey(
+        Usuario,
+        on_delete=models.SET_NULL,
+        related_name='participa_em',
+        null=True,
+        blank=True,
+    )
+    nome_membro_manual = models.CharField(max_length=255, blank=True, verbose_name='Nome do Membro')
+    cpf_manual = models.CharField(max_length=14, blank=True, verbose_name='CPF')
     funcao = models.CharField(
         max_length=50,
         choices=FUNCAO_CHOICES,
-        default='colaborador',
+        default='coordenador',
         verbose_name='Função na Equipe',
     )
-    carga_horaria_semanal = models.PositiveIntegerField(verbose_name="Carga Horária Semanal (h)")
-    carga_horaria_total = models.PositiveIntegerField(verbose_name="Carga Horária Total (h)")
+    carga_horaria_semanal = models.PositiveIntegerField(verbose_name="Carga Horária Semanal (h)", null=True, blank=True)
+    carga_horaria_total = models.PositiveIntegerField(verbose_name="Carga Horária Total (h)", null=True, blank=True)
 
     class Meta:
         verbose_name = "Membro da Equipe"
         verbose_name_plural = "Equipes dos Projetos"
-        unique_together = ('projeto', 'membro')
+        constraints = [
+            models.UniqueConstraint(
+                fields=('projeto', 'membro'),
+                condition=models.Q(membro__isnull=False),
+                name='equipe_usuario_unico_por_projeto',
+            ),
+            models.UniqueConstraint(
+                fields=('projeto', 'cpf_manual'),
+                condition=~models.Q(cpf_manual=''),
+                name='equipe_cpf_manual_unico_por_projeto',
+            ),
+        ]
+
+    @property
+    def nome_exibicao(self):
+        if self.membro_id:
+            return self.membro.get_full_name() or self.membro.username
+        return self.nome_membro_manual or 'Membro não informado'
+
+    @property
+    def cpf_exibicao(self):
+        valor = self.membro.cpf if self.membro_id else self.cpf_manual
+        numeros = ''.join(filter(str.isdigit, valor or ''))
+        if len(numeros) == 11:
+            return f'{numeros[:3]}.{numeros[3:6]}.{numeros[6:9]}-{numeros[9:]}'
+        return valor
+
+    @property
+    def perfil_exibicao(self):
+        return self.membro.get_perfil_display() if self.membro_id else 'Cadastro manual'
+
+    @property
+    def curso_exibicao(self):
+        if self.membro_id and self.membro.curso_id:
+            return str(self.membro.curso)
+        return 'Não informado'
 
     def __str__(self):
-        return f"{self.membro.get_full_name()} ({self.get_funcao_display()}) no projeto {self.projeto.titulo}"
+        return f"{self.nome_exibicao} ({self.get_funcao_display()}) no projeto {self.projeto.titulo}"
 
 # Modelos relacionados a um projeto
 def caminho_upload_arquivo(instance, filename): # função para gerar um caminho dinâmico para o upload de um arquivo
@@ -627,9 +800,11 @@ class Anexo(models.Model):
     """
     TIPO_ANEXO_CHOICES = (
         ('comite_etica', 'Aprovação do Comitê de Ética'),
+        ('submissao_comite_etica', 'Comprovante de Submissão ao Comitê de Ética'),
         ('cronograma', 'Cronograma'),
         ('imagens', 'Figuras, Imagens, etc.'),
         ('projeto_completo', 'Projeto Completo'),
+        ('comprovante_fomento', 'Comprovante de Aprovação da Agência de Fomento'),
         ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
         ('ata_conselho', 'Ata de Aprovação do Centro'),
         ('relatorio_submissao', 'Relatório de Submissão (Automático)'),
@@ -663,6 +838,70 @@ class Anexo(models.Model):
     class Meta:
         verbose_name = "Anexo"
         verbose_name_plural = "Anexos"
+
+
+class SolicitacaoAprovacaoCentro(models.Model):
+    """Convite restrito para o Centro registrar a aprovação de um projeto."""
+
+    projeto = models.ForeignKey(
+        Projeto,
+        on_delete=models.CASCADE,
+        related_name='solicitacoes_aprovacao_centro',
+    )
+    token_hash = models.CharField(max_length=64, unique=True, editable=False)
+    email_destinatario = models.EmailField()
+    criada_em = models.DateTimeField(auto_now_add=True)
+    expira_em = models.DateTimeField()
+    utilizada_em = models.DateTimeField(blank=True, null=True)
+    invalidada_em = models.DateTimeField(blank=True, null=True)
+    responsavel_nome = models.CharField(max_length=255, blank=True)
+    responsavel_cargo = models.CharField(max_length=255, blank=True)
+    ata = models.OneToOneField(
+        Anexo,
+        on_delete=models.SET_NULL,
+        related_name='solicitacao_centro',
+        blank=True,
+        null=True,
+    )
+
+    @staticmethod
+    def calcular_hash(token):
+        return hashlib.sha256(token.encode('utf-8')).hexdigest()
+
+    @classmethod
+    def emitir(cls, projeto, email_destinatario, validade_horas=168):
+        """Invalida convites anteriores e devolve a solicitação e o token bruto."""
+        agora = timezone.now()
+        cls.objects.filter(
+            projeto=projeto,
+            utilizada_em__isnull=True,
+            invalidada_em__isnull=True,
+        ).update(invalidada_em=agora)
+
+        token = secrets.token_urlsafe(32)
+        solicitacao = cls.objects.create(
+            projeto=projeto,
+            token_hash=cls.calcular_hash(token),
+            email_destinatario=email_destinatario,
+            expira_em=agora + timedelta(hours=validade_horas),
+        )
+        return solicitacao, token
+
+    @property
+    def esta_ativa(self):
+        return (
+            self.utilizada_em is None
+            and self.invalidada_em is None
+            and self.expira_em > timezone.now()
+        )
+
+    def __str__(self):
+        return f'Aprovação do Centro - {self.projeto}'
+
+    class Meta:
+        ordering = ['-criada_em']
+        verbose_name = 'Solicitação de Aprovação do Centro'
+        verbose_name_plural = 'Solicitações de Aprovação do Centro'
 
 
 class Relatorio(models.Model):
@@ -728,3 +967,27 @@ class Notificacao(models.Model):
         ordering = ['-data_criacao']
         verbose_name = "Notificação"
         verbose_name_plural = "Notificações"
+
+
+class NotificacaoPrazoEtica(models.Model):
+    """Evita o reenvio do mesmo alerta de prazo para um projeto."""
+
+    projeto = models.ForeignKey(
+        Projeto,
+        on_delete=models.CASCADE,
+        related_name='alertas_prazo_etica',
+    )
+    dias_restantes = models.PositiveSmallIntegerField()
+    enviada_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=('projeto', 'dias_restantes'),
+                name='alerta_etica_unico_por_prazo',
+            ),
+        ]
+        ordering = ['-enviada_em']
+
+    def __str__(self):
+        return f'{self.projeto} - alerta de {self.dias_restantes} dia(s)'
