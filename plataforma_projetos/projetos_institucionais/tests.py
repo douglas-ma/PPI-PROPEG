@@ -2,12 +2,15 @@ from datetime import date, timedelta
 from io import BytesIO, StringIO
 from unittest.mock import ANY, patch
 import re
+from pathlib import Path
 
+import tinycss2
+from django.conf import settings
 from django.core import mail
 from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import InMemoryStorage
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.urls import reverse
 from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
@@ -31,6 +34,44 @@ from .models import (
     Notificacao, NotificacaoPrazoEtica, SolicitacaoAprovacaoCentro, Usuario,
 )
 from .views import _gerar_relatorio_submissao
+
+
+class MobileLayoutRegressionTests(SimpleTestCase):
+    def test_layout_de_tela_pequena_restringe_menu_conteudo_e_tabela(self):
+        css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+        regras = tinycss2.parse_stylesheet(css, skip_comments=True, skip_whitespace=True)
+        regras_mobile = [
+            regra for regra in regras
+            if regra.type == 'at-rule'
+            and regra.at_keyword == 'media'
+            and 'max-width: 768px' in tinycss2.serialize(regra.prelude)
+        ]
+        self.assertTrue(regras_mobile, 'Deve existir uma regra de layout para larguras móveis.')
+
+        regras_internas = tinycss2.parse_rule_list(
+            regras_mobile[0].content,
+            skip_comments=True,
+            skip_whitespace=True,
+        )
+        estilos = {}
+        for regra in regras_internas:
+            if regra.type != 'qualified-rule':
+                continue
+            seletor = tinycss2.serialize(regra.prelude).strip()
+            declaracoes = tinycss2.parse_declaration_list(
+                regra.content,
+                skip_comments=True,
+                skip_whitespace=True,
+            )
+            estilos[seletor] = {
+                declaracao.name: tinycss2.serialize(declaracao.value).strip()
+                for declaracao in declaracoes
+                if declaracao.type == 'declaration'
+            }
+
+        self.assertEqual(estilos.get('#sidebar.collapsed', {}).get('width'), '88px')
+        self.assertEqual(estilos.get('#main-content', {}).get('min-width'), '0')
+        self.assertEqual(estilos.get('.table-responsive', {}).get('overflow-x'), 'auto')
 
 
 class CatalogoEPerfilTests(TestCase):
@@ -480,6 +521,21 @@ class ProjetoTipoFluxoFormTests(TestCase):
         self.assertEqual(resposta.context['total'], 1)
         self.assertEqual(list(resposta.context['page_obj'].object_list), [projeto_sem])
 
+    def test_consulta_publica_busca_coordenador_pelo_nome_completo(self):
+        self.coordenador.first_name = 'Bruno'
+        self.coordenador.last_name = 'Lima'
+        self.coordenador.save(update_fields=['first_name', 'last_name'])
+        projeto = self.criar_projeto_publico(
+            Projeto.TIPO_PROJETO_UFAC_SEM_FINANCIAMENTO,
+            'Projeto encontrado pelo coordenador',
+        )
+
+        resposta = self.client.get(reverse('consulta_publica'), {'q': 'Bruno Lima'})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(resposta.context['total'], 1)
+        self.assertEqual(list(resposta.context['page_obj'].object_list), [projeto])
+
     def test_consulta_publica_mantem_links_antigos_de_financiamento(self):
         self.criar_projeto_publico(Projeto.TIPO_PROJETO_AGENCIA_FOMENTO, 'Projeto agência')
         self.criar_projeto_publico(Projeto.TIPO_PROJETO_UFAC_SEM_FINANCIAMENTO, 'Projeto fluxo contínuo')
@@ -916,6 +972,20 @@ class EticaStatusEGestaoTests(TestCase):
             situacao_etica='submetido',
             etica_submetida_em=date.today(),
             prazo_aprovacao_etica=date.today() + timedelta(days=60),
+        )
+
+    def test_gestor_busca_usuario_pelo_nome_completo(self):
+        self.coordenador.first_name = 'Ana'
+        self.coordenador.last_name = 'Souza'
+        self.coordenador.save(update_fields=['first_name', 'last_name'])
+        self.client.force_login(self.gestor)
+
+        resposta = self.client.get(reverse('gerenciar_usuarios'), {'q': 'Ana Souza'})
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertEqual(
+            list(resposta.context['pagina_de_usuarios'].object_list),
+            [self.coordenador],
         )
 
     def _anexar_submissao_etica(self):

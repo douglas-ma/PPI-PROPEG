@@ -835,6 +835,31 @@ def _ods_disponiveis_com_projetos():
     return sorted(ods, key=chave_numerica)
 
 
+def _filtrar_consulta_publica_por_texto(queryset, consulta):
+    """Busca por título, resumo ou por todos os termos do nome do coordenador."""
+    if not consulta:
+        return queryset
+
+    filtro_texto = Q(titulo__icontains=consulta) | Q(resumo__icontains=consulta)
+    filtro_nome = _filtro_nome_completo(
+        consulta,
+        'coordenador__first_name',
+        'coordenador__last_name',
+    )
+    return queryset.filter(filtro_texto | filtro_nome)
+
+
+def _filtro_nome_completo(consulta, campo_nome, campo_sobrenome):
+    """Exige cada termo da busca em pelo menos uma parte do nome completo."""
+    filtro = Q()
+    for termo in consulta.split():
+        filtro &= (
+            Q(**{f'{campo_nome}__icontains': termo})
+            | Q(**{f'{campo_sobrenome}__icontains': termo})
+        )
+    return filtro
+
+
 def consulta_publica(request):
     queryset = Projeto.objects.filter(
         status__in=['aprovado', 'em_andamento', 'finalizado', 'encerrado']
@@ -845,11 +870,7 @@ def consulta_publica(request):
     status_filter      = request.GET.get('status', '').strip()
     ano_filter         = request.GET.get('ano', '').strip()
     ods_filters, ods_match = _obter_filtro_ods(request)
-    if q:
-        queryset = queryset.filter(
-            Q(titulo__icontains=q) | Q(resumo__icontains=q) |
-            Q(coordenador__first_name__icontains=q) | Q(coordenador__last_name__icontains=q)
-        )
+    queryset = _filtrar_consulta_publica_por_texto(queryset, q)
     if centro_filter:        queryset = queryset.filter(centro_lotacao__pk=centro_filter)
     if curso_filter:         queryset = queryset.filter(curso__pk=curso_filter)
     if status_filter:        queryset = queryset.filter(status=status_filter)
@@ -895,11 +916,7 @@ def consulta_publica_pdf(request):
     ano_filter    = request.GET.get('ano', '').strip()
     ods_filters, ods_match = _obter_filtro_ods(request)
 
-    if q:
-        queryset = queryset.filter(
-            Q(titulo__icontains=q) | Q(resumo__icontains=q) |
-            Q(coordenador__first_name__icontains=q) | Q(coordenador__last_name__icontains=q)
-        )
+    queryset = _filtrar_consulta_publica_por_texto(queryset, q)
     if centro_filter: queryset = queryset.filter(centro_lotacao__pk=centro_filter)
     if curso_filter:  queryset = queryset.filter(curso__pk=curso_filter)
     if status_filter: queryset = queryset.filter(status=status_filter)
@@ -1240,9 +1257,9 @@ def gerenciar_usuarios(request):
     sort_by       = request.GET.get('sort', 'first_name')
 
     if query:
+        filtro_nome = _filtro_nome_completo(query, 'first_name', 'last_name')
         queryset = queryset.filter(
-            Q(first_name__icontains=query) |
-            Q(last_name__icontains=query)  |
+            filtro_nome |
             Q(cpf__icontains=query)        |
             Q(email__icontains=query)
         )

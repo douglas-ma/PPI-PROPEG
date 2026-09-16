@@ -15,8 +15,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('toggle-btn');
 
     if (sidebar && toggleBtn) {
-        // Restaura o estado salvo ao carregar a página
-        if (localStorage.getItem('sidebarCollapsed') === 'true') {
+        // Em telas estreitas, inicia com o menu compacto para liberar espaço.
+        const telaPequena = window.matchMedia('(max-width: 768px)').matches;
+        if (telaPequena || localStorage.getItem('sidebarCollapsed') === 'true') {
             sidebar.classList.add('collapsed');
         }
 
