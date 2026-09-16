@@ -13,8 +13,13 @@ build/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-media/
-staticfiles/
+plataforma_projetos/media/*
+!plataforma_projetos/media/ods_imagens/
+!plataforma_projetos/media/ods_imagens/*.png
+plataforma_projetos/staticfiles/
+plataforma_projetos/output/docx_qa*/
+plataforma_projetos/output/pdf/
+plataforma_projetos/tmp*/
 
 # Ambiente virtual
 .env

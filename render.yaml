@@ -1,6 +1,4 @@
-## render.yaml
-## Coloque este arquivo na RAIZ do repositório (junto com manage.py ou na pasta pai).
-## O Render lê este arquivo para criar todos os serviços automaticamente.
+## Blueprint de implantação da Plataforma PROPEG no Render.
 
 services:
   # ── Aplicação Web Django ────────────────────────────────────────────────────
@@ -8,45 +6,47 @@ services:
     name: propeg-plataforma
     runtime: python
     region: oregon          # ou frankfurt se quiser mais próximo do Brasil
-    plan: free              # troque por "starter" ($7/mês) para sem sleep
-    rootDir: plataforma_projetos   # pasta onde está o manage.py
-    buildCommand: ./build.sh
-    startCommand: gunicorn plataforma_projetos.wsgi:application --bind 0.0.0.0:$PORT --workers 2 --timeout 120
+    plan: free
+    rootDir: plataforma_projetos
+    buildCommand: bash build.sh
+    startCommand: gunicorn plataforma_projetos.wsgi:application --bind 0.0.0.0:$PORT --workers 1 --threads 2 --timeout 120
+    healthCheckPath: /
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: plataforma_projetos.settings_prod
       - key: SECRET_KEY
         generateValue: true          # Render gera automaticamente
-      - key: DEBUG
-        value: "False"
       - key: ALLOWED_HOSTS
-        value: ".onrender.com"       # atualize com seu domínio real se tiver
+        value: ".onrender.com"
       - key: CSRF_TRUSTED_ORIGINS
         value: "https://*.onrender.com"
       - key: DATABASE_URL
         fromDatabase:
           name: propeg-db
           property: connectionString
-      - key: EMAIL_HOST
-        value: smtp.gmail.com
-      - key: EMAIL_PORT
-        value: "587"
-      - key: EMAIL_USE_TLS
-        value: "True"
-      - key: EMAIL_HOST_USER
-        sync: false    # preencha manualmente no painel
-      - key: EMAIL_HOST_PASSWORD
-        sync: false    # preencha manualmente no painel
+      - key: CLOUDINARY_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
       - key: DEFAULT_FROM_EMAIL
         sync: false
-      # Descomente se usar Cloudinary para armazenamento de mídia:
-      # - key: CLOUDINARY_URL
-      #   sync: false
+      - key: ADMIN_CPF
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: ADMIN_FIRST_NAME
+        value: Administrador
+      - key: ADMIN_LAST_NAME
+        value: PROPEG
+      - key: APROVACAO_CENTRO_LINK_HORAS
+        value: "168"
 
   # ── Banco de dados PostgreSQL ───────────────────────────────────────────────
 databases:
   - name: propeg-db
     databaseName: propeg
     user: propeg
-    plan: free              # 90 dias gratuito, depois $7/mês
+    plan: free              # expira após 30 dias; atualize o plano para uso contínuo
     region: oregon
