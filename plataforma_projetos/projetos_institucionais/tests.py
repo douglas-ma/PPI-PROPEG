@@ -22,6 +22,10 @@ from .forms import (
     ProjetoEtapa1Form,
     ProjetoEtapa2AgenciaFomentoForm,
 )
+from .management.commands.povoar_demonstracao import (
+    TITULOS_PROJETOS_DEMO,
+    USUARIOS_DEMO,
+)
 from .models import (
     Anexo, CentroLotacao, CursoGraduacao, Edital, EquipeProjeto, ODS, Projeto,
     Notificacao, NotificacaoPrazoEtica, SolicitacaoAprovacaoCentro, Usuario,
@@ -79,6 +83,44 @@ class CatalogoEPerfilTests(TestCase):
             },
         )
 
+    def test_comando_aditivo_preserva_dados_e_pode_ser_reexecutado(self):
+        usuario_existente = Usuario.objects.create_user(
+            cpf='52998224725',
+            username='usuario-existente',
+            email='existente@ufac.br',
+            password='senha-segura-123',
+            perfil='coordenador',
+            is_active=True,
+        )
+        projeto_existente = Projeto.objects.create(
+            coordenador=usuario_existente,
+            titulo='Projeto existente em produção',
+        )
+
+        call_command('povoar_demonstracao', adicionar=True, stdout=StringIO())
+        call_command('povoar_demonstracao', adicionar=True, stdout=StringIO())
+
+        self.assertTrue(Usuario.objects.filter(pk=usuario_existente.pk).exists())
+        self.assertTrue(Projeto.objects.filter(pk=projeto_existente.pk).exists())
+        self.assertEqual(
+            Usuario.objects.filter(cpf__in=[dados[0] for dados in USUARIOS_DEMO]).count(),
+            9,
+        )
+        self.assertEqual(
+            Projeto.objects.filter(titulo__in=TITULOS_PROJETOS_DEMO).count(),
+            9,
+        )
+        self.assertEqual(Projeto.objects.count(), 10)
+
+        call_command('limpar_demonstracao', confirmar=True, stdout=StringIO())
+
+        self.assertTrue(Usuario.objects.filter(pk=usuario_existente.pk).exists())
+        self.assertTrue(Projeto.objects.filter(pk=projeto_existente.pk).exists())
+        self.assertFalse(
+            Usuario.objects.filter(cpf__in=[dados[0] for dados in USUARIOS_DEMO]).exists()
+        )
+        self.assertFalse(Projeto.objects.filter(titulo__in=TITULOS_PROJETOS_DEMO).exists())
+
     def test_ajuda_apresenta_secao_sobre_o_sistema(self):
         usuario = Usuario.objects.create_user(
             cpf='11144477735',
@@ -92,7 +134,7 @@ class CatalogoEPerfilTests(TestCase):
 
         resposta = self.client.get(reverse('ajuda'))
 
-        self.assertContains(resposta, 'Sobre o Sistema e o Desenvolvedor')
+        self.assertContains(resposta, 'Sobre o Sistema e os Desenvolvedores')
         self.assertContains(resposta, 'Douglas Moura Araújo')
 
 

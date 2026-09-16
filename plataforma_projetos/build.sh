@@ -15,3 +15,6 @@ python manage.py normalizar_ods
 
 # Cria o administrador inicial sem interpolar segredos no shell.
 python manage.py garantir_superusuario
+
+# Carga temporaria e idempotente de dados de demonstracao em producao.
+python manage.py povoar_demonstracao --adicionar

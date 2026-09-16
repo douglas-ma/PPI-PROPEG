@@ -12,6 +12,8 @@ from docx.shared import Inches, Pt, RGBColor
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT / 'output' / 'Plano_de_Testes_Plataforma_PROPEG.docx'
 LOGO = ROOT / 'static' / 'imagens' / 'logo_ufac.png'
+PRODUCTION_URL = 'https://propeg-plataforma.onrender.com'
+LOGIN_URL = f'{PRODUCTION_URL}/projetos/'
 
 AZUL = '0B3D6E'
 AZUL_CLARO = 'EAF2F8'
@@ -51,6 +53,13 @@ def set_repeat_table_header(row):
     tr_pr.append(tbl_header)
 
 
+def set_row_cant_split(row):
+    tr_pr = row._tr.get_or_add_trPr()
+    cant_split = OxmlElement('w:cantSplit')
+    cant_split.set(qn('w:val'), 'true')
+    tr_pr.append(cant_split)
+
+
 def set_table_borders(table, color=BORDA, size='6'):
     tbl_pr = table._tbl.tblPr
     borders = tbl_pr.first_child_found_in('w:tblBorders')
@@ -81,6 +90,7 @@ def format_table(table, widths=None, header=True):
     if widths:
         set_col_widths(table, widths)
     for row_index, row in enumerate(table.rows):
+        set_row_cant_split(row)
         if header and row_index == 0:
             set_repeat_table_header(row)
         for cell in row.cells:
@@ -180,12 +190,17 @@ def add_case(doc, case):
     for result in case['expected']:
         case_paragraphs.append(add_bullet(doc, result))
 
-    # Mantém cada caso íntegro para facilitar a execução e evitar que um bloco
-    # de passos seja separado do respectivo resultado esperado.
-    for paragraph in case_paragraphs[:-1]:
+    # Mantém o cabeçalho e os metadados junto ao início dos passos, mas permite
+    # que casos longos continuem na página seguinte sem criar grandes vazios.
+    cabecalho = [heading, profile, priority, preconditions]
+    if case.get('data'):
+        cabecalho.append(data)
+    cabecalho.append(steps_label)
+    for paragraph in cabecalho:
         paragraph.paragraph_format.keep_with_next = True
+    result_label.paragraph_format.keep_with_next = True
+    for paragraph in case_paragraphs:
         paragraph.paragraph_format.keep_together = True
-    case_paragraphs[-1].paragraph_format.keep_together = True
     doc.add_paragraph()
 
 
@@ -193,7 +208,9 @@ def add_cases_section(doc, title, intro, cases, page_break_before=False):
     heading = doc.add_heading(title, level=1)
     if page_break_before:
         heading.paragraph_format.page_break_before = True
-    doc.add_paragraph(intro)
+    intro_paragraph = doc.add_paragraph(intro)
+    heading.paragraph_format.keep_with_next = True
+    intro_paragraph.paragraph_format.keep_with_next = True
     for case in cases:
         add_case(doc, case)
 
@@ -224,6 +241,10 @@ def build_document():
     title_style.font.size = Pt(26)
     title_style.font.bold = True
     title_style.font.color.rgb = RGBColor(0, 0, 0)
+    title_p_pr = title_style._element.get_or_add_pPr()
+    title_borders = title_p_pr.find(qn('w:pBdr'))
+    if title_borders is not None:
+        title_p_pr.remove(title_borders)
 
     for style_name, size in (('Heading 1', 17), ('Heading 2', 14), ('Heading 3', 11.5)):
         style = styles[style_name]
@@ -247,11 +268,14 @@ def build_document():
     title = doc.add_paragraph(style='Title')
     title.alignment = WD_ALIGN_PARAGRAPH.CENTER
     title.add_run('Plano de Testes da Plataforma de Projetos Institucionais')
+    direct_title_borders = title._p.get_or_add_pPr().find(qn('w:pBdr'))
+    if direct_title_borders is not None:
+        title._p.get_or_add_pPr().remove(direct_title_borders)
     subtitle = doc.add_paragraph()
     subtitle.alignment = WD_ALIGN_PARAGRAPH.CENTER
     subtitle.paragraph_format.space_before = Pt(8)
     subtitle.paragraph_format.space_after = Pt(24)
-    run = subtitle.add_run('Roteiro de homologação funcional por perfil e fluxo')
+    run = subtitle.add_run('Roteiro de validação funcional no ambiente de produção')
     run.font.size = Pt(15)
     run.font.bold = True
 
@@ -260,11 +284,11 @@ def build_document():
     metadata.rows[0].cells[0].text = 'Sistema'
     metadata.rows[0].cells[1].text = 'Plataforma de Projetos Institucionais PROPEG UFAC'
     metadata.rows[1].cells[0].text = 'Versão do roteiro'
-    metadata.rows[1].cells[1].text = '1.0'
+    metadata.rows[1].cells[1].text = '2.0'
     metadata.rows[2].cells[0].text = 'Data de referência'
     metadata.rows[2].cells[1].text = '16 de setembro de 2026'
     metadata.rows[3].cells[0].text = 'Ambiente'
-    metadata.rows[3].cells[1].text = 'Desenvolvimento local com base de homologação'
+    metadata.rows[3].cells[1].text = 'Produção no Render com dados temporários de amostra'
     format_table(metadata, [Inches(1.55), Inches(5.25)], header=False)
     for row in metadata.rows:
         set_cell_shading(row.cells[0], AZUL_CLARO)
@@ -274,10 +298,11 @@ def build_document():
     opening = doc.add_paragraph()
     opening.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     opening.add_run(
-        'Este documento orienta a homologação manual de toda a plataforma, desde o cadastro '
+        'Este documento orienta a validação manual da plataforma publicada no Render, desde o cadastro '
         'e o login até a criação, tramitação, execução, finalização e consulta de projetos. '
-        'Os casos utilizam a base de homologação criada no projeto e cobrem os perfis Coordenador, '
-        'Aluno, Gestor e o acesso restrito do Centro de Estudos.'
+        'Os casos utilizam dados temporários de amostra e cobrem os perfis Coordenador, Aluno, '
+        'Gestor e o acesso restrito do Centro de Estudos. As operações realizadas alteram o banco '
+        'de produção e devem permanecer limitadas às contas e aos registros descritos neste roteiro.'
     )
     doc.add_page_break()
 
@@ -287,11 +312,12 @@ def build_document():
         'podem ser repetidos após recriar a base. Registre evidências em captura de tela e anote o '
         'resultado como Aprovado, Reprovado ou Bloqueado.'
     )
-    add_bullet(doc, 'Inicie o servidor com python manage.py runserver.')
-    add_bullet(doc, 'Acesse http://127.0.0.1:8000/.')
-    add_bullet(doc, 'Para restaurar os dados, execute python manage.py povoar_demonstracao --confirmar.')
+    add_bullet(doc, f'Acesse {LOGIN_URL}.')
+    add_bullet(doc, 'Use somente as contas e os projetos de amostra identificados neste documento.')
+    add_bullet(doc, 'Antes de cada fluxo completo, escolha um projeto de amostra que ainda não tenha sido alterado ou crie um novo projeto com uma das contas de coordenador.')
+    add_bullet(doc, 'Para testar envio de e-mail, substitua temporariamente o e-mail de uma conta de amostra por uma caixa postal que você controle.')
     add_bullet(doc, 'Use um navegador atualizado e, para responsividade, teste também uma largura próxima de 390 px.')
-    add_bullet(doc, 'As contas e senhas abaixo são exclusivas do ambiente de homologação.')
+    add_bullet(doc, 'As credenciais abaixo são temporárias e devem ser removidas ao fim da validação.')
 
     doc.add_heading('Critérios gerais de aprovação', level=2)
     criteria = [
@@ -301,10 +327,10 @@ def build_document():
     ]
     add_table(doc, ['Resultado', 'Critério'], criteria, [Inches(1.35), Inches(5.45)])
 
-    doc.add_heading('Credenciais da base de homologação', level=1)
+    doc.add_heading('Credenciais da amostra em produção', level=1)
     doc.add_paragraph(
         'O CPF pode ser digitado com ou sem pontuação. As senhas diferem por perfil para facilitar '
-        'a execução dos testes e não devem ser reutilizadas fora do ambiente local.'
+        'a execução dos testes e não devem ser reutilizadas em contas pessoais ou institucionais.'
     )
     credentials = [
         ('Coordenador', 'Ana Souza', '100.000.001-08', 'Coord@2026'),
@@ -322,6 +348,28 @@ def build_document():
         ['Perfil', 'Nome', 'CPF', 'Senha'],
         credentials,
         [Inches(1.25), Inches(2.1), Inches(1.75), Inches(1.7)],
+    )
+
+    doc.add_heading('Caminhos do ambiente de produção', level=1)
+    routes = [
+        ('Entrada e autenticação', LOGIN_URL),
+        ('Consulta pública', f'{PRODUCTION_URL}/projetos/consulta/'),
+        ('Ajuda da plataforma', f'{PRODUCTION_URL}/projetos/ajuda/'),
+        ('Painel do coordenador', f'{PRODUCTION_URL}/projetos/telaprincipal/'),
+        ('Projetos do coordenador', f'{PRODUCTION_URL}/projetos/projetos/meusprojetos/'),
+        ('Projetos do aluno', f'{PRODUCTION_URL}/projetos/aluno/projetos/meusprojetos/'),
+        ('Painel do gestor', f'{PRODUCTION_URL}/projetos/gestor/dashboard/'),
+        ('Usuários para o gestor', f'{PRODUCTION_URL}/projetos/gestor/usuarios/'),
+        ('Histórico de projetos', f'{PRODUCTION_URL}/projetos/gestor/projetos/historico/'),
+        ('Gestão de editais', f'{PRODUCTION_URL}/projetos/gestor/editais/'),
+        ('Relatórios para o gestor', f'{PRODUCTION_URL}/projetos/gestor/relatorios/'),
+        ('Administração Django', f'{PRODUCTION_URL}/admin/'),
+    ]
+    add_table(doc, ['Função', 'URL'], routes, [Inches(2.2), Inches(4.6)])
+    doc.add_paragraph(
+        'As rotas autenticadas redirecionam para a tela inicial quando a sessão não possui o perfil '
+        'necessário. O painel Django usa a conta administrativa configurada no Render; as contas de '
+        'gestor desta amostra devem ser usadas na própria plataforma.'
     )
 
     doc.add_heading('Projetos disponíveis para consulta', level=1)
@@ -345,10 +393,12 @@ def build_document():
 
     doc.add_heading('Dados auxiliares para os testes', level=1)
     aux_rows = [
-        ('Link restrito do Centro', '/projetos/centro/aprovacao/demo-centro-ufac-2026/'),
+        ('Link restrito do Centro', f'{PRODUCTION_URL}/projetos/centro/aprovacao/demo-centro-ufac-2026/'),
+        ('Validade do link do Centro', 'Uso único; expira 30 dias após o último povoamento da amostra'),
         ('Edital aberto', 'Edital DEMO nº 1 do ano corrente'),
-        ('PDF nativamente digital', 'output/pdf/projeto_teste_preenchimento_automatico.pdf'),
-        ('Imagem para anexos', 'static/imagens/imagem-exemplo.jpeg'),
+        ('PDF nativamente digital', 'Arquivo local output/pdf/projeto_teste_preenchimento_automatico.pdf'),
+        ('Imagem para anexos', 'Arquivo local static/imagens/imagem-exemplo.jpeg'),
+        ('E-mail de recebimento', 'Substituir o e-mail de uma conta de amostra por uma caixa postal controlada pelo testador'),
         ('CPF válido para membro manual', '529.982.247-25'),
         ('Centro sugerido', 'CCET - Centro de Ciências Exatas e Tecnológicas'),
         ('Curso sugerido', 'Bacharelado em Sistemas de Informação'),
@@ -356,7 +406,7 @@ def build_document():
     ]
     add_table(doc, ['Item', 'Valor'], aux_rows, [Inches(2.15), Inches(4.65)])
 
-    doc.add_heading('Dados para criar um projeto durante a homologação', level=2)
+    doc.add_heading('Dados para criar um projeto durante a validação', level=2)
     new_project_data = [
         ('Título', 'Sistema de Indicadores para Gestão Acadêmica'),
         ('Período', '01/10/2026 a 30/09/2027'),
@@ -377,7 +427,7 @@ def build_document():
     access_cases = [
         {
             'id': 'CT-ACC-001', 'title': 'Abrir a página inicial', 'profile': 'Público',
-            'pre': 'Servidor em execução e sessão encerrada.',
+            'pre': 'Implantação do Render disponível e sessão encerrada.',
             'steps': ['Acessar a URL inicial.', 'Verificar os painéis de login, cadastro, recuperação de senha e consulta pública.'],
             'expected': ['A página carrega sem autenticação.', 'Os controles são legíveis e não há sobreposição ou rolagem horizontal indevida.'],
         },
@@ -395,13 +445,13 @@ def build_document():
         },
         {
             'id': 'CT-ACC-004', 'title': 'Impedir CPF ou e-mail duplicado', 'profile': 'Público',
-            'pre': 'Base de homologação carregada.', 'data': 'CPF ou e-mail de Ana Souza.',
+            'pre': 'Dados de amostra carregados em produção.', 'data': 'CPF ou e-mail de Ana Souza.',
             'steps': ['Tentar criar nova conta reutilizando o CPF existente.', 'Repetir o teste reutilizando apenas o e-mail existente.'],
             'expected': ['As duas tentativas são rejeitadas sem criar usuários duplicados.', 'O campo responsável apresenta mensagem de validação.'],
         },
         {
             'id': 'CT-ACC-005', 'title': 'Autenticar os três perfis', 'profile': 'Coordenador Aluno Gestor',
-            'pre': 'Base de homologação carregada.', 'data': 'Usar uma credencial de cada perfil da tabela.',
+            'pre': 'Dados de amostra carregados em produção.', 'data': 'Usar uma credencial de cada perfil da tabela.',
             'steps': ['Entrar como Coordenador e observar a tela principal.', 'Sair e repetir como Aluno.', 'Sair e repetir como Gestor.'],
             'expected': ['Cada credencial é aceita.', 'Menus, atalhos e painel inicial mudam conforme o perfil.'],
         },
@@ -419,7 +469,7 @@ def build_document():
         },
         {
             'id': 'CT-ACC-008', 'title': 'Solicitar redefinição de senha', 'profile': 'Público',
-            'pre': 'Backend de e-mail configurado para o ambiente de teste.', 'data': 'CPF de um usuário ativo.',
+            'pre': 'E-mail transacional do Render configurado e conta de amostra apontando para uma caixa postal controlada.', 'data': 'CPF de um usuário ativo.',
             'steps': ['Abrir Esqueceu a senha.', 'Informar o CPF e enviar.', 'Abrir o link recebido e definir uma nova senha.'],
             'expected': ['A mensagem de resposta não confirma se o CPF existe.', 'O link válido permite alterar a senha e autenticar com o novo valor.'],
         },
@@ -428,6 +478,12 @@ def build_document():
             'pre': 'Usuário autenticado.',
             'steps': ['Clicar em Sair.', 'Tentar abrir diretamente uma URL autenticada.'],
             'expected': ['A sessão é encerrada.', 'A rota protegida redireciona para o acesso.'],
+        },
+        {
+            'id': 'CT-ACC-010', 'title': 'Consultar o guia e a seção sobre o sistema', 'profile': 'Qualquer usuário autenticado',
+            'pre': 'Usuário autenticado.',
+            'steps': ['Abrir a tela Ajuda.', 'Percorrer as seções do guia.', 'Abrir a seção Sobre o Sistema e os Desenvolvedores.'],
+            'expected': ['O guia apresenta os três tipos de projeto e os fluxos atuais.', 'Douglas Moura Araújo e Áleks Sebastian de Freitas Araújo são identificados como desenvolvedores.'],
         },
     ]
     add_cases_section(
@@ -458,7 +514,7 @@ def build_document():
         },
         {
             'id': 'CT-PER-004', 'title': 'Validar centros e cursos vinculados', 'profile': 'Coordenador Aluno',
-            'pre': 'Base de homologação carregada.',
+            'pre': 'Dados de amostra carregados em produção.',
             'steps': ['Abrir uma seleção de centro.', 'Confirmar os oito centros acadêmicos.', 'Na criação de projeto, selecionar CCET e abrir a lista de cursos.'],
             'expected': ['Não aparecem centros genéricos ou de teste.', 'Após escolher CCET, somente os quatro cursos vinculados ao centro são oferecidos.'],
         },
@@ -522,7 +578,7 @@ def build_document():
         },
         {
             'id': 'CT-COO-010', 'title': 'Preencher automaticamente a Etapa 2', 'profile': 'Coordenador',
-            'pre': 'Projeto na Etapa 2.', 'data': 'output/pdf/projeto_teste_preenchimento_automatico.pdf.',
+            'pre': 'Projeto na Etapa 2.', 'data': 'Arquivo local output/pdf/projeto_teste_preenchimento_automatico.pdf.',
             'steps': ['Enviar o PDF nativamente digital.', 'Confirmar o preenchimento automático.', 'Revisar todas as seções.'],
             'expected': ['O sistema pergunta antes de alterar os campos.', 'Resumo, introdução, objetivos, metodologia, resultados e referências são preenchidos conforme as seções identificadas.'],
         },
@@ -582,7 +638,6 @@ def build_document():
         },
         {
             'id': 'CT-COO-020', 'title': 'Iniciar projeto aprovado e validar bloqueio ético', 'profile': 'Coordenador',
-            'page_break_before': True,
             'pre': 'Usar Saúde Mental e Permanência Estudantil.',
             'steps': ['Tentar iniciar com aprovação ética pendente.', 'Anexar a aprovação definitiva.', 'Tentar iniciar novamente.'],
             'expected': ['A primeira tentativa é bloqueada com orientação.', 'Após o comprovante aprovado, o início pode ser confirmado e a equipe é notificada.'],
@@ -604,7 +659,7 @@ def build_document():
     center_cases = [
         {
             'id': 'CT-CEN-001', 'title': 'Abrir o link restrito do Centro', 'profile': 'Responsável do Centro',
-            'pre': 'Usar o link de homologação antes de consumi-lo.',
+            'pre': 'Usar o link de amostra do Centro antes de consumi-lo.',
             'steps': ['Abrir o link em janela anônima, sem autenticação.', 'Conferir o resumo do projeto.'],
             'expected': ['O acesso exibe apenas as informações necessárias.', 'Menus e funções internas da plataforma não ficam disponíveis.'],
         },
@@ -640,23 +695,23 @@ def build_document():
             'id': 'CT-GES-001', 'title': 'Consultar o painel do gestor', 'profile': 'Gestor',
             'pre': 'Entrar como Gabriela Costa.',
             'steps': ['Abrir o Painel do Gestor.', 'Conferir métricas e projetos que aguardam ação.'],
-            'expected': ['Os totais refletem a base de homologação.', 'A navegação permite acessar usuários, projetos, relatórios e editais.'],
+            'expected': ['Os totais refletem os dados de amostra em produção.', 'A navegação permite acessar usuários, projetos, relatórios e editais.'],
         },
         {
             'id': 'CT-GES-002', 'title': 'Pesquisar e consultar usuários', 'profile': 'Gestor',
-            'pre': 'Base de homologação carregada.',
+            'pre': 'Dados de amostra carregados em produção.',
             'steps': ['Abrir Gerenciar Usuários.', 'Pesquisar por nome, CPF e perfil.', 'Abrir os detalhes de um resultado.'],
             'expected': ['Os filtros retornam usuários compatíveis.', 'Detalhes pessoais e institucionais aparecem conforme o cadastro.'],
         },
         {
             'id': 'CT-GES-003', 'title': 'Ativar inativar e editar usuário', 'profile': 'Gestor',
-            'pre': 'Usuário de homologação selecionado.',
+            'pre': 'Usuário de amostra selecionado.',
             'steps': ['Usar a ação de inativar e confirmar.', 'Tentar login com a conta.', 'Reativar e editar os campos permitidos.'],
             'expected': ['Conta inativa não autentica.', 'A reativação e a edição ficam registradas e o usuário é notificado.'],
         },
         {
             'id': 'CT-GES-004', 'title': 'Excluir usuário sem vínculos e proteger usuário vinculado', 'profile': 'Gestor',
-            'pre': 'Criar uma conta temporária sem projetos; manter os usuários de homologação vinculados.',
+            'pre': 'Criar uma conta temporária sem projetos; manter os usuários de amostra vinculados.',
             'steps': ['Excluir a conta temporária após confirmar.', 'Tentar excluir coordenador ou aluno com projeto.'],
             'expected': ['A conta sem vínculos é excluída.', 'Vínculos protegidos impedem exclusão inconsistente e geram orientação.'],
         },
@@ -698,7 +753,7 @@ def build_document():
         },
         {
             'id': 'CT-GES-011', 'title': 'Filtrar e ordenar o histórico de projetos', 'profile': 'Gestor',
-            'pre': 'Base de homologação carregada.',
+            'pre': 'Dados de amostra carregados em produção.',
             'steps': ['Combinar busca textual, status, centro, curso, datas, tipo e múltiplos ODS.', 'Testar o modo Todas as ODS (AND) e depois Qualquer ODS (OR).', 'Alterar ordenação e itens por página.'],
             'expected': ['Filtros são combinados sem perder parâmetros na paginação; AND exige todas as ODS e OR aceita qualquer uma.', 'A tabela e os totais correspondem aos critérios escolhidos.'],
         },
@@ -778,7 +833,6 @@ def build_document():
         'Casos de teste do aluno',
         'Validação do acompanhamento e das restrições do perfil discente.',
         student_cases,
-        page_break_before=True,
     )
 
     public_cases = [
@@ -790,7 +844,6 @@ def build_document():
         },
         {
             'id': 'CT-PUB-002', 'title': 'Pesquisar e filtrar consulta pública', 'profile': 'Público',
-            'page_break_before': True,
             'pre': 'Consulta pública aberta.',
             'steps': ['Pesquisar por título ou coordenador.', 'Selecionar ODS 1 e ODS 10.', 'Testar Todas as ODS (AND) e depois Qualquer ODS (OR).'],
             'expected': ['No modo AND aparecem somente projetos vinculados às duas ODS; no modo OR aparece qualquer projeto vinculado a pelo menos uma.', 'Filtros podem ser limpos sem erro.'],
@@ -813,19 +866,17 @@ def build_document():
         'Casos de teste da consulta pública',
         'Validação do acesso sem autenticação e da proteção de dados.',
         public_cases,
-        page_break_before=True,
     )
 
     notification_cases = [
         {
             'id': 'CT-NOT-001', 'title': 'Visualizar e excluir notificações', 'profile': 'Qualquer usuário autenticado',
-            'pre': 'Usuário possui a notificação de homologação.',
+            'pre': 'Usuário possui a notificação inicial da amostra.',
             'steps': ['Abrir o sino e a central de notificações.', 'Pesquisar por texto ou data.', 'Excluir uma notificação e depois excluir múltiplas selecionadas.'],
             'expected': ['Contador e estado de leitura são atualizados.', 'Somente notificações do usuário autenticado são alteradas.'],
         },
         {
             'id': 'CT-NOT-002', 'title': 'Emitir alertas do prazo ético', 'profile': 'Coordenador Gestor',
-            'page_break_before': True,
             'pre': 'Projeto com submissão ética e prazo configurado.',
             'steps': ['Executar python manage.py notificar_prazos_etica em um marco aplicável.', 'Consultar notificações e caixa de e-mail de teste.', 'Executar novamente no mesmo marco.'],
             'expected': ['Alerta interno e e-mail são enviados em 60, 30, 15, 7, 3 e 1 dia.', 'O mesmo marco não gera duplicidade.'],
@@ -836,7 +887,6 @@ def build_document():
         'Casos de teste de notificações',
         'Validação da central interna e dos avisos por prazo.',
         notification_cases,
-        page_break_before=True,
     )
 
     security_cases = [
@@ -866,7 +916,7 @@ def build_document():
         },
         {
             'id': 'CT-SEG-005', 'title': 'Validar token do Centro contra alteração', 'profile': 'Público',
-            'pre': 'Link de homologação disponível.',
+            'pre': 'Link de amostra do Centro disponível.',
             'steps': ['Alterar um ou mais caracteres do token na URL.', 'Tentar consultar e enviar dados.'],
             'expected': ['O token alterado não localiza a solicitação.', 'Nenhum dado do projeto é exposto.'],
         },
@@ -882,7 +932,6 @@ def build_document():
         'Casos de teste de segurança e interface',
         'Cenários negativos e de controle de acesso.',
         security_cases,
-        page_break_before=True,
     )
 
     e2e_heading = doc.add_heading('Roteiros completos de ponta a ponta', level=1)
@@ -938,13 +987,22 @@ def build_document():
         for number, step in enumerate(steps, start=1):
             add_numbered(doc, number, step)
 
-    doc.add_heading('Verificação automatizada e regressão', level=1)
+    automated_heading = doc.add_heading('Verificação automatizada e manutenção da amostra', level=1)
+    automated_heading.paragraph_format.page_break_before = True
+    automated_intro = doc.add_paragraph(
+        'Os comandos abaixo são destinados ao responsável técnico e devem ser executados no ambiente '
+        'do Render ou em uma implantação equivalente. O modo aditivo preserva registros existentes; '
+        'a limpeza remove somente os CPFs, projetos e editais identificados como demonstração.'
+    )
+    automated_heading.paragraph_format.keep_with_next = True
+    automated_intro.paragraph_format.keep_with_next = True
     automated = [
         ('Verificação do projeto', 'python manage.py check', 'Nenhum problema identificado.'),
         ('Migrations pendentes', 'python manage.py makemigrations --check --dry-run', 'Nenhuma alteração detectada.'),
         ('Testes automatizados', 'python manage.py test', 'Todos os testes concluídos com OK.'),
         ('Alertas éticos', 'python manage.py notificar_prazos_etica', 'Alertas aplicáveis processados sem duplicidade.'),
-        ('Restaurar base de homologação', 'python manage.py povoar_demonstracao --confirmar', '9 usuários, 9 projetos, 8 centros e 49 cursos.'),
+        ('Adicionar ou restaurar amostra', 'python manage.py povoar_demonstracao --adicionar', '9 usuários e 9 projetos de amostra, sem excluir outros dados.'),
+        ('Remover amostra temporária', 'python manage.py limpar_demonstracao --confirmar', 'Somente usuários, projetos e editais DEMO são removidos.'),
     ]
     add_table(doc, ['Objetivo', 'Comando', 'Resultado esperado'], automated, [Inches(1.5), Inches(3.2), Inches(2.1)])
 
@@ -961,9 +1019,9 @@ def build_document():
         [Inches(1.0), Inches(0.9), Inches(1.0), Inches(1.6), Inches(2.3)],
     )
 
-    doc.add_heading('Critério de encerramento da homologação', level=1)
+    doc.add_heading('Critério de encerramento da validação', level=1)
     doc.add_paragraph(
-        'A homologação pode ser encerrada quando todos os casos de prioridade alta estiverem aprovados, '
+        'A validação pode ser encerrada quando todos os casos de prioridade alta estiverem aprovados, '
         'não houver falhas de controle de acesso ou perda de dados e as divergências restantes estiverem '
         'registradas com responsável e decisão de correção. Os três fluxos de projeto e o fluxo ético '
         'devem ser executados integralmente ao menos uma vez.'

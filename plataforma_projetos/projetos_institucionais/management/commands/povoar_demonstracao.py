@@ -44,6 +44,18 @@ USUARIOS_DEMO = (
     ('10000000957', 'Isabela', 'Martins', 'gestor', 'isabela.martins@example.com'),
 )
 
+TITULOS_PROJETOS_DEMO = (
+    'Plataforma Aberta de Indicadores Acadêmicos',
+    'Inclusão Digital para Comunidades do Acre',
+    'Laboratório de Dados para Gestão Universitária',
+    'Saúde Mental e Permanência Estudantil',
+    'Memória Social e Patrimônio Cultural Acreano',
+    'Cartografia Participativa em Comunidades Urbanas',
+    'Manejo Sustentável de Sistemas Agroflorestais',
+    'Monitoramento da Biodiversidade no Campus',
+    'Educação Ambiental em Escolas Públicas',
+)
+
 def formatar_cpf(cpf):
     return f'{cpf[:3]}.{cpf[3:6]}.{cpf[6:9]}-{cpf[9:]}'
 
@@ -59,6 +71,14 @@ class Command(BaseCommand):
             '--confirmar',
             action='store_true',
             help='Confirma a exclusão dos usuários e projetos existentes.',
+        )
+        parser.add_argument(
+            '--adicionar',
+            action='store_true',
+            help=(
+                'Adiciona ou restaura somente os registros de demonstração, '
+                'sem excluir dados existentes. Pode ser usado de forma idempotente.'
+            ),
         )
 
     def _salvar_usuario(self, cpf, nome, sobrenome, perfil, email, **campos):
@@ -80,41 +100,48 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        if not options['confirmar']:
+        modo_aditivo = options['adicionar']
+        if options['confirmar'] and modo_aditivo:
+            raise CommandError('Use apenas um modo: --confirmar ou --adicionar.')
+        if not options['confirmar'] and not modo_aditivo:
             raise CommandError(
-                'Operação destrutiva não confirmada. Execute novamente com --confirmar.'
+                'Informe --adicionar para preservar os dados existentes ou '
+                '--confirmar para recriar integralmente a base de homologação.'
             )
 
         hoje = timezone.localdate()
         agora = timezone.now()
 
-        # Projetos carregam a maior parte dos registros transacionais por CASCADE.
-        Projeto.objects.all().delete()
-
-        # Mantém editais históricos, mas transfere sua autoria antes de remover usuários.
         dados_gestor = USUARIOS_DEMO[6]
         gestor_principal = self._salvar_usuario(*dados_gestor)
-        Edital.objects.all().update(criado_por=gestor_principal)
-        AdendoEdital.objects.all().update(criado_por=gestor_principal)
 
-        Usuario.objects.filter(is_superuser=False).exclude(pk=gestor_principal.pk).delete()
-        gestor_principal.endereco = None
-        gestor_principal.curso = None
-        gestor_principal.centro_lotacao = None
-        gestor_principal.titulacao = None
-        gestor_principal.save(update_fields=[
-            'endereco', 'curso', 'centro_lotacao', 'titulacao',
-        ])
-        Endereco.objects.all().delete()
+        if not modo_aditivo:
+            # Projetos carregam a maior parte dos registros transacionais por CASCADE.
+            Projeto.objects.all().delete()
 
-        # Recria os catálogos solicitados sem manter centros ou cursos de teste.
-        ProgramaPos.objects.all().delete()
-        CursoGraduacao.objects.all().delete()
-        CentroLotacao.objects.all().delete()
+            # Mantém editais históricos, mas transfere sua autoria antes de remover usuários.
+            Edital.objects.all().update(criado_por=gestor_principal)
+            AdendoEdital.objects.all().update(criado_por=gestor_principal)
+
+            Usuario.objects.filter(is_superuser=False).exclude(pk=gestor_principal.pk).delete()
+            gestor_principal.endereco = None
+            gestor_principal.curso = None
+            gestor_principal.centro_lotacao = None
+            gestor_principal.titulacao = None
+            gestor_principal.save(update_fields=[
+                'endereco', 'curso', 'centro_lotacao', 'titulacao',
+            ])
+            Endereco.objects.all().delete()
+
+            # Recria os catálogos solicitados sem manter centros ou cursos de teste.
+            ProgramaPos.objects.all().delete()
+            CursoGraduacao.objects.all().delete()
+            CentroLotacao.objects.all().delete()
+
         centros = criar_catalogo_ufac(CentroLotacao, CursoGraduacao)
-        ProgramaPos.objects.create(
+        ProgramaPos.objects.get_or_create(
             nome='Programa de Pós-Graduação em Ciência da Computação (PPGCC)',
-            centro_lotacao=centros['CCET'],
+            defaults={'centro_lotacao': centros['CCET']},
         )
 
         titulacao_doutorado, _ = Titulacao.objects.get_or_create(nome='Doutorado')
@@ -307,31 +334,51 @@ class Command(BaseCommand):
             (alunos[0], alunos[2]),
         )
         for indice, definicao in enumerate(definicoes):
-            projeto = Projeto.objects.create(
-                descricao='Proposta institucional vinculada às atividades de pesquisa, ensino e extensão da UFAC.',
-                resumo='Iniciativa voltada ao desenvolvimento de ações e resultados aplicáveis ao contexto universitário.',
-                introducao='Contextualização e justificativa da proposta no âmbito da Universidade Federal do Acre.',
-                objetivo_geral='Executar as ações previstas e acompanhar os resultados da proposta.',
-                objetivos_especificos='Organizar as atividades; acompanhar a execução; registrar os resultados e avaliar os impactos.',
-                metodologia='Planejamento das atividades, execução conforme cronograma e avaliação dos resultados.',
-                resultados='Atividades executadas, resultados registrados e informações disponíveis para acompanhamento.',
-                referencias='UNIVERSIDADE FEDERAL DO ACRE. Documentos institucionais.',
-                palavras_chave='UFAC, projeto institucional, pesquisa',
-                parcerias='Unidades acadêmicas da UFAC',
-                data_inicio=hoje - timedelta(days=180 - indice * 15),
-                data_fim=hoje + timedelta(days=180 - indice * 10),
-                eh_docente=True,
-                eh_pesquisador=True,
-                ultima_alteracao_gestor_em=agora if definicao['status'] != 'rascunho' else None,
-                ultima_alteracao_gestor_por=(
+            chave_projeto = {
+                'coordenador': definicao['coordenador'],
+                'titulo': definicao['titulo'],
+            }
+            campos_especificos = {
+                campo: valor
+                for campo, valor in definicao.items()
+                if campo not in chave_projeto
+            }
+            valores_projeto = {
+                'descricao': 'Proposta institucional vinculada às atividades de pesquisa, ensino e extensão da UFAC.',
+                'resumo': 'Iniciativa voltada ao desenvolvimento de ações e resultados aplicáveis ao contexto universitário.',
+                'introducao': 'Contextualização e justificativa da proposta no âmbito da Universidade Federal do Acre.',
+                'objetivo_geral': 'Executar as ações previstas e acompanhar os resultados da proposta.',
+                'objetivos_especificos': 'Organizar as atividades; acompanhar a execução; registrar os resultados e avaliar os impactos.',
+                'metodologia': 'Planejamento das atividades, execução conforme cronograma e avaliação dos resultados.',
+                'resultados': 'Atividades executadas, resultados registrados e informações disponíveis para acompanhamento.',
+                'referencias': 'UNIVERSIDADE FEDERAL DO ACRE. Documentos institucionais.',
+                'palavras_chave': 'UFAC, projeto institucional, pesquisa',
+                'parcerias': 'Unidades acadêmicas da UFAC',
+                'data_inicio': hoje - timedelta(days=180 - indice * 15),
+                'data_fim': hoje + timedelta(days=180 - indice * 10),
+                'eh_docente': True,
+                'eh_pesquisador': True,
+                'ultima_alteracao_gestor_em': agora if definicao['status'] != 'rascunho' else None,
+                'ultima_alteracao_gestor_por': (
                     gestores[indice % len(gestores)]
                     if definicao['status'] != 'rascunho'
                     else None
                 ),
-                **definicao,
-            )
-            projeto.ods.add(ods[indice % len(ods)], ods[(indice + 3) % len(ods)])
-            projeto.grupos_pesquisa.add(grupo_inovacao)
+                **campos_especificos,
+            }
+            if modo_aditivo:
+                projeto, _ = Projeto.objects.update_or_create(
+                    **chave_projeto,
+                    defaults=valores_projeto,
+                )
+                EquipeProjeto.objects.filter(projeto=projeto).delete()
+            else:
+                projeto = Projeto.objects.create(
+                    **chave_projeto,
+                    **valores_projeto,
+                )
+            projeto.ods.set([ods[indice % len(ods)], ods[(indice + 3) % len(ods)]])
+            projeto.grupos_pesquisa.set([grupo_inovacao])
             EquipeProjeto.objects.create(
                 projeto=projeto,
                 membro=projeto.coordenador,
@@ -352,28 +399,49 @@ class Command(BaseCommand):
             projetos.append(projeto)
 
         token_centro = 'demo-centro-ufac-2026'
-        SolicitacaoAprovacaoCentro.objects.create(
-            projeto=projetos[1],
-            token_hash=SolicitacaoAprovacaoCentro.calcular_hash(token_centro),
-            email_destinatario=projetos[1].centro_lotacao.email,
-            expira_em=agora + timedelta(days=30),
-        )
-
-        Notificacao.objects.bulk_create([
-            Notificacao(
-                destinatario=usuario,
-                mensagem='Sua conta está habilitada para acesso à plataforma.',
-                link='/projetos/telaprincipal/',
+        dados_solicitacao = {
+            'projeto': projetos[1],
+            'email_destinatario': projetos[1].centro_lotacao.email,
+            'expira_em': agora + timedelta(days=30),
+            'utilizada_em': None,
+            'invalidada_em': None,
+            'responsavel_nome': '',
+            'responsavel_cargo': '',
+            'ata': None,
+        }
+        token_hash = SolicitacaoAprovacaoCentro.calcular_hash(token_centro)
+        if modo_aditivo:
+            SolicitacaoAprovacaoCentro.objects.update_or_create(
+                token_hash=token_hash,
+                defaults=dados_solicitacao,
             )
-            for usuario in usuarios.values()
-        ])
+            for usuario in usuarios.values():
+                Notificacao.objects.get_or_create(
+                    destinatario=usuario,
+                    mensagem='Sua conta está habilitada para acesso à plataforma.',
+                    link='/projetos/telaprincipal/',
+                )
+        else:
+            SolicitacaoAprovacaoCentro.objects.create(
+                token_hash=token_hash,
+                **dados_solicitacao,
+            )
+            Notificacao.objects.bulk_create([
+                Notificacao(
+                    destinatario=usuario,
+                    mensagem='Sua conta está habilitada para acesso à plataforma.',
+                    link='/projetos/telaprincipal/',
+                )
+                for usuario in usuarios.values()
+            ])
 
+        descricao_modo = 'adicionada sem excluir dados existentes' if modo_aditivo else 'recriada'
         self.stdout.write(self.style.SUCCESS(
-            f'Base de homologação criada: {len(usuarios)} usuários, '
+            f'Base de demonstração {descricao_modo}: {len(usuarios)} usuários, '
             f'{len(projetos)} projetos, {CentroLotacao.objects.count()} centros e '
             f'{CursoGraduacao.objects.count()} cursos.'
         ))
-        self.stdout.write('Credenciais de homologação:')
+        self.stdout.write('Credenciais de demonstração:')
         for cpf, nome, sobrenome, perfil, _email in USUARIOS_DEMO:
             self.stdout.write(
                 f'- {perfil}: {nome} {sobrenome} | CPF {formatar_cpf(cpf)} '
