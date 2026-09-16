@@ -1,5 +1,10 @@
 """Catálogo único das ODS usadas pela plataforma."""
 
+import os
+from pathlib import Path
+
+from django.conf import settings
+from django.core.files import File
 from .models import ODS
 
 
@@ -43,6 +48,21 @@ def normalizar_ods_padrao():
         if principal.titulo != titulo_numerado:
             principal.titulo = titulo_numerado
             principal.save(update_fields=['titulo'])
+
+        if not principal.imagem:
+            nome_imagem = f'ods_imagens/SDG-{numero}.png'
+            origem = Path(settings.BASE_DIR) / 'media' / nome_imagem
+            if origem.exists():
+                if os.environ.get('CLOUDINARY_URL'):
+                    with origem.open('rb') as arquivo:
+                        principal.imagem.save(
+                            f'SDG-{numero}.png',
+                            File(arquivo),
+                            save=False,
+                        )
+                else:
+                    principal.imagem.name = nome_imagem
+                principal.save(update_fields=['imagem'])
 
         for duplicata in candidatos:
             if duplicata.pk == principal.pk:

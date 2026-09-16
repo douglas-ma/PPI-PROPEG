@@ -8,26 +8,10 @@ pip install -r requirements.txt
 # Coleta os arquivos estáticos
 python manage.py collectstatic --no-input
 
-# Aplica as migrations
+# Aplica as migrations e garante os catálogos institucionais essenciais.
 python manage.py migrate
+python manage.py carregar_catalogo_ufac
+python manage.py normalizar_ods
 
-# Adicione o super user se ele não existir
-python manage.py shell -c "
-from projetos_institucionais.models import Usuario
-cpf = '$ADMIN_CPF'
-if not Usuario.objects.filter(cpf=cpf).exists():
-    Usuario.objects.create_superuser(
-        cpf=cpf,
-        username=cpf,
-        email='$ADMIN_EMAIL',
-        password='$ADMIN_PASSWORD',
-        first_name='Admin',
-        last_name='PROPEG',
-        perfil='gestor',
-        status='ativo',
-        is_active=True,
-    )
-    print('Superusuario criado.')
-else:
-    print('Superusuario ja existe.')
-"
+# Cria o administrador inicial sem interpolar segredos no shell.
+python manage.py garantir_superusuario
