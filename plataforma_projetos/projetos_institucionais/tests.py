@@ -73,6 +73,39 @@ class MobileLayoutRegressionTests(SimpleTestCase):
         self.assertEqual(estilos.get('#main-content', {}).get('min-width'), '0')
         self.assertEqual(estilos.get('.table-responsive', {}).get('overflow-x'), 'auto')
 
+    def test_acoes_do_assistente_ficam_visiveis_em_telas_pequenas(self):
+        css = (Path(settings.BASE_DIR) / 'static' / 'css' / 'style.css').read_text(encoding='utf-8')
+        regras = tinycss2.parse_stylesheet(css, skip_comments=True, skip_whitespace=True)
+        regra_mobile = next(
+            regra for regra in regras
+            if regra.type == 'at-rule'
+            and regra.at_keyword == 'media'
+            and 'max-width: 768px' in tinycss2.serialize(regra.prelude)
+        )
+        estilos = {}
+        for regra in tinycss2.parse_rule_list(regra_mobile.content, skip_comments=True, skip_whitespace=True):
+            if regra.type != 'qualified-rule':
+                continue
+            seletor = tinycss2.serialize(regra.prelude).strip()
+            declaracoes = tinycss2.parse_declaration_list(
+                regra.content,
+                skip_comments=True,
+                skip_whitespace=True,
+            )
+            estilos[seletor] = {
+                declaracao.name: tinycss2.serialize(declaracao.value).strip()
+                for declaracao in declaracoes
+                if declaracao.type == 'declaration'
+            }
+
+        self.assertEqual(estilos.get('.wizard-container', {}).get('padding-left'), '12px')
+        self.assertEqual(estilos.get('.wizard-container', {}).get('padding-right'), '12px')
+        self.assertEqual(estilos.get('.wizard-card-body', {}).get('padding'), '16px')
+        self.assertEqual(estilos.get('.wizard-actions', {}).get('flex-direction'), 'column')
+        self.assertEqual(estilos.get('.wizard-action-buttons', {}).get('width'), '100%')
+        self.assertEqual(estilos.get('.wizard-action-buttons', {}).get('flex-direction'), 'column')
+        self.assertEqual(estilos.get('.wizard-action-buttons .btn', {}).get('width'), '100%')
+
 
 class CatalogoEPerfilTests(TestCase):
     def test_regime_de_trabalho_aceita_somente_opcoes_institucionais(self):

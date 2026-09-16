@@ -32,7 +32,7 @@
   }
   #equipe-area #equipe-table { margin-bottom: 0; }
 </style>
-<div class="container-fluid py-4 px-4">
+<div class="container-fluid py-4 px-4 wizard-container">
 
   {# ── Cabeçalho ─────────────────────────────────────────────────────────── #}
   <div class="d-flex justify-content-between align-items-start mb-3">
@@ -185,7 +185,7 @@
           </div>
         </div>
 
-        <div class="card-body p-4">
+        <div class="card-body p-4 wizard-card-body">
           <form method="post" enctype="multipart/form-data" novalidate id="etapa-form">
             {% csrf_token %}
 
@@ -1084,7 +1084,7 @@
 
             {# ── Botões de ação ──────────────────────────────────────────── #}
             <hr class="mt-4">
-            <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex justify-content-between align-items-center wizard-actions">
               <div>
                 {% if step > 1 and not fluxo_curto_agencia %}
                 <a href="{% url 'projeto_etapa' pk=projeto.pk step=step|add:'-1' %}"
@@ -1093,7 +1093,7 @@
                 </a>
                 {% endif %}
               </div>
-              <div class="d-flex gap-2">
+              <div class="d-flex gap-2 wizard-action-buttons">
                 {% if step < step_total %}
                   <button type="submit" name="acao" value="rascunho"
                           class="btn btn-outline-success">
