@@ -301,7 +301,7 @@ def build_document():
         'Este documento orienta a validação manual da plataforma publicada no Render, desde o cadastro '
         'e o login até a criação, tramitação, execução, finalização e consulta de projetos. '
         'Os casos utilizam dados temporários de amostra e cobrem os perfis Coordenador, Aluno, '
-        'Gestor e o acesso restrito do Centro de Estudos. As operações realizadas alteram o banco '
+        'Gestor e o acesso restrito do Centro Acadêmico. As operações realizadas alteram o banco '
         'de produção e devem permanecer limitadas às contas e aos registros descritos neste roteiro.'
     )
     doc.add_page_break()
@@ -401,11 +401,11 @@ def build_document():
         ('E-mail de recebimento', 'Substituir o e-mail de uma conta de amostra por uma caixa postal controlada pelo testador'),
         (
             'Centro fictício local',
-            'TESTE LUNAR 20260916 - CENTRO DE ESTUDOS FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO); '
+            'TESTE LUNAR 20260916 - CENTRO ACADÊMICO FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO); '
             'e-mail d.moura250304@gmail.com',
         ),
         ('CPF válido para membro manual', '529.982.247-25'),
-        ('Centro sugerido', 'CCET - Centro de Ciências Exatas e Tecnológicas'),
+        ('Centro sugerido', 'CCET - Centro Acadêmico de Ciências Exatas e Tecnológicas'),
         ('Curso sugerido', 'Bacharelado em Sistemas de Informação'),
         ('ODS sugeridos', 'ODS 4 Educação de Qualidade e ODS 9 Indústria Inovação e Infraestrutura'),
     ]
@@ -502,7 +502,7 @@ def build_document():
         {
             'id': 'CT-PER-001', 'title': 'Completar o perfil do coordenador', 'profile': 'Coordenador',
             'pre': 'Entrar como Ana Souza.',
-            'steps': ['Abrir Meu Perfil e Editar.', 'Preencher dados pessoais, titulação, SIAPE, Lattes e centro de lotação.', 'Salvar e reabrir o perfil.'],
+            'steps': ['Abrir Meu Perfil e Editar.', 'Preencher dados pessoais, titulação, SIAPE, Lattes e Centro Acadêmico.', 'Salvar e reabrir o perfil.'],
             'expected': ['Os dados válidos são persistidos.', 'Centro e demais seleções exibem os valores salvos.'],
         },
         {
@@ -555,7 +555,7 @@ def build_document():
             'id': 'CT-COO-005', 'title': 'Criar projeto UFAC sem financiamento', 'profile': 'Coordenador',
             'pre': 'Novo projeto iniciado.',
             'steps': ['Selecionar UFAC Sem Financiamento Fluxo Contínuo.', 'Escolher um centro com e-mail e preencher as etapas.', 'Submeter o projeto.'],
-            'expected': ['Ata não é exigida do coordenador durante o cadastro.', 'O projeto fica Aguardando aprovação do Centro e não passa imediatamente ao gestor.'],
+            'expected': ['Ata não é exigida do coordenador durante o cadastro.', 'O projeto fica Aguardando deliberação do Centro Acadêmico e não passa imediatamente ao gestor.'],
         },
         {
             'id': 'CT-COO-006', 'title': 'Criar projeto UFAC com financiamento', 'profile': 'Coordenador',
@@ -572,8 +572,8 @@ def build_document():
         {
             'id': 'CT-COO-008', 'title': 'Declarar submissão ética e prazo de 90 dias', 'profile': 'Coordenador',
             'pre': 'Na Etapa 1, marcar que o projeto envolve aspectos éticos.',
-            'steps': ['Selecionar Comprovante de submissão.', 'Anexar o comprovante e submeter.', 'Abrir os detalhes do projeto.'],
-            'expected': ['O sistema registra prazo máximo de 90 dias.', 'A pendência e os dias restantes aparecem para coordenador e gestor.'],
+            'steps': ['Selecionar Comprovante de submissão.', 'Ler o aviso azul exibido abaixo da seleção.', 'Anexar o comprovante, submeter e abrir os detalhes do projeto.'],
+            'expected': ['O aviso explica o prazo de 90 dias, os alertas e o bloqueio até a aprovação definitiva.', 'A pendência e os dias restantes aparecem para coordenador e gestor.'],
         },
         {
             'id': 'CT-COO-009', 'title': 'Preencher manualmente a Etapa 2', 'profile': 'Coordenador',
@@ -653,6 +653,12 @@ def build_document():
             'steps': ['Enviar relatório parcial com evidências.', 'Enviar relatório final.', 'Abrir Certificados e gerar para coordenador e membros.'],
             'expected': ['Relatórios e evidências ficam associados ao projeto.', 'O relatório final conduz ao fluxo de finalização e os certificados exibem os dados corretos.'],
         },
+        {
+            'id': 'CT-COO-022', 'title': 'Confirmar a remoção da imagem de capa', 'profile': 'Coordenador Gestor',
+            'pre': 'Abrir a Etapa 1 de um projeto novo ou histórico.',
+            'steps': ['Percorrer todas as seções da Etapa 1.', 'Revisar a etapa final e os detalhes após salvar.'],
+            'expected': ['Nenhum campo de imagem de capa é exibido.', 'O projeto funciona normalmente sem solicitar ou exibir capa personalizada.'],
+        },
     ]
     add_cases_section(
         doc,
@@ -671,13 +677,13 @@ def build_document():
         {
             'id': 'CT-CEN-002', 'title': 'Visualizar o documento do projeto', 'profile': 'Responsável do Centro',
             'pre': 'Link do Centro ativo.',
-            'steps': ['Clicar para visualizar o projeto.', 'Voltar ao formulário de aprovação.'],
+            'steps': ['Clicar para visualizar o projeto.', 'Voltar ao formulário de deliberação.'],
             'expected': ['O documento pode ser consultado pelo token.', 'Nenhum outro projeto pode ser acessado pelo mesmo link.'],
         },
         {
-            'id': 'CT-CEN-003', 'title': 'Validar campos obrigatórios da aprovação', 'profile': 'Responsável do Centro',
+            'id': 'CT-CEN-003', 'title': 'Validar campos obrigatórios da deliberação', 'profile': 'Responsável do Centro',
             'pre': 'Link do Centro ativo.',
-            'steps': ['Enviar sem nome, cargo, confirmação ou ata.', 'Tentar anexar formato não permitido.'],
+            'steps': ['Enviar sem nome, cargo, resultado, confirmação ou ata.', 'Tentar anexar formato não permitido.'],
             'expected': ['Campos ausentes são indicados.', 'Somente PDF, PNG, JPG ou JPEG são aceitos para a ata.'],
         },
         {
@@ -685,12 +691,12 @@ def build_document():
             'pre': 'Link ativo e arquivo de teste disponível.',
             'steps': [
                 'Informar nome e cargo.',
-                'Confirmar a aprovação, anexar a ata e enviar.',
+                'Selecionar Aprovado, confirmar a deliberação, anexar a ata e enviar.',
                 'Abrir os detalhes do projeto com o coordenador ou gestor e consultar a ata em Anexos.',
             ],
             'expected': [
                 'A ata fica vinculada ao projeto e pode ser aberta em Anexos.',
-                'O projeto muda de Aguardando aprovação do Centro para Submetido, segue à gestão e o token é marcado como utilizado.',
+                'Quando aprovado, o projeto muda de Aguardando deliberação do Centro Acadêmico para Submetido, segue automaticamente à gestão e o token é marcado como utilizado.',
                 'O coordenador recebe a notificação prevista.',
             ],
         },
@@ -714,8 +720,14 @@ def build_document():
                 'O segundo acesso informa que o link está indisponível.',
             ],
         },
+        {
+            'id': 'CT-CEN-007', 'title': 'Registrar reprovação pelo Centro Acadêmico', 'profile': 'Responsável do Centro Gestor',
+            'pre': 'Token local válido para um projeto que aguarda deliberação.',
+            'steps': ['Informar nome e cargo.', 'Selecionar Reprovado, confirmar a deliberação e anexar a ata.', 'Abrir os detalhes com o gestor e o coordenador.'],
+            'expected': ['O projeto passa para Reprovado e não entra na fila de análise pendente da PROPEG.', 'A ata, o resultado e as notificações ficam registrados; o token não pode ser reutilizado.'],
+        },
     ]
-    add_cases_section(doc, 'Casos de teste do Centro de Estudos', 'O link é temporário, restrito e de uso único.', center_cases)
+    add_cases_section(doc, 'Casos de teste do Centro Acadêmico', 'O link é temporário, restrito e de uso único.', center_cases)
 
     manager_cases = [
         {
@@ -775,8 +787,8 @@ def build_document():
         {
             'id': 'CT-GES-010', 'title': 'Cadastrar projeto existente', 'profile': 'Gestor',
             'pre': 'Dados do projeto e coordenador disponíveis.',
-            'steps': ['Abrir Cadastrar Projeto Existente.', 'Selecionar coordenador e percorrer todas as etapas.', 'Informar a situação atual e concluir.'],
-            'expected': ['O registro histórico é criado com todos os dados.', 'O projeto aparece no histórico com indicação de importação legada.'],
+            'steps': ['Abrir Cadastrar Projeto Existente e confirmar que a Etapa 1 aparece diretamente.', 'Testar a seleção de um coordenador cadastrado.', 'Iniciar outro cadastro, escolher coordenador não cadastrado e informar nome, CPF e e-mail.', 'Percorrer as etapas, informar a situação atual e concluir.'],
+            'expected': ['Não existe uma tela intermediária para escolher coordenador.', 'As duas origens de coordenador são aceitas e o registro histórico aparece com os dados e a indicação de importação legada.'],
         },
         {
             'id': 'CT-GES-011', 'title': 'Filtrar e ordenar o histórico de projetos', 'profile': 'Gestor',
@@ -982,7 +994,7 @@ def build_document():
             'Fluxo B UFAC sem financiamento',
             [
                 'Coordenador seleciona UFAC Sem Financiamento e um centro com e-mail.',
-                'Após a submissão, o projeto fica Aguardando aprovação do Centro.',
+                'Após a submissão, o projeto fica Aguardando deliberação do Centro Acadêmico.',
                 'Responsável abre o link restrito, consulta o projeto e anexa a ata aprovada.',
                 'O token torna-se inutilizável e o projeto segue para a gestão.',
                 'Gestor aprova; coordenador inicia, envia relatórios e conclui.',
@@ -1046,20 +1058,20 @@ def build_document():
         [Inches(1.0), Inches(0.9), Inches(1.0), Inches(1.6), Inches(2.3)],
     )
 
-    update_heading = doc.add_heading('Atualização da execução de 16 de setembro de 2026', level=1)
+    update_heading = doc.add_heading('Atualização da execução de 17 de setembro de 2026', level=1)
     update_heading.paragraph_format.page_break_before = True
     doc.add_paragraph(
-        'Esta seção consolida a validação específica do fluxo de aprovação pelo Centro de Estudos, '
+        'Esta seção consolida a validação específica do fluxo de deliberação pelo Centro Acadêmico, '
         'a correção aplicada durante a execução e os limites da confirmação em produção. Os resultados '
         'não autorizam declarar a plataforma livre de bugs; eles descrevem a cobertura efetivamente executada.'
     )
 
-    doc.add_heading('Resultado do fluxo do Centro de Estudos', level=2)
+    doc.add_heading('Resultado do fluxo do Centro Acadêmico', level=2)
     execution_rows = [
         (
             'Envio local com token válido',
             'Corrigido',
-            'Ata salva; solicitação marcada como utilizada; projeto 106 passou de Aguardando aprovação do Centro para Submetido.',
+            'Ata salva; solicitação marcada como utilizada; projeto 106 passou de Aguardando deliberação do Centro Acadêmico para Submetido.',
         ),
         (
             'Consulta posterior da ata',
@@ -1084,7 +1096,7 @@ def build_document():
         (
             'Suíte automatizada completa',
             'Passou',
-            '49 testes concluídos com sucesso; check sem problemas; nenhuma migration pendente.',
+            '51 testes concluídos com sucesso; check sem problemas; nenhuma migration pendente.',
         ),
     ]
     add_table(
@@ -1097,7 +1109,7 @@ def build_document():
     doc.add_heading('BUG-001 — envio da ata bloqueado por CSRF em origem isolada', level=2)
     bug_rows = [
         ('Classificação', 'Alta'),
-        ('Perfil', 'Responsável do Centro de Estudos, sem autenticação'),
+        ('Perfil', 'Responsável do Centro Acadêmico, sem autenticação'),
         ('Página', '/projetos/centro/aprovacao/<token>/'),
         ('Pré-condição', 'Solicitação ativa para projeto UFAC sem financiamento e ata válida disponível.'),
         (
@@ -1165,7 +1177,7 @@ def build_document():
     temporary_rows = [
         (
             'Centro 24',
-            'TESTE LUNAR 20260916 - CENTRO DE ESTUDOS FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO)',
+            'TESTE LUNAR 20260916 - CENTRO ACADÊMICO FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO)',
         ),
         ('Usuário 36', 'teste-lunar-coordenador; conta sintética usada apenas no fluxo local.'),
         ('Projeto 106', 'TESTE LUNAR 20260916 - VALIDAÇÃO DO LINK DO CENTRO - TESTE LOCAL; situação final Submetido.'),
@@ -1182,7 +1194,7 @@ def build_document():
 
     doc.add_heading('Conclusão desta execução', level=2)
     doc.add_paragraph(
-        'O fluxo do Centro de Estudos foi confirmado de ponta a ponta no ambiente local após a correção. '
+        'O fluxo do Centro Acadêmico foi confirmado de ponta a ponta no ambiente local após a correção. '
         'Em produção, foi confirmado que a implantação aceita o contexto Origin: null e alcança a validação '
         'do token. O envio com um token de produção válido permanece sem execução para preservar o link de '
         'demonstração. Portanto, a funcionalidade está operacional dentro da cobertura descrita, mas a plataforma '

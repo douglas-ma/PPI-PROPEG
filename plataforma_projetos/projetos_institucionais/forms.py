@@ -95,7 +95,7 @@ class Etapa2_InfoGeraisForm(forms.ModelForm):
         decimal_places=2
     )
     centro_lotacao = forms.ModelChoiceField(
-        label="Centro de Lotação",
+        label="Centro Acadêmico",
         queryset=CentroLotacao.objects.all(),
         required=True
     )
@@ -134,11 +134,6 @@ class Etapa2_InfoGeraisForm(forms.ModelForm):
         label="Tipo Ético", 
         required=False,
         widget=forms.TextInput(attrs={'placeholder': 'Digite o tipo de comitê de ética'})
-    )
-    imagem_capa = forms.ImageField(
-        label="Imagem de Capa do Projeto (Opcional)",
-        required=False,
-        help_text="Esta imagem será exibida nos cards do projeto. Use uma imagem representativa."
     )
     anexos_gerais = MultipleFileField(
         label="Anexos Adicionais",
@@ -366,7 +361,7 @@ class CoordenadorProfileForm(forms.ModelForm):
             'data_nascimento': 'Data de Nascimento',
             'siape':           'SIAPE',
             'lattes':          'Link Currículo Lattes',
-            'centro_lotacao':  'Centro de Lotação',
+            'centro_lotacao':  'Centro Acadêmico',
         }
 
 
@@ -444,25 +439,30 @@ class AnexoComprovanteForm(forms.ModelForm):
 
 class AprovacaoCentroForm(forms.Form):
     responsavel_nome = forms.CharField(
-        label='Nome do responsável pelo Centro de Estudos',
+        label='Nome do responsável pelo Centro Acadêmico',
         max_length=255,
         widget=forms.TextInput(attrs={'autocomplete': 'name'}),
     )
     responsavel_cargo = forms.CharField(
         label='Cargo ou função',
         max_length=255,
-        widget=forms.TextInput(attrs={'placeholder': 'Ex.: Diretor(a) do Centro'}),
+        widget=forms.TextInput(attrs={'placeholder': 'Ex.: Diretor(a) do Centro Acadêmico'}),
+    )
+    resultado_deliberacao = forms.ChoiceField(
+        label='Resultado da deliberação',
+        choices=[('', 'Selecione o resultado')] + list(SolicitacaoAprovacaoCentro.RESULTADO_CHOICES),
+        widget=forms.RadioSelect,
     )
     ata_assembleia = forms.FileField(
-        label='Ata da assembleia com a aprovação',
+        label='Ata da assembleia com a deliberação',
         validators=[FileExtensionValidator(FORMATOS_DOCUMENTO), validar_pdf_ou_imagem],
         widget=forms.FileInput(attrs={'accept': '.pdf,.png,.jpg,.jpeg', 'class': 'form-control'}),
         help_text='Formatos aceitos: PDF, PNG, JPG e JPEG.',
     )
-    confirma_aprovacao = forms.BooleanField(
+    confirma_deliberacao = forms.BooleanField(
         label=(
-            'Confirmo que a ata anexada registra a aprovação deste projeto '
-            'pelo Conselho do Centro.'
+            'Confirmo que o resultado informado corresponde à deliberação '
+            'registrada na ata anexada.'
         ),
         required=True,
     )
@@ -665,6 +665,30 @@ class ProjetoEtapa1Form(forms.ModelForm):
         label='Coordenador responsável',
         required=False,
     )
+    origem_coordenador = forms.ChoiceField(
+        choices=(
+            ('sistema', 'Coordenador cadastrado no sistema'),
+            ('manual', 'Coordenador não cadastrado no sistema'),
+        ),
+        label='Origem do cadastro do coordenador',
+        widget=forms.RadioSelect,
+        required=False,
+    )
+    coordenador_externo_nome = forms.CharField(
+        label='Nome completo do coordenador',
+        max_length=255,
+        required=False,
+    )
+    coordenador_externo_cpf = forms.CharField(
+        label='CPF do coordenador (opcional)',
+        max_length=14,
+        required=False,
+        widget=forms.TextInput(attrs={'inputmode': 'numeric', 'placeholder': '000.000.000-00'}),
+    )
+    coordenador_externo_email = forms.EmailField(
+        label='E-mail do coordenador (opcional)',
+        required=False,
+    )
     agencia_financiadora_nome = forms.CharField(
         label="Agência Financiadora",
         required=False,
@@ -736,7 +760,7 @@ class ProjetoEtapa1Form(forms.ModelForm):
             'tipo_projeto', 'titulo', 'data_inicio', 'data_fim', 'edital',
             'centro_lotacao', 'curso', 'valor_fomento',
             'eh_docente', 'eh_pesquisador', 'eh_pesquisador_visitante',
-            'participa_pos_graduacao', 'etica_obrigatoria', 'situacao_etica', 'imagem_capa',
+            'participa_pos_graduacao', 'etica_obrigatoria', 'situacao_etica',
         ]
         widgets = {
             'data_inicio': forms.DateInput(attrs={'type': 'date'}),
@@ -753,11 +777,20 @@ class ProjetoEtapa1Form(forms.ModelForm):
             self.fields['coordenador_projeto'].queryset = Usuario.objects.filter(
                 perfil='coordenador', is_active=True,
             ).order_by('first_name', 'last_name', 'username')
-            self.fields['coordenador_projeto'].required = not self.is_draft
+            self.fields['origem_coordenador'].initial = 'sistema'
             if self.instance and self.instance.pk:
-                self.fields['coordenador_projeto'].initial = self.instance.coordenador
+                if self.instance.coordenador_id:
+                    self.fields['origem_coordenador'].initial = 'sistema'
+                    self.fields['coordenador_projeto'].initial = self.instance.coordenador
+                elif self.instance.coordenador_externo_nome:
+                    self.fields['origem_coordenador'].initial = 'manual'
         else:
-            self.fields.pop('coordenador_projeto')
+            for campo in (
+                'origem_coordenador', 'coordenador_projeto',
+                'coordenador_externo_nome', 'coordenador_externo_cpf',
+                'coordenador_externo_email',
+            ):
+                self.fields.pop(campo)
 
         # Queryset de editais calculado em runtime (evita bug de data fixa)
         if self.allow_closed_edital:
@@ -788,6 +821,14 @@ class ProjetoEtapa1Form(forms.ModelForm):
             for field in self.fields.values():
                 field.required = False
 
+    def clean_coordenador_externo_cpf(self):
+        cpf = ''.join(filter(str.isdigit, self.cleaned_data.get('coordenador_externo_cpf', '')))
+        if not cpf:
+            return ''
+        if len(cpf) != 11 or not CPF().validate(cpf):
+            raise ValidationError('Informe um CPF válido.')
+        return CPF().mask(cpf)
+
     def clean(self):
         cleaned_data = super().clean()
         data_inicio = cleaned_data.get('data_inicio')
@@ -797,6 +838,17 @@ class ProjetoEtapa1Form(forms.ModelForm):
 
         if self.is_draft:
             return cleaned_data
+
+        if self.modo_gestor:
+            origem = cleaned_data.get('origem_coordenador')
+            if origem == 'sistema':
+                if not cleaned_data.get('coordenador_projeto'):
+                    self.add_error('coordenador_projeto', 'Selecione o coordenador cadastrado.')
+            elif origem == 'manual':
+                if not cleaned_data.get('coordenador_externo_nome', '').strip():
+                    self.add_error('coordenador_externo_nome', 'Informe o nome completo do coordenador.')
+            else:
+                self.add_error('origem_coordenador', 'Informe como o coordenador será registrado.')
 
         tipo_projeto = cleaned_data.get('tipo_projeto')
         if tipo_projeto == Projeto.TIPO_PROJETO_AGENCIA_FOMENTO:
@@ -814,7 +866,7 @@ class ProjetoEtapa1Form(forms.ModelForm):
             if centro and not centro.email:
                 self.add_error(
                     'centro_lotacao',
-                    'O centro selecionado não possui e-mail cadastrado para receber a solicitação de aprovação.',
+                    'O Centro Acadêmico selecionado não possui e-mail cadastrado para receber a solicitação de deliberação.',
                 )
 
         elif tipo_projeto == Projeto.TIPO_PROJETO_UFAC_COM_FINANCIAMENTO:
@@ -840,8 +892,17 @@ class ProjetoEtapa1Form(forms.ModelForm):
     def save(self, commit=True):
         projeto = super().save(commit=False)
 
-        if self.modo_gestor and self.cleaned_data.get('coordenador_projeto'):
-            projeto.coordenador = self.cleaned_data['coordenador_projeto']
+        if self.modo_gestor:
+            if self.cleaned_data.get('origem_coordenador') == 'manual':
+                projeto.coordenador = None
+                projeto.coordenador_externo_nome = self.cleaned_data.get('coordenador_externo_nome', '').strip()
+                projeto.coordenador_externo_cpf = self.cleaned_data.get('coordenador_externo_cpf', '')
+                projeto.coordenador_externo_email = self.cleaned_data.get('coordenador_externo_email', '').strip()
+            elif self.cleaned_data.get('coordenador_projeto'):
+                projeto.coordenador = self.cleaned_data['coordenador_projeto']
+                projeto.coordenador_externo_nome = ''
+                projeto.coordenador_externo_cpf = ''
+                projeto.coordenador_externo_email = ''
 
         # Agência Financiadora
         tipo_projeto = self.cleaned_data.get('tipo_projeto')
@@ -996,7 +1057,6 @@ class ProjetoEtapa2Form(forms.ModelForm):
         if self.is_draft:
             for field in self.fields.values():
                 field.required = False
-
 
     def clean_documento_projeto(self):
         arquivo = self.cleaned_data.get('documento_projeto')

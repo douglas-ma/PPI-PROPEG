@@ -123,7 +123,7 @@
         <div class="card-header bg-white border-bottom py-3"><strong>Informações</strong></div>
         <ul class="list-group list-group-flush small">
           <li class="list-group-item"><span class="text-muted d-block">Tipo do Projeto</span>{{ projeto.get_tipo_projeto_display|default:"—" }}</li>
-          <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
+          <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.nome_coordenador }}</span></li>
           <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
           {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
         </ul>

@@ -19,12 +19,6 @@
                     <h2 class="display-5">{{ projeto.titulo }}</h2>
                 </div>
 
-                {% if projeto.imagem_capa %}
-                <div class="text-center my-4">
-                    <img src="{{ projeto.imagem_capa.url }}" class="img-fluid rounded shadow-sm" alt="Imagem do projeto {{ projeto.titulo }}">
-                </div>
-                {% endif %}
-
                 {% if projeto.resumo %}
                 <div class="text-center my-5">
                     <figure>
@@ -101,9 +95,9 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>{{ projeto.coordenador.get_full_name }}</td>
+                                    <td>{{ projeto.nome_coordenador }}</td>
                                     <td><span class="badge bg-primary">Coordenador(a)</span></td>
-                                    <td>{{ projeto.coordenador.cpf }}</td>
+                                    <td>{{ projeto.cpf_coordenador|default:"—" }}</td>
                                     <td>N/A</td>
                                 </tr>
                                 

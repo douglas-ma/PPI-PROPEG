@@ -103,10 +103,10 @@
       {% if user == projeto.coordenador and projeto.status == 'aguardando_conselho' and projeto.requer_ata_conselho %}
         <form action="{% url 'reenviar_solicitacao_centro' projeto.pk %}" method="post" class="d-inline"
               onsubmit="return confirm('Gerar um novo link e invalidar o anterior?')"
-              data-confirmation-help="Reenviar o convite ao Centro e invalidar o link anterior">
+              data-confirmation-help="Reenviar o convite ao Centro Acadêmico e invalidar o link anterior">
           {% csrf_token %}
           <button type="submit" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-envelope-arrow-up me-1"></i>Reenviar solicitação ao Centro
+            <i class="bi bi-envelope-arrow-up me-1"></i>Reenviar solicitação ao Centro Acadêmico
           </button>
         </form>
       {% endif %}
@@ -130,7 +130,7 @@
   <div class="alert alert-info border-0 shadow-sm d-flex gap-3 align-items-start">
     <i class="bi bi-hourglass-split fs-4 flex-shrink-0"></i>
     <div>
-      <strong>Aguardando a ata do Centro de Estudos</strong>
+      <strong>Aguardando a deliberação do Centro Acadêmico</strong>
       <div class="small mt-1">
         A solicitação foi encaminhada para <strong>{{ projeto.centro_lotacao.email }}</strong>.
         {% if solicitacao_centro %}
@@ -167,6 +167,12 @@
   <div class="alert alert-secondary border-0 shadow-sm">
     <strong><i class="bi bi-x-octagon me-1"></i>Encerrado sem conclusão</strong>
     <div class="small mt-1">{{ projeto.motivo_encerramento|linebreaksbr }}</div>
+    {% if projeto.encerrado_em %}
+      <div class="small text-muted mt-2">
+        Registrado em {{ projeto.encerrado_em|date:"d/m/Y à\s H:i" }}
+        {% if projeto.encerrado_por %}por {{ projeto.encerrado_por.get_full_name|default:projeto.encerrado_por.username }}{% endif %}.
+      </div>
+    {% endif %}
   </div>
   {% endif %}
 
@@ -282,7 +288,7 @@
               <i class="bi bi-file-earmark-text-fill text-warning fs-5"></i>
               <div class="flex-grow-1">
                 <span class="fw-semibold small">
-                  {% if projeto.requer_ata_conselho %}Ata de Aprovação do Conselho{% else %}Ata de Aprovação do Centro{% endif %}
+                  Ata de Deliberação do Centro Acadêmico
                 </span>
                 <div class="text-muted" style="font-size:.75rem;">{{ ata_conselho.data_upload|date:"d/m/Y" }} às {{ ata_conselho.data_upload|date:"H:i" }}</div>
               </div>
@@ -370,11 +376,11 @@
         <div class="card-body p-0">
           <ul class="list-group list-group-flush small">
             <li class="list-group-item"><span class="text-muted d-block">Tipo do Projeto</span><span class="fw-semibold">{{ projeto.get_tipo_projeto_display|default:"—" }}</span></li>
-            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
-            <li class="list-group-item"><span class="text-muted d-block">E-mail</span>{{ projeto.coordenador.email }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.nome_coordenador }}</span></li>
+            <li class="list-group-item"><span class="text-muted d-block">E-mail</span>{{ projeto.email_coordenador|default:"—" }}</li>
             <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
             {% if projeto.edital %}<li class="list-group-item"><span class="text-muted d-block">Edital</span>{{ projeto.edital.titulo_completo }}</li>{% endif %}
-            <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Centro Acadêmico</span>{{ projeto.centro_lotacao|default:"—" }}</li>
             {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
             {% if projeto.programa_pos %}<li class="list-group-item"><span class="text-muted d-block">Programa de Pós-Graduação</span>{{ projeto.programa_pos }}</li>{% endif %}
             {% if projeto.ultima_alteracao_gestor_em %}
@@ -502,9 +508,9 @@
         <div class="card-body p-0">
           <ul class="list-group list-group-flush small">
             <li class="list-group-item"><span class="text-muted d-block">Tipo do Projeto</span><span class="fw-semibold">{{ projeto.get_tipo_projeto_display|default:"—" }}</span></li>
-            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.coordenador.get_full_name }}</span></li>
+            <li class="list-group-item"><span class="text-muted d-block">Coordenador</span><span class="fw-semibold">{{ projeto.nome_coordenador }}</span></li>
             <li class="list-group-item"><span class="text-muted d-block">Vigência</span>{{ projeto.data_inicio|date:"d/m/Y" }} – {{ projeto.data_fim|date:"d/m/Y" }}</li>
-            <li class="list-group-item"><span class="text-muted d-block">Centro de Lotação</span>{{ projeto.centro_lotacao|default:"—" }}</li>
+            <li class="list-group-item"><span class="text-muted d-block">Centro Acadêmico</span>{{ projeto.centro_lotacao|default:"—" }}</li>
             {% if projeto.curso %}<li class="list-group-item"><span class="text-muted d-block">Curso</span>{{ projeto.curso }}</li>{% endif %}
             {% if projeto.palavras_chave %}<li class="list-group-item"><span class="text-muted d-block">Palavras-chave</span>{{ projeto.palavras_chave }}</li>{% endif %}
           </ul>

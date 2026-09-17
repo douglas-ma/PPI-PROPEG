@@ -138,7 +138,7 @@
           </div>
           <div class="alert alert-info d-flex gap-2 py-2 mt-3 mb-0">
             <i class="bi bi-building flex-shrink-0 mt-1"></i>
-            <span class="small"><strong>Centro de Estudos/Lotação:</strong> participa do fluxo de projetos UFAC sem financiamento por um link restrito enviado por e-mail. O responsável não precisa criar uma conta; o link permite somente consultar o projeto e registrar a ata de aprovação.</span>
+            <span class="small"><strong>Centro Acadêmico:</strong> participa do fluxo de projetos UFAC sem financiamento por um link restrito enviado por e-mail. O responsável não precisa criar uma conta; o link permite somente consultar o projeto, registrar o resultado da deliberação e anexar a ata.</span>
           </div>
         </div>
       </section>
@@ -264,7 +264,7 @@
             <strong>Fluxo conforme o tipo:</strong>
             <ul class="mb-0 mt-1">
               <li><strong>Agência de Fomento:</strong> segue diretamente para análise da PROPEG após o comprovante de aprovação.</li>
-              <li><strong>UFAC sem financiamento / fluxo contínuo:</strong> segue primeiro ao Centro de Lotação. O Centro recebe um link restrito e temporário para anexar a ata; somente então o projeto é encaminhado à PROPEG.</li>
+              <li><strong>UFAC sem financiamento / fluxo contínuo:</strong> segue primeiro ao Centro Acadêmico. O responsável recebe um link restrito e temporário para informar o resultado e anexar a ata. Quando aprovado, o projeto é encaminhado automaticamente à PROPEG.</li>
               <li><strong>UFAC com financiamento:</strong> segue o fluxo do edital selecionado.</li>
             </ul>
           </div>
@@ -314,7 +314,7 @@
             <li><strong>Em Revisão:</strong> projetos submetidos ou aguardando centro.</li>
             <li><strong>Aprovados/Rejeitados</strong>, <strong>Finalizados</strong> e <strong>Encerrados sem conclusão.</strong></li>
           </ul>
-          <p>Em todas as abas (exceto Visão Geral) há uma <strong>barra de busca e filtros</strong> por título, centro de lotação, ano de início e quantidade de itens por página.</p>
+          <p>Em todas as abas (exceto Visão Geral) há uma <strong>barra de busca e filtros</strong> por título, Centro Acadêmico, ano de início e quantidade de itens por página.</p>
         </div>
       </section>
 
@@ -419,18 +419,19 @@
             <p>Projetos enviados pelos coordenadores que aguardam análise inicial. Ações disponíveis:</p>
             <ul>
               <li><strong>Ver:</strong> acessar o detalhe completo do projeto.</li>
-              <li><strong>Centro:</strong> encaminhar o projeto para análise do centro.</li>
+              <li><strong>Centro Acadêmico:</strong> encaminhar o projeto para deliberação, quando o fluxo exigir.</li>
               <li><strong>Aprovar:</strong> aprovar o projeto diretamente (confirmação obrigatória).</li>
               <li><strong>Reprovar:</strong> reprovar o projeto (confirmação obrigatória). O coordenador pode corrigir e ressubmeter.</li>
             </ul>
           </div>
 
           <div class="mb-3">
-            <h6 class="fw-semibold"><span class="badge bg-warning text-dark me-2">Ag. Centro</span>Aguardando Aprovação do Centro</h6>
-            <p>Projetos encaminhados ao centro do centro. Ações disponíveis:</p>
+            <h6 class="fw-semibold"><span class="badge bg-warning text-dark me-2">Ag. Centro</span>Aguardando Deliberação do Centro Acadêmico</h6>
+            <p>Projetos encaminhados ao Centro Acadêmico. O responsável acessa o link restrito enviado por e-mail.</p>
             <ul>
-              <li><strong>Ata:</strong> anexar a ata de aprovação do centro (PDF).</li>
-              <li><strong>Aprovar / Reprovar:</strong> registrar o resultado da deliberação.</li>
+              <li><strong>Resultado:</strong> informar se o projeto foi aprovado ou reprovado.</li>
+              <li><strong>Ata:</strong> anexar a ata da deliberação em PDF ou imagem.</li>
+              <li><strong>Encaminhamento:</strong> quando aprovado, o projeto é enviado automaticamente à fila do gestor da PROPEG.</li>
             </ul>
           </div>
 
@@ -475,7 +476,7 @@
           <p>Visão completa de todos os projetos submetidos (exceto rascunhos), com filtros avançados de <strong>seleção múltipla</strong>:</p>
           <ul>
             <li><strong>Status:</strong> selecione um ou mais status simultaneamente.</li>
-            <li><strong>Centro de Lotação:</strong> filtre por um ou mais centros.</li>
+            <li><strong>Centro Acadêmico:</strong> filtre por um ou mais centros.</li>
             <li><strong>Curso:</strong> filtre por um ou mais cursos.</li>
             <li><strong>Vínculo com ODS:</strong> selecione um ou mais Objetivos de Desenvolvimento Sustentável.</li>
             <li><strong>Busca:</strong> por título ou coordenador.</li>
@@ -484,7 +485,7 @@
           <h6 class="fw-semibold">Correção e acervo histórico</h6>
           <ul>
             <li>Nos detalhes de qualquer projeto, use <strong>Editar Projeto</strong> para corrigir dados, equipe, ODS ou documentos. A data, a hora e o gestor responsável ficam visíveis no projeto.</li>
-            <li>Use <strong>Cadastrar Projeto Existente</strong> para inserir dados anteriores à plataforma. Selecione o coordenador, preencha as cinco etapas e informe o status atual na revisão.</li>
+            <li>Use <strong>Cadastrar Projeto Existente</strong> para abrir diretamente as etapas. Na Etapa 1, selecione um coordenador cadastrado ou informe manualmente os dados de alguém que não esteja mais vinculado à UFAC. Depois, complete as etapas e informe o status atual na revisão.</li>
           </ul>
         </div>
       </section>
@@ -535,7 +536,7 @@
           <p>A consulta pública é uma área <strong>aberta a qualquer pessoa</strong>, sem necessidade de login. Acesse pelo botão <strong>"Consulta Pública de Projetos"</strong> na tela de login.</p>
           <ul>
             <li>Exibe projetos com status Aprovado, Em Andamento, Finalizado ou Encerrado sem conclusão.</li>
-            <li>Filtros por status, centro de lotação e curso.</li>
+            <li>Filtros por status, Centro Acadêmico e curso.</li>
             <li>Campo de busca por título, resumo ou coordenador.</li>
             <li>Botão <strong>"Gerar Relatório PDF"</strong> que exporta os resultados filtrados.</li>
             <li>Clique em qualquer card de projeto para ver a visão pública detalhada (resumo, objetivo geral, equipe e ODS).</li>

@@ -103,7 +103,7 @@ table.dados tbody td {
       <th style="width:22%;">Título</th>
       <th style="width:13%;">Coordenador</th>
       <th style="width:17%;">Tipo do Projeto</th>
-      <th style="width:10%;">Centro de Lotação</th>
+      <th style="width:10%;">Centro Acadêmico</th>
       <th style="width:8%;">Curso</th>
       <th style="width:8%;">Início</th>
       <th style="width:8%;">Fim</th>
@@ -115,7 +115,7 @@ table.dados tbody td {
     <tr>
       <td>{{ forloop.counter }}</td>
       <td><strong>{{ p.titulo }}</strong></td>
-      <td>{{ p.coordenador.get_full_name }}</td>
+      <td>{{ p.nome_coordenador }}</td>
       <td>{{ p.get_tipo_projeto_display|default:"—" }}</td>
       <td>{{ p.centro_lotacao|default:"—" }}</td>
       <td>{{ p.curso|default:"—" }}</td>

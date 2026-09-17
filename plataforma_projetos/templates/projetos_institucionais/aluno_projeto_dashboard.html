@@ -100,7 +100,7 @@
           {% for part in page_obj %}
           <tr>
             <td class="fw-semibold small">{{ part.projeto.titulo|truncatechars:45 }}</td>
-            <td class="small text-muted">{{ part.projeto.coordenador.get_full_name|truncatechars:25 }}</td>
+            <td class="small text-muted">{{ part.projeto.nome_coordenador|truncatechars:25 }}</td>
             <td class="small">{{ part.get_funcao_display }}</td>
             <td class="text-center small text-muted">{{ part.carga_horaria_semanal }}h</td>
             <td class="text-center small text-muted">

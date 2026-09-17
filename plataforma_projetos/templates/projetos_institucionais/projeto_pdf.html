@@ -175,7 +175,7 @@ li { margin-bottom: 0; }
   {% endif %}
 
   <div class="capa-autores">
-    <p class="s">{{ coord.get_full_name }}</p>
+    <p class="s">{{ projeto.nome_coordenador }}</p>
   </div>
 
   <p class="s capa-titulo">{{ projeto.titulo }}</p>
@@ -189,7 +189,7 @@ li { margin-bottom: 0; }
 
 {# ══════════════════════ FOLHA DE ROSTO ════════════════════════════════════ #}
 <div class="pg-rosto">
-  <p class="s rosto-autor">{{ coord.get_full_name }}</p>
+  <p class="s rosto-autor">{{ projeto.nome_coordenador }}</p>
 
   <p class="s rosto-titulo">{{ projeto.titulo }}</p>
 
@@ -201,7 +201,7 @@ li { margin-bottom: 0; }
     <br><br>Edital: {{ projeto.edital.titulo_completo }}
     {% endif %}
     <br><br>
-    Coordenador(a): {{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+    Coordenador(a): {{ projeto.nome_coordenador }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
     {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
     {% if coord.lattes %}<br>Lattes: <span style="font-family:monospace;font-size:8pt;">{{ coord.lattes }}</span>{% endif %}
     {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
@@ -247,13 +247,13 @@ li { margin-bottom: 0; }
     <tr><td class="col-l">Título</td><td>{{ projeto.titulo }}</td></tr>
     <tr>
       <td class="col-l">Coordenador(a)</td>
-      <td>{{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+      <td>{{ projeto.nome_coordenador }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
         {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}
         {% if coord.lattes %}<br>Lattes: <span style="font-family:monospace;font-size:8pt;">{{ coord.lattes }}</span>{% endif %}
         {% if coord.cnpq_area %}<br>Área CNPq: {{ coord.get_cnpq_area_display }}{% endif %}
       </td>
     </tr>
-    <tr><td class="col-l">Centro de Lotação</td><td>{{ projeto.centro_lotacao|default:"-" }}</td></tr>
+    <tr><td class="col-l">Centro Acadêmico</td><td>{{ projeto.centro_lotacao|default:"-" }}</td></tr>
     {% if projeto.curso %}<tr><td class="col-l">Curso de Graduação</td><td>{{ projeto.curso }}</td></tr>{% endif %}
     <tr><td class="col-l">Período de Execução</td>
         <td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>

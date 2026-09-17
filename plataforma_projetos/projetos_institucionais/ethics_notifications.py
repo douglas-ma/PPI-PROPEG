@@ -21,6 +21,8 @@ def processar_alertas_etica(data_referencia=None):
 
     enviados = 0
     for projeto in projetos:
+        if not projeto.coordenador_id:
+            continue
         if projeto.anexos.filter(tipo_anexo='comite_etica').exists():
             continue
         dias = (projeto.prazo_aprovacao_etica - hoje).days
@@ -52,16 +54,16 @@ def processar_alertas_etica(data_referencia=None):
                 link=link,
             )
 
-        if projeto.coordenador.email:
+        if projeto.email_coordenador:
             send_mail(
                 subject=f'Prazo para aprovação ética: {dias} dia(s)',
                 message=(
-                    f'Olá, {projeto.coordenador.get_full_name() or projeto.coordenador.username}.\n\n'
+                    f'Olá, {projeto.nome_coordenador}.\n\n'
                     f'{mensagem}\n\nAcesse a plataforma para anexar o comprovante definitivo.\n\n'
                     'Equipe PROPEG/UFAC'
                 ),
                 from_email=getattr(settings, 'DEFAULT_FROM_EMAIL', None),
-                recipient_list=[projeto.coordenador.email],
+                recipient_list=[projeto.email_coordenador],
                 fail_silently=True,
             )
         enviados += 1

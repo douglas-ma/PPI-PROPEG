@@ -9,42 +9,42 @@ Fontes consultadas em setembro de 2026:
 CENTROS_UFAC = (
     {
         'sigla': 'CCBN',
-        'nome': 'CCBN - Centro de Ciências Biológicas e da Natureza',
+        'nome': 'CCBN - Centro Acadêmico de Ciências Biológicas e da Natureza',
         'email': 'ccbn@ufac.br',
     },
     {
         'sigla': 'CCET',
-        'nome': 'CCET - Centro de Ciências Exatas e Tecnológicas',
+        'nome': 'CCET - Centro Acadêmico de Ciências Exatas e Tecnológicas',
         'email': 'ccet@ufac.br',
     },
     {
         'sigla': 'CCJSA',
-        'nome': 'CCJSA - Centro de Ciências Jurídicas e Sociais Aplicadas',
+        'nome': 'CCJSA - Centro Acadêmico de Ciências Jurídicas e Sociais Aplicadas',
         'email': 'ccjsa@ufac.br',
     },
     {
         'sigla': 'CCSD',
-        'nome': 'CCSD - Centro de Ciências da Saúde e do Desporto',
+        'nome': 'CCSD - Centro Acadêmico de Ciências da Saúde e do Desporto',
         'email': 'ccsd@ufac.br',
     },
     {
         'sigla': 'CELA',
-        'nome': 'CELA - Centro de Educação, Letras e Artes',
+        'nome': 'CELA - Centro Acadêmico de Educação, Letras e Artes',
         'email': 'cela@ufac.br',
     },
     {
         'sigla': 'CFCH',
-        'nome': 'CFCH - Centro de Filosofia e Ciências Humanas',
+        'nome': 'CFCH - Centro Acadêmico de Filosofia e Ciências Humanas',
         'email': 'cfch@ufac.br',
     },
     {
         'sigla': 'CEL',
-        'nome': 'CEL - Centro de Educação e Letras (Campus Floresta)',
+        'nome': 'CEL - Centro Acadêmico de Educação e Letras (Campus Floresta)',
         'email': 'cel.ufac@gmail.com',
     },
     {
         'sigla': 'CMULTI',
-        'nome': 'CMULTI - Centro Multidisciplinar (Campus Floresta)',
+        'nome': 'CMULTI - Centro Acadêmico Multidisciplinar (Campus Floresta)',
         'email': 'cmulti@ufac.br',
     },
 )
@@ -129,6 +129,10 @@ def criar_catalogo_ufac(CentroLotacao, CursoGraduacao, *, limpar=False):
         centro = CentroLotacao.objects.filter(nome=dados['nome']).first()
         if centro is None:
             centro = CentroLotacao.objects.filter(nome=dados['sigla']).first()
+        if centro is None:
+            centro = CentroLotacao.objects.filter(
+                nome__startswith=f"{dados['sigla']} - ",
+            ).first()
         if centro is None:
             centro = CentroLotacao.objects.create(
                 nome=dados['nome'],

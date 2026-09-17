@@ -65,8 +65,8 @@ th { font-weight: bold; text-align: center; }
   <p class="s capa-titulo">{{ projeto.titulo }}</p>
 
   <div class="capa-info">
-    <p class="s"><strong>Coordenador(a):</strong> {{ coord.get_full_name }}</p>
-    {% if projeto.centro_lotacao %}<p class="s"><strong>Centro:</strong> {{ projeto.centro_lotacao }}</p>{% endif %}
+    <p class="s"><strong>Coordenador(a):</strong> {{ projeto.nome_coordenador }}</p>
+    {% if projeto.centro_lotacao %}<p class="s"><strong>Centro Acadêmico:</strong> {{ projeto.centro_lotacao }}</p>{% endif %}
     <p class="s"><strong>Período Relatado:</strong>
       {{ dados.periodo_inicio|date:"d/m/Y" }} a {{ dados.periodo_fim|date:"d/m/Y" }}
     </p>
@@ -108,9 +108,9 @@ th { font-weight: bold; text-align: center; }
     <caption>Quadro 1 – Dados de identificação</caption>
     <tr><td class="col-l">Título</td><td>{{ projeto.titulo }}</td></tr>
     <tr><td class="col-l">Coordenador(a)</td>
-        <td>{{ coord.get_full_name }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
+        <td>{{ projeto.nome_coordenador }}{% if coord.titulacao %}, {{ coord.titulacao }}{% endif %}
           {% if coord.siape %}<br>SIAPE: {{ coord.siape }}{% endif %}</td></tr>
-    <tr><td class="col-l">Centro de Lotação</td><td>{{ projeto.centro_lotacao|default:"—" }}</td></tr>
+    <tr><td class="col-l">Centro Acadêmico</td><td>{{ projeto.centro_lotacao|default:"—" }}</td></tr>
     {% if projeto.curso %}<tr><td class="col-l">Curso</td><td>{{ projeto.curso }}</td></tr>{% endif %}
     <tr><td class="col-l">Vigência do Projeto</td>
         <td>{{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }}</td></tr>

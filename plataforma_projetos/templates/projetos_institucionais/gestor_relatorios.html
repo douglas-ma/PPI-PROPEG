@@ -128,7 +128,7 @@
                 {{ r.projeto.titulo|truncatechars:45 }}
               </a>
             </td>
-            <td class="text-muted">{{ r.projeto.coordenador.get_full_name|truncatechars:22 }}</td>
+            <td class="text-muted">{{ r.projeto.nome_coordenador|truncatechars:22 }}</td>
             <td class="text-muted">{{ r.projeto.centro_lotacao|default:"—" }}</td>
             <td class="text-center">
               {% if r.tipo == 'final' %}

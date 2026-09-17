@@ -195,13 +195,13 @@ def _emitir_solicitacao_centro(request, projeto):
         validade_horas=validade_horas,
     )
     link = request.build_absolute_uri(reverse('aprovacao_centro', args=[token]))
-    assunto = f'Aprovação de projeto pelo Centro: "{projeto.titulo}"'
+    assunto = f'Deliberação de projeto pelo Centro Acadêmico: "{projeto.titulo}"'
     mensagem = (
         f'Prezados responsáveis do {projeto.centro_lotacao.nome},\n\n'
         f'O projeto "{projeto.titulo}", coordenado por '
-        f'{projeto.coordenador.get_full_name()}, aguarda deliberação do Conselho do Centro.\n\n'
+        f'{projeto.nome_coordenador}, aguarda deliberação do Centro Acadêmico.\n\n'
         f'Acesse o link restrito abaixo para consultar o projeto e anexar a ata da assembleia '
-        f'que registra sua aprovação:\n{link}\n\n'
+        f'que registra sua aprovação ou reprovação:\n{link}\n\n'
         f'O link permite somente esta tramitação, expira em {validade_horas // 24 or 1} dia(s) '
         f'e será invalidado após o envio válido da ata.\n\n'
         'Atenciosamente,\nEquipe PROPEG/UFAC'
@@ -330,15 +330,10 @@ class ProjetoCreateWizard(SessionWizardView):
         dados_equipe = formset_equipe.cleaned_data if formset_equipe else []
 
         projeto.edital = dados_gerais.pop('edital', None)
-        imagem_capa_salvar = dados_gerais.pop('imagem_capa', None)
-
         for campo, valor in dados_gerais.items():
             if hasattr(projeto, campo) and not isinstance(getattr(projeto, campo), models.Manager):
                 setattr(projeto, campo, valor)
         
-        if imagem_capa_salvar:
-            projeto.imagem_capa = imagem_capa_salvar
-
         projeto.status = 'submetido'
         projeto.save()
 
@@ -570,7 +565,7 @@ def anexar_ata_conselho(request, pk):
             anexo = form.save(commit=False)
             anexo.projeto    = projeto
             anexo.tipo_anexo = 'ata_conselho'
-            anexo.descricao  = form.cleaned_data.get('descricao') or 'Ata de Aprovação do Centro'
+            anexo.descricao  = form.cleaned_data.get('descricao') or 'Ata de Deliberação do Centro Acadêmico'
             anexo.save()
             messages.success(request, f'Ata do centro anexada ao projeto "{projeto.titulo}".')
             return redirect('gestor_dashboard')
@@ -578,7 +573,7 @@ def anexar_ata_conselho(request, pk):
         form = AnexoComprovanteForm()
     return render(request, 'projetos_institucionais/anexar_comprovante.html', {
         'form': form, 'projeto': projeto,
-        'titulo_pagina': 'Anexar Ata de Aprovação do Centro',
+        'titulo_pagina': 'Anexar Ata de Deliberação do Centro Acadêmico',
     })
 
 
@@ -593,7 +588,7 @@ def _obter_solicitacao_por_token(token):
 
 def _motivo_link_centro_invalido(solicitacao):
     if solicitacao is None:
-        return 'Este link de aprovação não existe ou está incorreto.'
+        return 'Este link de deliberação não existe ou está incorreto.'
     if solicitacao.utilizada_em:
         return 'Este link já foi utilizado para registrar a ata.'
     if solicitacao.invalidada_em:
@@ -604,7 +599,7 @@ def _motivo_link_centro_invalido(solicitacao):
         not solicitacao.projeto.requer_ata_conselho
         or solicitacao.projeto.status != 'aguardando_conselho'
     ):
-        return 'Este projeto não está mais aguardando a aprovação do Centro.'
+        return 'Este projeto não está mais aguardando a deliberação do Centro Acadêmico.'
     return ''
 
 
@@ -646,41 +641,72 @@ def aprovacao_centro(request, token):
             projeto = Projeto.objects.select_for_update().get(pk=solicitacao.projeto_id)
             responsavel_nome = form.cleaned_data['responsavel_nome'].strip()
             responsavel_cargo = form.cleaned_data['responsavel_cargo'].strip()
+            resultado = form.cleaned_data['resultado_deliberacao']
+            resultado_rotulo = dict(SolicitacaoAprovacaoCentro.RESULTADO_CHOICES)[resultado]
             ata = Anexo.objects.create(
                 projeto=projeto,
                 tipo_anexo='ata_conselho',
                 arquivo=form.cleaned_data['ata_assembleia'],
                 descricao=(
-                    f'Ata de aprovação do Centro enviada por {responsavel_nome} '
-                    f'({responsavel_cargo}).'
+                    f'Ata de deliberação do Centro Acadêmico enviada por {responsavel_nome} '
+                    f'({responsavel_cargo}). Resultado: {resultado_rotulo}.'
                 ),
             )
             solicitacao.ata = ata
             solicitacao.responsavel_nome = responsavel_nome
             solicitacao.responsavel_cargo = responsavel_cargo
+            solicitacao.resultado_deliberacao = resultado
             solicitacao.utilizada_em = timezone.now()
             solicitacao.save(update_fields=[
-                'ata', 'responsavel_nome', 'responsavel_cargo', 'utilizada_em',
+                'ata', 'responsavel_nome', 'responsavel_cargo',
+                'resultado_deliberacao', 'utilizada_em',
             ])
-            projeto.status = 'submetido'
+            projeto.status = 'submetido' if resultado == 'aprovado' else 'reprovado'
             projeto.save(update_fields=['status'])
 
         link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
-        enviar_email_e_notificacao(
-            f'Projeto "{projeto.titulo}" aprovado pelo Centro',
-            (
-                f'Olá, {projeto.coordenador.first_name}!\n\n'
-                f'O Centro de Estudos anexou a ata de aprovação do projeto "{projeto.titulo}". '
-                'O projeto foi encaminhado automaticamente à PROPEG e agora aguarda a análise do gestor.\n\n'
-                'Atenciosamente,\nEquipe PROPEG/UFAC'
-            ),
-            projeto.coordenador,
-            link=link_projeto,
-        )
+        aprovado = resultado == 'aprovado'
+        if projeto.coordenador_id:
+            enviar_email_e_notificacao(
+                f'Deliberação do Centro Acadêmico: "{projeto.titulo}"',
+                (
+                    f'Olá, {projeto.nome_coordenador}!\n\n'
+                    f'O Centro Acadêmico anexou a ata e registrou o projeto "{projeto.titulo}" como '
+                    f'{"aprovado" if aprovado else "reprovado"}. '
+                    + (
+                        'O projeto foi encaminhado automaticamente à PROPEG e agora aguarda a análise do gestor.\n\n'
+                        if aprovado else
+                        'A tramitação foi encerrada com a reprovação registrada na ata.\n\n'
+                    )
+                    + 'Atenciosamente,\nEquipe PROPEG/UFAC'
+                ),
+                projeto.coordenador,
+                link=link_projeto,
+            )
+
+        for gestor in Usuario.objects.filter(perfil='gestor', is_active=True):
+            enviar_email_e_notificacao(
+                f'Deliberação do Centro Acadêmico: "{projeto.titulo}"',
+                (
+                    f'O Centro Acadêmico registrou o projeto "{projeto.titulo}" como '
+                    f'{"aprovado" if aprovado else "reprovado"} e anexou a ata da assembleia. '
+                    + (
+                        'O projeto já está disponível para análise da PROPEG.'
+                        if aprovado else
+                        'O resultado e a ata estão disponíveis no histórico do projeto.'
+                    )
+                ),
+                gestor,
+                link=link_projeto,
+            )
         return render(
             request,
             'projetos_institucionais/aprovacao_centro.html',
-            {'concluido': True, 'projeto': projeto},
+            {
+                'concluido': True,
+                'projeto': projeto,
+                'resultado_deliberacao': resultado,
+            },
         )
 
     return render(request, 'projetos_institucionais/aprovacao_centro.html', {
@@ -715,10 +741,10 @@ def aprovacao_centro_documento(request, token):
 def reenviar_solicitacao_centro(request, pk):
     projeto = get_object_or_404(Projeto, pk=pk, coordenador=request.user)
     if not projeto.requer_ata_conselho or projeto.status != 'aguardando_conselho':
-        messages.warning(request, 'Este projeto não está aguardando a ata do Centro.')
+        messages.warning(request, 'Este projeto não está aguardando a ata do Centro Acadêmico.')
         return redirect('projeto_detalhe', pk=pk)
     if not projeto.centro_lotacao or not projeto.centro_lotacao.email:
-        messages.error(request, 'O Centro de Lotação não possui e-mail cadastrado.')
+        messages.error(request, 'O Centro Acadêmico não possui e-mail cadastrado.')
         return redirect('projeto_detalhe', pk=pk)
 
     _, enviado = _emitir_solicitacao_centro(request, projeto)
@@ -847,7 +873,11 @@ def _filtrar_consulta_publica_por_texto(queryset, consulta):
     if not consulta:
         return queryset
 
-    filtro_texto = Q(titulo__icontains=consulta) | Q(resumo__icontains=consulta)
+    filtro_texto = (
+        Q(titulo__icontains=consulta)
+        | Q(resumo__icontains=consulta)
+        | Q(coordenador_externo_nome__icontains=consulta)
+    )
     filtro_nome = _filtro_nome_completo(
         consulta,
         'coordenador__first_name',
@@ -1157,7 +1187,7 @@ def aprovar_projeto(request, pk):
 
     subject = f'Seu projeto "{projeto.titulo}" foi APROVADO!'
     message = (
-        f'Olá, {projeto.coordenador.first_name}!\n\n'
+        f'Olá, {projeto.nome_coordenador}!\n\n'
         f'Temos boas notícias: seu projeto "{projeto.titulo}" foi aprovado pelo gestor.'
         f'Você já pode iniciá-lo a partir do seu painel ou aguardar a data de início programada.'
     )
@@ -1185,7 +1215,7 @@ def reprovar_projeto(request, pk):
 
     subject = f'Atualização sobre seu projeto "{projeto.titulo}"'
     message = (
-        f'Olá, {projeto.coordenador.first_name}.\n\n'
+        f'Olá, {projeto.nome_coordenador}.\n\n'
         f'Após análise, o projeto "{projeto.titulo}" foi reprovado. '
         f'Você pode acessar o sistema para editar e ressubmeter o projeto, se desejar.'
     )
@@ -1451,7 +1481,8 @@ def historico_projetos(request):
         queryset = queryset.filter(
             Q(titulo__icontains=query) |
             Q(coordenador__first_name__icontains=query) |
-            Q(coordenador__last_name__icontains=query)
+            Q(coordenador__last_name__icontains=query) |
+            Q(coordenador_externo_nome__icontains=query)
         )
     if status_filters:
         queryset = queryset.filter(status__in=status_filters)
@@ -1542,7 +1573,8 @@ def historico_projetos_pdf(request):
         queryset = queryset.filter(
             Q(titulo__icontains=query) |
             Q(coordenador__first_name__icontains=query) |
-            Q(coordenador__last_name__icontains=query)
+            Q(coordenador__last_name__icontains=query) |
+            Q(coordenador_externo_nome__icontains=query)
         )
     if status_filters: queryset = queryset.filter(status__in=status_filters)
     if data_inicio_filter: queryset = queryset.filter(data_inicio__gte=data_inicio_filter)
@@ -1612,19 +1644,19 @@ def encaminhar_para_conselho(request, pk):
 
         if projeto.centro_lotacao and projeto.centro_lotacao.email:
             if eh_encerramento:
-                subject_conselho = f'Projeto para Aprovação de Encerramento pelo Centro: "{projeto.titulo}"'
+                subject_conselho = f'Projeto para deliberação de encerramento pelo Centro Acadêmico: "{projeto.titulo}"'
                 message_conselho = (
-                    f'Prezados responsáveis do centro {projeto.centro_lotacao.nome},\n\n'
-                    f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, '
-                    f'concluiu suas atividades e foi encaminhado para aprovação de encerramento.\n\n'
+                    f'Prezados responsáveis do {projeto.centro_lotacao.nome},\n\n'
+                    f'O projeto "{projeto.titulo}", coordenado por {projeto.nome_coordenador}, '
+                    f'concluiu suas atividades e foi encaminhado para deliberação de encerramento.\n\n'
                     f'O relatório final de atividades está disponível para análise.\n\n'
                     f'Atenciosamente,\nEquipe de Gestão PROPEG'
                 )
             else:
-                subject_conselho = f'Novo Projeto para Análise do Centro: "{projeto.titulo}"'
+                subject_conselho = f'Novo projeto para análise do Centro Acadêmico: "{projeto.titulo}"'
                 message_conselho = (
-                    f'Prezados responsáveis do centro {projeto.centro_lotacao.nome},\n\n'
-                    f'O projeto "{projeto.titulo}", coordenado por {projeto.coordenador.get_full_name()}, foi encaminhado para sua análise e aprovação.\n\n'
+                    f'Prezados responsáveis do {projeto.centro_lotacao.nome},\n\n'
+                    f'O projeto "{projeto.titulo}", coordenado por {projeto.nome_coordenador}, foi encaminhado para sua análise e deliberação.\n\n'
                     f'O relatório de submissão do projeto está anexado a este email para sua conveniência.\n\n'
                     f'Atenciosamente,\nEquipe de Gestão PROPEG'
                 )
@@ -1677,26 +1709,26 @@ def encaminhar_para_conselho(request, pk):
 
         if eh_encerramento:
             msg_coord = (
-                f'Olá, {projeto.coordenador.first_name}!\n\n'
-                f'Seu projeto "{projeto.titulo}" foi encaminhado para aprovação de encerramento pelo centro do seu centro.\n\n'
+                f'Olá, {projeto.nome_coordenador}!\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para deliberação de encerramento pelo Centro Acadêmico.\n\n'
                 f'Você será notificado assim que houver uma decisão.\n\n'
                 f'Atenciosamente,\nEquipe PROPEG'
             )
-            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao centro para aprovação de encerramento.'
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao Centro Acadêmico para deliberação de encerramento.'
         else:
             msg_coord = (
-                f'Olá, {projeto.coordenador.first_name}!\n\n'
-                f'Seu projeto "{projeto.titulo}" foi encaminhado para análise do centro do seu centro de lotação.\n\n'
-                f'O status foi atualizado para "Aguardando aprovação do centro". Você será notificado sobre as próximas etapas.\n\n'
+                f'Olá, {projeto.nome_coordenador}!\n\n'
+                f'Seu projeto "{projeto.titulo}" foi encaminhado para análise do Centro Acadêmico.\n\n'
+                f'O status foi atualizado para "Aguardando deliberação do Centro Acadêmico". Você será notificado sobre as próximas etapas.\n\n'
                 f'Atenciosamente,\nEquipe PROPEG'
             )
-            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao centro e o coordenador foi notificado.'
+            msg_sucesso = f'O projeto "{projeto.titulo}" foi encaminhado ao Centro Acadêmico e o coordenador foi notificado.'
 
         link_projeto = request.build_absolute_uri(reverse('projeto_detalhe', args=[projeto.pk]))
         enviar_email_e_notificacao(msg_sucesso.split('"')[0], msg_coord, projeto.coordenador, link=link_projeto)
         messages.success(request, msg_sucesso)
     else:
-        messages.warning(request, f'O projeto "{projeto.titulo}" não pode ser encaminhado ao centro no status atual.')
+        messages.warning(request, f'O projeto "{projeto.titulo}" não pode ser encaminhado ao Centro Acadêmico no status atual.')
 
     return redirect('gestor_dashboard')
 
@@ -1786,6 +1818,9 @@ def enviar_email_e_notificacao(subject, message, destinatario_usuario, link=None
     """
     Envia um email (via Brevo API ou SMTP) e cria uma notificação no sistema.
     """
+    if destinatario_usuario is None:
+        return False
+
     brevo_key = getattr(settings, 'BREVO_API_KEY', '')
     if brevo_key:
         # Produção: usa API HTTP do Brevo (funciona no Render free)
@@ -1821,6 +1856,7 @@ def enviar_email_e_notificacao(subject, message, destinatario_usuario, link=None
         mensagem=message,
         link=link
     )
+    return True
 
 
 @login_required
@@ -1949,7 +1985,7 @@ def criar_relatorio(request, pk):
                 gestores = Usuario.objects.filter(perfil='gestor', is_active=True)
                 subject = f'Relatório Final Submetido: "{projeto.titulo}"'
                 message = (
-                    f'O coordenador {projeto.coordenador.get_full_name()} submeteu o '
+                    f'O coordenador {projeto.nome_coordenador} submeteu o '
                     f'relatório final para o projeto "{projeto.titulo}".\n\n'
                     f'O projeto agora está pronto para sua análise e finalização.'
                 )
@@ -2004,7 +2040,7 @@ def encerrar_projeto(request, pk):
 
         subject = f'Seu projeto "{projeto.titulo}" foi finalizado com êxito'
         message = (
-            f'Olá, {projeto.coordenador.first_name}!\n\n'
+            f'Olá, {projeto.nome_coordenador}!\n\n'
             f'Informamos que o projeto "{projeto.titulo}" foi revisado e finalizado com êxito pela gestão.\n\n'
             f'Agradecemos pelo seu trabalho e dedicação.\nEquipe PROPEG'
         )
@@ -2042,7 +2078,7 @@ def encerrar_projeto_sem_conclusao(request, pk):
         enviar_email_e_notificacao(
             f'Projeto "{projeto.titulo}" encerrado sem conclusão',
             (
-                f'Olá, {projeto.coordenador.first_name}.\n\n'
+                f'Olá, {projeto.nome_coordenador}.\n\n'
                 f'O projeto "{projeto.titulo}" foi encerrado sem conclusão pela gestão.\n'
                 f'Motivo: {projeto.motivo_encerramento}\n\nEquipe PROPEG/UFAC'
             ),
@@ -2154,6 +2190,8 @@ def gestor_detalhe_edital(request, pk):
             | Q(coordenador__first_name__icontains=q)
             | Q(coordenador__last_name__icontains=q)
             | Q(coordenador__cpf__icontains=q)
+            | Q(coordenador_externo_nome__icontains=q)
+            | Q(coordenador_externo_cpf__icontains=q)
         )
     if status in dict(Projeto.STATUS_CHOICES):
         projetos = projetos.filter(status=status)
@@ -2412,19 +2450,19 @@ def projeto_editar_iniciar(request, pk):
 @login_required
 @gestor_required
 def gestor_projeto_criar(request):
-    """Inicia o cadastro completo de um projeto anterior à implantação do sistema."""
-    form = GestorProjetoNovoForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        projeto = Projeto.objects.create(
-            coordenador=form.cleaned_data['coordenador'],
-            status='rascunho',
-            importado_legado=True,
-            ultima_alteracao_gestor_em=timezone.now(),
-            ultima_alteracao_gestor_por=request.user,
-        )
-        messages.info(request, 'Cadastro histórico iniciado. Preencha todas as etapas do projeto.')
-        return redirect('projeto_etapa', pk=projeto.pk, step=1)
-    return render(request, 'projetos_institucionais/gestor_projeto_novo.html', {'form': form})
+    """Cria o rascunho histórico e abre diretamente a primeira etapa."""
+    projeto = Projeto.objects.create(
+        coordenador=None,
+        status='rascunho',
+        importado_legado=True,
+        ultima_alteracao_gestor_em=timezone.now(),
+        ultima_alteracao_gestor_por=request.user,
+    )
+    messages.info(
+        request,
+        'Cadastro histórico iniciado. Informe o coordenador e os demais dados nas etapas do projeto.',
+    )
+    return redirect('projeto_etapa', pk=projeto.pk, step=1)
 
 
 def _registrar_alteracao_gestor(projeto, usuario):
@@ -2447,9 +2485,12 @@ def _checar_etapas(projeto):
     Para projetos aprovados por agência de fomento o fluxo é de 2 etapas
     e a etapa 2 é validada no momento do POST.
     """
+    coordenador_informado = bool(
+        projeto.coordenador_id or projeto.coordenador_externo_nome.strip()
+    )
     etapa_1_base = bool(
         projeto.tipo_projeto and projeto.titulo and projeto.data_inicio and
-        projeto.data_fim and projeto.centro_lotacao
+        projeto.data_fim and projeto.centro_lotacao and coordenador_informado
     )
 
     if projeto.eh_agencia_fomento:
@@ -2783,7 +2824,7 @@ def projeto_etapa_view(request, pk, step):
                     ):
                         messages.error(
                             request,
-                            'Cadastre um Centro de Lotação com e-mail válido antes de solicitar a aprovação.',
+                            'Cadastre um Centro Acadêmico com e-mail válido antes de solicitar a deliberação.',
                         )
                         return redirect('projeto_etapa', pk=pk, step=1)
 
@@ -2801,7 +2842,7 @@ def projeto_etapa_view(request, pk, step):
                             destinatario=request.user,
                             mensagem=(
                                 f'O projeto "{projeto.titulo}" foi encaminhado diretamente ao '
-                                f'{projeto.centro_lotacao.nome} e aguarda o envio da ata de aprovação.'
+                                f'{projeto.centro_lotacao.nome} e aguarda o envio da ata de deliberação.'
                             ),
                             link=reverse('projeto_detalhe', args=[projeto.pk]),
                         )
@@ -2935,7 +2976,7 @@ def ajuda(request):
         {'titulo': 'Informações Gerais',  'badge': 'bg-primary', 'itens': [
             'Seleção de um dos três tipos de projeto e documentação correspondente',
             'Título e resumo do projeto', 'Palavras-chave', 'Datas de início e fim',
-            'Centro de lotação e curso',
+            'Centro Acadêmico e curso',
             'Agência de Fomento: comprovante de aprovação em PDF, PNG, JPG ou JPEG',
             'UFAC com financiamento: edital UFAC aberto obrigatório',
             'UFAC sem financiamento: centro com e-mail cadastrado para receber a solicitação',
@@ -2985,8 +3026,8 @@ def _ajuda_dados():
         {'titulo': 'Rascunho', 'desc': 'O coordenador cria o projeto, preenche as etapas e pode salvar ou retomar o rascunho a qualquer momento.', 'cor': '#6c757d'},
         {'titulo': 'Tipo e preenchimento', 'desc': 'Na Etapa 1, o coordenador escolhe o tipo do projeto e informa a documentação exigida para aquele fluxo.', 'cor': '#0d6efd'},
         {'titulo': 'Submissão por tipo', 'desc': 'Na Etapa 5, o sistema gera o relatório em PDF e direciona o projeto conforme a modalidade selecionada.', 'cor': '#0d6efd'},
-        {'titulo': 'Aprovação do Centro', 'desc': 'Somente projetos UFAC sem financiamento passam primeiro pelo Centro: o responsável recebe um link restrito, válido por 7 dias e de uso único, para anexar a ata.', 'cor': '#ffc107'},
-        {'titulo': 'Análise da PROPEG', 'desc': 'Agência de Fomento e UFAC com financiamento seguem para análise do gestor. O projeto UFAC sem financiamento chega à PROPEG depois da ata do Centro.', 'cor': '#fd7e14'},
+        {'titulo': 'Deliberação do Centro Acadêmico', 'desc': 'Somente projetos UFAC sem financiamento passam primeiro pelo Centro Acadêmico: o responsável recebe um link restrito, válido por 7 dias e de uso único, para registrar o resultado e anexar a ata.', 'cor': '#ffc107'},
+        {'titulo': 'Análise da PROPEG', 'desc': 'Agência de Fomento e UFAC com financiamento seguem para análise do gestor. O projeto UFAC sem financiamento aprovado pelo Centro Acadêmico é encaminhado automaticamente à PROPEG.', 'cor': '#fd7e14'},
         {'titulo': 'Aprovado e início', 'desc': 'Após a aprovação do gestor, o coordenador pode confirmar o início. Quando houver aspectos éticos, a aprovação definitiva deve estar anexada.', 'cor': '#198754'},
         {'titulo': 'Em andamento', 'desc': 'Durante a execução, o coordenador acompanha a equipe e envia relatórios parciais ou finais.', 'cor': '#0d6efd'},
         {'titulo': 'Finalizado ou encerrado', 'desc': 'Com relatório final e conclusão bem-sucedida, o status é Finalizado. Encerrado é reservado à interrupção sem conclusão e exige motivo registrado pelo gestor.', 'cor': '#6c757d'},
@@ -2998,15 +3039,15 @@ def _ajuda_dados():
         {'pergunta': 'Posso enviar mais de um arquivo na etapa 2?',                       'resposta': 'Sim. Use o botão "Adicionar Anexo" quantas vezes precisar. Cada arquivo pode ser PDF, PNG, JPG ou JPEG e pode ser removido na própria lista de arquivos enviados.'},
         {'pergunta': 'Como funciona o preenchimento automático da etapa 2?',              'resposta': 'O documento é opcional. Quando enviar um PDF nativamente digital, com texto selecionável, o sistema perguntará se você deseja preencher automaticamente os campos. Ele identifica os títulos e limites das seções, preenche os campos e mantém você na Etapa 2 para revisar. PDFs digitalizados sem texto selecionável não são processados.'},
         {'pergunta': 'Existe limite nos campos da etapa 2?',                             'resposta': 'Sim. Cada campo aceita até 4.000 caracteres. A caixa de texto quebra as linhas e cresce conforme você digita, enquanto o contador mostra o total utilizado.'},
-        {'pergunta': 'Qual tipo de projeto devo selecionar?',                            'resposta': 'Use "1 - Projeto Aprovado (Agência de Fomento)" para aprovação externa já obtida e anexe o comprovante; "2 - UFAC (Sem Financiamento/Fluxo Contínuo)" para o fluxo que começa no Centro; e "3 - UFAC (Com Financiamento)" para projetos vinculados a edital UFAC aberto.'},
-        {'pergunta': 'Como funciona a aprovação do Centro?',                             'resposta': 'No tipo UFAC sem financiamento, o coordenador submete o projeto diretamente ao Centro. O sistema envia um link restrito ao e-mail cadastrado, válido por 7 dias e de uso único. O responsável consulta o projeto, informa seus dados, aceita a aprovação e anexa a ata em PDF ou imagem. Depois disso, o projeto é encaminhado à PROPEG.'},
-        {'pergunta': 'O que acontece se o link do Centro expirar ou já tiver sido usado?', 'resposta': 'O link deixa de exibir o projeto e não aceita novos envios. O coordenador pode abrir os detalhes do projeto e usar "Reenviar solicitação" para gerar um novo link, invalidando o anterior.'},
+        {'pergunta': 'Qual tipo de projeto devo selecionar?',                            'resposta': 'Use "1 - Projeto Aprovado (Agência de Fomento)" para aprovação externa já obtida e anexe o comprovante; "2 - UFAC (Sem Financiamento/Fluxo Contínuo)" para o fluxo que começa no Centro Acadêmico; e "3 - UFAC (Com Financiamento)" para projetos vinculados a edital UFAC aberto.'},
+        {'pergunta': 'Como funciona a deliberação do Centro Acadêmico?',                  'resposta': 'No tipo UFAC sem financiamento, o coordenador submete o projeto diretamente ao Centro Acadêmico. O sistema envia um link restrito ao e-mail cadastrado, válido por 7 dias e de uso único. O responsável consulta o projeto, informa o resultado da deliberação e anexa a ata em PDF ou imagem. Se aprovado, o projeto é encaminhado automaticamente à PROPEG; se reprovado, o resultado fica registrado no projeto.'},
+        {'pergunta': 'O que acontece se o link do Centro Acadêmico expirar ou já tiver sido usado?', 'resposta': 'O link deixa de exibir o projeto e não aceita novos envios. O coordenador pode abrir os detalhes do projeto e usar "Reenviar solicitação" para gerar um novo link, invalidando o anterior.'},
         {'pergunta': 'Como gero o relatório de submissão?',                               'resposta': 'Ele é criado pelo sistema no envio da Etapa 5. O relatório segue a apresentação institucional em padrão ABNT, inclui a logo da UFAC na capa, incorpora imagens e páginas de PDFs válidos e mantém links para os arquivos originais.'},
-        {'pergunta': 'Quem avalia cada tipo de projeto?',                                'resposta': 'Agência de Fomento e UFAC com financiamento seguem para análise da PROPEG conforme o fluxo vigente. UFAC sem financiamento só chega ao gestor depois que o Centro registrar a ata pelo link restrito.'},
+        {'pergunta': 'Quem avalia cada tipo de projeto?',                                'resposta': 'Agência de Fomento e UFAC com financiamento seguem para análise da PROPEG conforme o fluxo vigente. UFAC sem financiamento só chega ao gestor depois que o Centro Acadêmico registrar uma deliberação favorável e anexar a ata pelo link restrito.'},
         {'pergunta': 'Como funciona o prazo da aprovação ética?',                    'resposta': 'Se na Etapa 1 for anexado apenas o comprovante de submissão ao comitê, o coordenador terá 90 dias para anexar a aprovação definitiva. O sistema envia alertas internos e por e-mail quando faltarem 60, 30, 15, 7, 3 e 1 dia. Enquanto o documento definitivo estiver pendente, o gestor não pode aprovar e o coordenador não pode iniciar o projeto.'},
         {'pergunta': 'Qual a diferença entre Finalizado e Encerrado?',                    'resposta': 'Finalizado identifica o projeto concluído com êxito após o relatório final. Encerrado identifica uma interrupção sem conclusão; o gestor deve registrar o motivo.'},
         {'pergunta': 'O gestor pode corrigir um projeto?',                                'resposta': 'Sim. Nos detalhes do projeto, o gestor pode abrir as mesmas etapas para corrigir dados, equipe, ODS e documentos. A plataforma registra data, hora e o gestor responsável pela última alteração.'},
-        {'pergunta': 'Como cadastrar projetos antigos?',                                  'resposta': 'O gestor usa "Cadastrar Projeto Existente", seleciona o coordenador, preenche as cinco etapas e informa a situação atual do projeto. Esses registros passam a compor o histórico.'},
+        {'pergunta': 'Como cadastrar projetos antigos?',                                  'resposta': 'O gestor usa "Cadastrar Projeto Existente" e segue diretamente para as etapas. Na Etapa 1, pode selecionar um coordenador cadastrado ou informar manualmente os dados de um coordenador que não está no sistema. Depois, preenche as demais etapas e informa a situação atual do projeto.'},
         {'pergunta': 'Preciso de aprovação do gestor para acessar o sistema?',            'resposta': 'Não. O cadastro é automático e o acesso é imediato.'},
         {'pergunta': 'Como sei que o gestor avaliou meu projeto?',                        'resposta': 'Você recebe uma notificação na plataforma (sino) e um e-mail no endereço cadastrado.'},
         {'pergunta': 'Posso excluir um projeto?',                                         'resposta': 'Apenas rascunhos podem ser excluídos. Projetos submetidos ficam no histórico.'},
@@ -3036,13 +3077,14 @@ def listar_certificados(request, pk):
 
     # Monta lista: coordenador principal + equipe
     membros = []
-    membros.append({
-        'usuario': projeto.coordenador,
-        'nome': projeto.coordenador.get_full_name() or projeto.coordenador.username,
-        'funcao': 'Coordenador',
-        'carga_horaria_total': None,
-        'pk': projeto.coordenador.pk,
-    })
+    if projeto.coordenador_id:
+        membros.append({
+            'usuario': projeto.coordenador,
+            'nome': projeto.nome_coordenador,
+            'funcao': 'Coordenador',
+            'carga_horaria_total': None,
+            'pk': projeto.coordenador.pk,
+        })
     for ep in projeto.equipe.select_related('membro').all():
         membros.append({
             'usuario': ep.membro,
@@ -3079,7 +3121,7 @@ def gerar_certificado(request, pk, membro_pk):
     )
 
     # Determina função e horas
-    if usuario_membro.pk == projeto.coordenador.pk:
+    if projeto.coordenador_id and usuario_membro.pk == projeto.coordenador.pk:
         funcao = 'Coordenador'
         carga_horaria = None
     else:

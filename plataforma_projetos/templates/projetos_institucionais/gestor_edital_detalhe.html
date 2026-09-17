@@ -183,7 +183,7 @@
           {% for p in page_obj %}
           <tr>
             <td class="fw-semibold">{{ p.titulo }}</td>
-            <td>{{ p.coordenador.get_full_name|default:p.coordenador.username }}</td>
+            <td>{{ p.nome_coordenador }}</td>
             <td>{{ p.centro_lotacao|default:"—" }}</td>
             <td><span class="badge {% if p.status == 'aprovado' or p.status == 'em_andamento' or p.status == 'finalizado' %}bg-success{% elif p.status == 'reprovado' %}bg-danger{% elif p.status == 'submetido' %}bg-primary{% else %}bg-secondary{% endif %}">{{ p.get_status_display }}</span></td>
             <td><a href="{% url 'projeto_detalhe' p.pk %}" class="btn btn-sm btn-outline-primary" title="Abrir detalhes"><i class="bi bi-eye"></i></a></td>

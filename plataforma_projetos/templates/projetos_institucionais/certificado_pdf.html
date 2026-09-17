@@ -226,9 +226,9 @@
         <strong>{{ funcao }}</strong>
         do projeto de pesquisa e extensão
         <strong>&#8220;{{ projeto.titulo }}&#8221;</strong>,
-        vinculado ao {{ projeto.centro_lotacao|default:"Centro de Lotação da UFAC" }},{% if projeto.data_inicio and projeto.data_fim %}
+        vinculado ao {{ projeto.centro_lotacao|default:"Centro Acadêmico da UFAC" }},{% if projeto.data_inicio and projeto.data_fim %}
         no período de {{ projeto.data_inicio|date:"d/m/Y" }} a {{ projeto.data_fim|date:"d/m/Y" }},{% endif %}
-        sob coordenação de <strong>{{ projeto.coordenador.get_full_name }}</strong>.
+        sob coordenação de <strong>{{ projeto.nome_coordenador }}</strong>.
       </div>
 
       <div class="badges">
@@ -265,7 +265,7 @@
 
       <div class="assinatura">
         <hr class="ass-linha">
-        <div class="ass-nome">{{ projeto.coordenador.get_full_name }}</div>
+        <div class="ass-nome">{{ projeto.nome_coordenador }}</div>
         <div class="ass-cargo">Coordenador(a) do Projeto</div>
       </div>
 

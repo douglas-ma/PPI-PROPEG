@@ -437,6 +437,24 @@ class ProjetoTipoFluxoFormTests(TestCase):
         )
         self.assertTrue(com_arquivo.is_valid(), com_arquivo.errors)
 
+    def test_etapa_1_exibe_aviso_de_submissao_etica_e_nao_oferece_imagem_de_capa(self):
+        projeto = Projeto.objects.create(
+            coordenador=self.coordenador,
+            status='rascunho',
+            etica_obrigatoria=True,
+            situacao_etica='submetido',
+        )
+        self.client.force_login(self.coordenador)
+
+        resposta = self.client.get(
+            reverse('projeto_etapa', kwargs={'pk': projeto.pk, 'step': 1}),
+        )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'A aprovação definitiva deverá ser anexada em até 90 dias')
+        self.assertContains(resposta, "situacaoEtica.value === 'submetido'")
+        self.assertNotContains(resposta, 'name="imagem_capa"')
+
     def test_documento_da_etapa_2_e_opcional(self):
         projeto = self.novo_projeto()
         projeto.tipo_projeto = Projeto.TIPO_PROJETO_AGENCIA_FOMENTO
@@ -734,7 +752,7 @@ class ProjetoTipoFluxoFormTests(TestCase):
 class AprovacaoPreviaCentroTests(TestCase):
     def setUp(self):
         self.centro = CentroLotacao.objects.create(
-            nome='Centro de Ciências de Teste',
+            nome='Centro Acadêmico de Teste',
             email='conselho@example.com',
         )
         self.coordenador = Usuario.objects.create_user(
@@ -790,13 +808,14 @@ class AprovacaoPreviaCentroTests(TestCase):
                 reverse('aprovacao_centro', kwargs={'token': token}),
                 data={
                     'responsavel_nome': 'Maria Diretora',
-                    'responsavel_cargo': 'Diretora do Centro',
+                    'responsavel_cargo': 'Diretora do Centro Acadêmico',
+                    'resultado_deliberacao': 'aprovado',
                     'ata_assembleia': SimpleUploadedFile(
                         'ata-aprovacao.pdf',
                         b'%PDF-1.4 ata aprovada',
                         content_type='application/pdf',
                     ),
-                    'confirma_aprovacao': 'on',
+                    'confirma_deliberacao': 'on',
                 },
                 HTTP_ORIGIN='null',
             )
@@ -806,6 +825,7 @@ class AprovacaoPreviaCentroTests(TestCase):
         solicitacao.refresh_from_db()
         self.projeto.refresh_from_db()
         self.assertIsNotNone(solicitacao.utilizada_em)
+        self.assertEqual(solicitacao.resultado_deliberacao, 'aprovado')
         self.assertEqual(self.projeto.status, 'submetido')
         self.assertTrue(self.projeto.anexos.filter(tipo_anexo='ata_conselho').exists())
 
@@ -849,13 +869,14 @@ class AprovacaoPreviaCentroTests(TestCase):
                 reverse('aprovacao_centro', kwargs={'token': token}),
                 data={
                     'responsavel_nome': 'Maria Diretora',
-                    'responsavel_cargo': 'Diretora do Centro',
+                    'responsavel_cargo': 'Diretora do Centro Acadêmico',
+                    'resultado_deliberacao': 'aprovado',
                     'ata_assembleia': SimpleUploadedFile(
                         'ata-aprovacao.pdf',
                         b'%PDF-1.4 ata aprovada',
                         content_type='application/pdf',
                     ),
-                    'confirma_aprovacao': 'on',
+                    'confirma_deliberacao': 'on',
                 },
             )
 
@@ -866,6 +887,7 @@ class AprovacaoPreviaCentroTests(TestCase):
         self.assertEqual(self.projeto.status, 'submetido')
         self.assertIsNotNone(solicitacao.utilizada_em)
         self.assertEqual(solicitacao.responsavel_nome, 'Maria Diretora')
+        self.assertEqual(solicitacao.resultado_deliberacao, 'aprovado')
         self.assertTrue(self.projeto.anexos.filter(tipo_anexo='ata_conselho').exists())
 
         segundo_envio = self.client.post(
@@ -878,6 +900,46 @@ class AprovacaoPreviaCentroTests(TestCase):
         self.client.force_login(self.gestor)
         painel = self.client.get(reverse('gestor_dashboard'))
         self.assertIn(self.projeto, painel.context['projetos_pendentes'])
+
+    def test_centro_pode_reprovar_e_resultado_fica_registrado(self):
+        self.projeto.status = 'aguardando_conselho'
+        self.projeto.save(update_fields=['status'])
+        solicitacao, token = SolicitacaoAprovacaoCentro.emitir(
+            self.projeto,
+            self.centro.email,
+        )
+        campo_arquivo = Anexo._meta.get_field('arquivo')
+
+        with patch.object(campo_arquivo, 'storage', InMemoryStorage()):
+            resposta = self.client.post(
+                reverse('aprovacao_centro', kwargs={'token': token}),
+                data={
+                    'responsavel_nome': 'Maria Diretora',
+                    'responsavel_cargo': 'Diretora do Centro Acadêmico',
+                    'resultado_deliberacao': 'reprovado',
+                    'ata_assembleia': SimpleUploadedFile(
+                        'ata-deliberacao.pdf',
+                        b'%PDF-1.4 projeto reprovado',
+                        content_type='application/pdf',
+                    ),
+                    'confirma_deliberacao': 'on',
+                },
+            )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'reprovada')
+        solicitacao.refresh_from_db()
+        self.projeto.refresh_from_db()
+        self.assertEqual(solicitacao.resultado_deliberacao, 'reprovado')
+        self.assertIsNotNone(solicitacao.utilizada_em)
+        self.assertEqual(self.projeto.status, 'reprovado')
+        self.assertTrue(self.projeto.anexos.filter(tipo_anexo='ata_conselho').exists())
+        self.assertTrue(
+            Notificacao.objects.filter(
+                destinatario=self.gestor,
+                mensagem__icontains='reprovado',
+            ).exists()
+        )
 
     def test_link_expirado_nao_expoe_o_projeto(self):
         solicitacao, token = SolicitacaoAprovacaoCentro.emitir(
@@ -1182,6 +1244,14 @@ class EticaStatusEGestaoTests(TestCase):
         self.assertEqual(projeto_final.status, 'finalizado')
         self.assertIsNotNone(projeto_final.finalizado_em)
 
+        resposta_sem_motivo = self.client.post(
+            reverse('encerrar_projeto_sem_conclusao', kwargs={'pk': self.projeto.pk}),
+            {'motivo': ''},
+        )
+        self.assertEqual(resposta_sem_motivo.status_code, 200)
+        self.projeto.refresh_from_db()
+        self.assertEqual(self.projeto.status, 'submetido')
+
         resposta = self.client.post(
             reverse('encerrar_projeto_sem_conclusao', kwargs={'pk': self.projeto.pk}),
             {'motivo': 'Interrupção por inviabilidade técnica.'},
@@ -1191,6 +1261,10 @@ class EticaStatusEGestaoTests(TestCase):
         self.assertEqual(self.projeto.status, 'encerrado')
         self.assertIn('inviabilidade', self.projeto.motivo_encerramento)
         self.assertEqual(self.projeto.encerrado_por, self.gestor)
+
+        detalhe = self.client.get(reverse('projeto_detalhe', kwargs={'pk': self.projeto.pk}))
+        self.assertContains(detalhe, 'Interrupção por inviabilidade técnica.')
+        self.assertContains(detalhe, self.gestor.get_full_name())
 
     def test_edital_contabiliza_apenas_submissoes_ufac_financiadas(self):
         edital = Edital.objects.create(
@@ -1219,10 +1293,7 @@ class EticaStatusEGestaoTests(TestCase):
 
     def test_gestor_inicia_cadastro_historico_e_edita_projeto(self):
         self.client.force_login(self.gestor)
-        resposta = self.client.post(
-            reverse('gestor_projeto_criar'),
-            {'coordenador': self.coordenador.pk},
-        )
+        resposta = self.client.get(reverse('gestor_projeto_criar'))
         projeto = Projeto.objects.exclude(pk=self.projeto.pk).latest('pk')
         self.assertRedirects(
             resposta,
@@ -1230,8 +1301,35 @@ class EticaStatusEGestaoTests(TestCase):
             fetch_redirect_response=False,
         )
         self.assertTrue(projeto.importado_legado)
-        self.assertEqual(projeto.coordenador, self.coordenador)
+        self.assertIsNone(projeto.coordenador)
         self.assertEqual(projeto.ultima_alteracao_gestor_por, self.gestor)
+
+        pagina_etapa = self.client.get(
+            reverse('projeto_etapa', kwargs={'pk': projeto.pk, 'step': 1}),
+        )
+        self.assertContains(pagina_etapa, 'Coordenador cadastrado no sistema')
+        self.assertContains(pagina_etapa, 'Coordenador não cadastrado no sistema')
+        self.assertNotContains(pagina_etapa, 'name="imagem_capa"')
+
+        salvamento = self.client.post(
+            reverse('projeto_etapa', kwargs={'pk': projeto.pk, 'step': 1}),
+            {
+                'acao': 'rascunho',
+                'origem_coordenador': 'manual',
+                'coordenador_externo_nome': 'Carlos Coordenador Egresso',
+                'coordenador_externo_cpf': '52998224725',
+                'coordenador_externo_email': 'carlos.egresso@example.com',
+            },
+        )
+        self.assertRedirects(
+            salvamento,
+            reverse('projeto_etapa', kwargs={'pk': projeto.pk, 'step': 1}),
+        )
+        projeto.refresh_from_db()
+        self.assertIsNone(projeto.coordenador)
+        self.assertEqual(projeto.nome_coordenador, 'Carlos Coordenador Egresso')
+        self.assertEqual(projeto.cpf_coordenador, '529.982.247-25')
+        self.assertEqual(projeto.email_coordenador, 'carlos.egresso@example.com')
 
         pagina_edicao = self.client.get(reverse('projeto_editar', kwargs={'pk': self.projeto.pk}))
         self.assertRedirects(

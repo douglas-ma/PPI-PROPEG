@@ -330,7 +330,7 @@
                 {{ p.titulo|truncatechars:55 }}
               </a>
             </td>
-            <td class="text-muted">{{ p.coordenador.get_full_name|truncatechars:25 }}</td>
+            <td class="text-muted">{{ p.nome_coordenador|truncatechars:25 }}</td>
             <td>
               <div class="small">{{ p.centro_lotacao|default:"—" }}</div>
               {% if p.curso %}<div class="text-muted" style="font-size:.75rem;">{{ p.curso }}</div>{% endif %}

@@ -202,7 +202,7 @@
             {% endif %}
             <div class="mt-auto border-top pt-2">
               <small class="text-muted d-block">
-                <i class="bi bi-person me-1"></i>{{ p.coordenador.get_full_name|truncatechars:30 }}
+                <i class="bi bi-person me-1"></i>{{ p.nome_coordenador|truncatechars:30 }}
               </small>
               <span class="badge bg-primary bg-opacity-10 text-primary border small me-1" title="{{ p.get_tipo_projeto_display }}">
                 <i class="bi bi-diagram-3 me-1"></i>{{ p.get_tipo_projeto_display|truncatechars:32 }}

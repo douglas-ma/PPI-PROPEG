@@ -16,6 +16,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS(f'Verificando {projetos_ativos.count()} projetos ativos...'))
 
         for projeto in projetos_ativos:
+            if not projeto.coordenador_id:
+                continue
             if projeto.data_fim:
                 dias_restantes = (projeto.data_fim - hoje).days
 

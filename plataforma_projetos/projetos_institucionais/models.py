@@ -236,7 +236,7 @@ class Usuario(AbstractUser):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        verbose_name="Centro de Lotação"
+        verbose_name="Centro Acadêmico"
     )
 
     objects = UsuarioManager()
@@ -283,8 +283,8 @@ class CentroLotacao(models.Model):
         return self.nome
     
     class Meta:
-        verbose_name = "Centro de Lotação"
-        verbose_name_plural = "Centros de Lotação"
+        verbose_name = "Centro Acadêmico"
+        verbose_name_plural = "Centros Acadêmicos"
 
 
 class CursoGraduacao(models.Model):
@@ -292,7 +292,7 @@ class CursoGraduacao(models.Model):
     centro_lotacao = models.ForeignKey(
         CentroLotacao,
         on_delete=models.PROTECT,
-        verbose_name="Centro de Lotação"
+        verbose_name="Centro Acadêmico"
     )
 
     def __str__(self):
@@ -308,7 +308,7 @@ class ProgramaPos(models.Model):
     centro_lotacao = models.ForeignKey(
         CentroLotacao,
         on_delete=models.PROTECT,
-        verbose_name="Centro de Lotação"
+        verbose_name="Centro Acadêmico"
     )
 
     def __str__(self):
@@ -459,7 +459,7 @@ class Projeto(models.Model):
     STATUS_CHOICES = [
         ('rascunho', 'Rascunho'),
         ('submetido', 'Submetido'),
-        ('aguardando_conselho', 'Aguardando aprovação do Centro'),
+        ('aguardando_conselho', 'Aguardando deliberação do Centro Acadêmico'),
         ('aprovado', 'Aprovado'),
         ('reprovado', 'Reprovado'),
         ('em_andamento', 'Em andamento'),
@@ -534,7 +534,23 @@ class Projeto(models.Model):
     coordenador = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
-        related_name='projetos_coordenados'
+        related_name='projetos_coordenados',
+        null=True,
+        blank=True,
+    )
+    coordenador_externo_nome = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name='Nome do coordenador não cadastrado',
+    )
+    coordenador_externo_cpf = models.CharField(
+        max_length=14,
+        blank=True,
+        verbose_name='CPF do coordenador não cadastrado',
+    )
+    coordenador_externo_email = models.EmailField(
+        blank=True,
+        verbose_name='E-mail do coordenador não cadastrado',
     )
     curso = models.ForeignKey(
         CursoGraduacao,
@@ -546,7 +562,7 @@ class Projeto(models.Model):
     centro_lotacao = models.ForeignKey(
         CentroLotacao,
         on_delete=models.PROTECT,
-        verbose_name="Centro de Lotação",
+        verbose_name="Centro Acadêmico",
         null=True,
         blank=True,
     )
@@ -607,6 +623,24 @@ class Projeto(models.Model):
 
     def __str__(self):
         return self.titulo or f"Projeto Rascunho (ID: {self.id})"
+
+    @property
+    def nome_coordenador(self):
+        if self.coordenador_id:
+            return self.coordenador.get_full_name() or self.coordenador.username
+        return self.coordenador_externo_nome or 'Não informado'
+
+    @property
+    def cpf_coordenador(self):
+        if self.coordenador_id:
+            return self.coordenador.cpf
+        return self.coordenador_externo_cpf
+
+    @property
+    def email_coordenador(self):
+        if self.coordenador_id:
+            return self.coordenador.email
+        return self.coordenador_externo_email
 
     @property
     def eh_agencia_fomento(self):
@@ -806,7 +840,7 @@ class Anexo(models.Model):
         ('projeto_completo', 'Projeto Completo'),
         ('comprovante_fomento', 'Comprovante de Aprovação da Agência de Fomento'),
         ('comprovante_aprovacao', 'Comprovante de Aprovação (Gestor)'),
-        ('ata_conselho', 'Ata de Aprovação do Centro'),
+        ('ata_conselho', 'Ata de Deliberação do Centro Acadêmico'),
         ('relatorio_submissao', 'Relatório de Submissão (Automático)'),
         ('outro', 'Outro'),
     )
@@ -841,7 +875,12 @@ class Anexo(models.Model):
 
 
 class SolicitacaoAprovacaoCentro(models.Model):
-    """Convite restrito para o Centro registrar a aprovação de um projeto."""
+    """Convite restrito para o Centro Acadêmico registrar sua deliberação."""
+
+    RESULTADO_CHOICES = (
+        ('aprovado', 'Aprovado pelo Centro Acadêmico'),
+        ('reprovado', 'Reprovado pelo Centro Acadêmico'),
+    )
 
     projeto = models.ForeignKey(
         Projeto,
@@ -856,6 +895,11 @@ class SolicitacaoAprovacaoCentro(models.Model):
     invalidada_em = models.DateTimeField(blank=True, null=True)
     responsavel_nome = models.CharField(max_length=255, blank=True)
     responsavel_cargo = models.CharField(max_length=255, blank=True)
+    resultado_deliberacao = models.CharField(
+        max_length=20,
+        choices=RESULTADO_CHOICES,
+        blank=True,
+    )
     ata = models.OneToOneField(
         Anexo,
         on_delete=models.SET_NULL,
@@ -896,12 +940,12 @@ class SolicitacaoAprovacaoCentro(models.Model):
         )
 
     def __str__(self):
-        return f'Aprovação do Centro - {self.projeto}'
+        return f'Deliberação do Centro Acadêmico - {self.projeto}'
 
     class Meta:
         ordering = ['-criada_em']
-        verbose_name = 'Solicitação de Aprovação do Centro'
-        verbose_name_plural = 'Solicitações de Aprovação do Centro'
+        verbose_name = 'Solicitação de Deliberação do Centro Acadêmico'
+        verbose_name_plural = 'Solicitações de Deliberação do Centro Acadêmico'
 
 
 class Relatorio(models.Model):

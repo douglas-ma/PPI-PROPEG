@@ -23,7 +23,7 @@
       </h3>
       <p class="text-muted mb-4">
         {% if encaminhado_centro %}
-          O projeto <strong>"{{ projeto.titulo }}"</strong> foi encaminhado ao Centro de Lotação.<br>
+          O projeto <strong>"{{ projeto.titulo }}"</strong> foi encaminhado ao Centro Acadêmico.<br>
           O responsável receberá um link restrito para anexar a ata de aprovação. Depois, o projeto seguirá automaticamente para a PROPEG.
         {% else %}
           O projeto <strong>"{{ projeto.titulo }}"</strong> foi enviado para análise.<br>
@@ -61,7 +61,7 @@
           </div>
           {% if projeto.centro_lotacao %}
           <div class="col-sm-6">
-            <span class="text-muted">Centro de Lotação</span><br>
+            <span class="text-muted">Centro Acadêmico</span><br>
             <strong>{{ projeto.centro_lotacao }}</strong>
           </div>
           {% endif %}

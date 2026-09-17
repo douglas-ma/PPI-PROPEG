@@ -19,14 +19,14 @@ class PerfilUsuarioForm(forms.ModelForm):
                 field.widget.attrs['class'] = 'form-control'
         
         self.fields['titulacao'].empty_label = "Selecione sua titulação"
-        self.fields['centro_lotacao'].empty_label = "Selecione seu centro de lotação"
+        self.fields['centro_lotacao'].empty_label = "Selecione seu Centro Acadêmico"
 
         self.fields['first_name'].label = "Primeiro Nome"
         self.fields['last_name'].label = "Sobrenome"
         self.fields['email'].label = "E-mail"
         self.fields['telefone'].label = "Telefone"
         self.fields['titulacao'].label = "Titulação"
-        self.fields['centro_lotacao'].label = "Centro de Lotação"
+        self.fields['centro_lotacao'].label = "Centro Acadêmico"
 
 
 class EnderecoForm(forms.ModelForm):
