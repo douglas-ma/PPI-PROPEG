@@ -15,6 +15,7 @@ from django.http import FileResponse, Http404, HttpResponseForbidden, JsonRespon
 from django.urls import reverse
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from .models import Anexo, ODS, Projeto, AdendoEdital, SolicitacaoAprovacaoCentro
 from .forms import *
@@ -607,8 +608,14 @@ def _motivo_link_centro_invalido(solicitacao):
     return ''
 
 
+@csrf_exempt
 def aprovacao_centro(request, token):
-    """Página pública restrita ao registro da ata pelo Centro de Estudos."""
+    """Registra a ata usando um token temporário, aleatório e de uso único.
+
+    O endpoint não usa sessão nem credenciais implícitas do navegador. A
+    dispensa de CSRF permite o envio por navegadores que abrem links de e-mail
+    em um contexto de origem opaca e enviam Origin: null.
+    """
     solicitacao = _obter_solicitacao_por_token(token)
     motivo_invalido = _motivo_link_centro_invalido(solicitacao)
     if motivo_invalido:

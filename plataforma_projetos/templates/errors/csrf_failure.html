@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Envio bloqueado - verificação CSRF</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; color: #1f2937; }
+    body { margin: 0; background: #f3f4f6; }
+    main { box-sizing: border-box; max-width: 850px; margin: 7vh auto; padding: 28px; background: #fff; border: 1px solid #d1d5db; border-radius: 10px; }
+    h1 { margin-top: 0; color: #7f1d1d; font-size: 1.55rem; }
+    h2 { margin: 24px 0 8px; font-size: 1.1rem; }
+    p { line-height: 1.55; }
+    pre { overflow-x: auto; padding: 16px; background: #111827; color: #f9fafb; border-radius: 6px; font: 0.88rem/1.55 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; user-select: text; }
+    button { padding: 9px 14px; border: 0; border-radius: 5px; background: #155e75; color: white; font: inherit; cursor: pointer; }
+    button:focus-visible { outline: 3px solid #67e8f9; outline-offset: 2px; }
+    #copy-status { margin-left: 10px; }
+    @media (max-width: 600px) { main { margin: 0; min-height: 100vh; border-radius: 0; padding: 22px 16px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>O envio foi bloqueado (403)</h1>
+    <p>A verificação de segurança CSRF recusou este envio. Os dados do formulário não foram processados. Você pode voltar à página do link e tentar novamente.</p>
+    {% if show_diagnostics %}
+      <h2>Diagnóstico para copiar</h2>
+      <p>O bloco não inclui o token de acesso nem o caminho completo do link. Copie-o e envie para o suporte.</p>
+      <pre id="csrf-diagnostic">{{ diagnostic_text }}</pre>
+      <button type="button" id="copy-diagnostic">Copiar diagnóstico</button>
+      <span id="copy-status" role="status" aria-live="polite"></span>
+      <script>
+        const copyButton = document.getElementById('copy-diagnostic');
+        const diagnostic = document.getElementById('csrf-diagnostic');
+        const copyStatus = document.getElementById('copy-status');
+        copyButton.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(diagnostic.innerText);
+            copyStatus.textContent = 'Diagnóstico copiado.';
+          } catch (_) {
+            copyStatus.textContent = 'Selecione e copie o bloco acima.';
+          }
+        });
+      </script>
+    {% else %}
+      <p>Se o problema continuar, informe este código ao suporte: <strong>{{ diagnostic_code }}</strong>.</p>
+    {% endif %}
+  </main>
+</body>
+</html>

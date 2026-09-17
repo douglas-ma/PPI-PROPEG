@@ -10,7 +10,7 @@ from django.core import mail
 from django.core.management import call_command
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.files.storage import InMemoryStorage
-from django.test import SimpleTestCase, TestCase
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from pypdf import PdfReader, PdfWriter
@@ -34,6 +34,56 @@ from .models import (
     Notificacao, NotificacaoPrazoEtica, SolicitacaoAprovacaoCentro, Usuario,
 )
 from .views import _gerar_relatorio_submissao
+
+
+class CsrfFailureDiagnosticTests(SimpleTestCase):
+    @override_settings(DEBUG=True)
+    def test_falha_csrf_exibe_diagnostico_copiavel_sem_token_ou_url_completa(self):
+        token_privado = 'token-centro-nao-deve-aparecer'
+        query_privada = 'segredo-na-query-nao-deve-aparecer'
+        cliente = Client(enforce_csrf_checks=True)
+
+        resposta = cliente.post(
+            f"{reverse('login')}?token={token_privado}",
+            data={},
+            HTTP_HOST='testserver',
+            HTTP_ORIGIN='null',
+            HTTP_REFERER=(
+                'https://visualizacao.exemplo.test/preview/'
+                f'?token={query_privada}'
+            ),
+        )
+
+        conteudo = resposta.content.decode('utf-8')
+        self.assertEqual(resposta.status_code, 403)
+        self.assertIn('Diagnóstico para copiar', conteudo)
+        self.assertIn(
+            'Origin checking failed - null does not match any trusted origins.',
+            conteudo,
+        )
+        self.assertIn('Origin: null', conteudo)
+        self.assertIn('View: login', conteudo)
+        self.assertIn('Referer origin: https://visualizacao.exemplo.test', conteudo)
+        self.assertNotIn(token_privado, conteudo)
+        self.assertNotIn(query_privada, conteudo)
+
+    @override_settings(DEBUG=False)
+    def test_producao_mostra_codigo_sem_expor_motivo_interno_ou_token(self):
+        token_privado = 'token-centro-nao-deve-aparecer'
+        cliente = Client(enforce_csrf_checks=True)
+
+        resposta = cliente.post(
+            f"{reverse('login')}?token={token_privado}",
+            data={},
+            HTTP_HOST='testserver',
+            HTTP_ORIGIN='null',
+        )
+
+        conteudo = resposta.content.decode('utf-8')
+        self.assertEqual(resposta.status_code, 403)
+        self.assertIn('código ao suporte', conteudo)
+        self.assertNotIn('Origin checking failed', conteudo)
+        self.assertNotIn(token_privado, conteudo)
 
 
 class MobileLayoutRegressionTests(SimpleTestCase):
@@ -721,6 +771,43 @@ class AprovacaoPreviaCentroTests(TestCase):
             data_fim=date.today() + timedelta(days=180),
             status='rascunho',
         )
+
+    def test_link_publico_aceita_ata_quando_navegador_envia_origin_null(self):
+        self.projeto.status = 'aguardando_conselho'
+        self.projeto.save(update_fields=['status'])
+        solicitacao, token = SolicitacaoAprovacaoCentro.emitir(
+            self.projeto,
+            self.centro.email,
+        )
+        cliente = Client(enforce_csrf_checks=True)
+        campo_arquivo = Anexo._meta.get_field('arquivo')
+
+        with (
+            patch.object(campo_arquivo, 'storage', InMemoryStorage()),
+            patch('projetos_institucionais.views.enviar_email_e_notificacao'),
+        ):
+            resposta = cliente.post(
+                reverse('aprovacao_centro', kwargs={'token': token}),
+                data={
+                    'responsavel_nome': 'Maria Diretora',
+                    'responsavel_cargo': 'Diretora do Centro',
+                    'ata_assembleia': SimpleUploadedFile(
+                        'ata-aprovacao.pdf',
+                        b'%PDF-1.4 ata aprovada',
+                        content_type='application/pdf',
+                    ),
+                    'confirma_aprovacao': 'on',
+                },
+                HTTP_ORIGIN='null',
+            )
+
+        self.assertEqual(resposta.status_code, 200)
+        self.assertContains(resposta, 'Ata registrada com sucesso')
+        solicitacao.refresh_from_db()
+        self.projeto.refresh_from_db()
+        self.assertIsNotNone(solicitacao.utilizada_em)
+        self.assertEqual(self.projeto.status, 'submetido')
+        self.assertTrue(self.projeto.anexos.filter(tipo_anexo='ata_conselho').exists())
 
     @patch('projetos_institucionais.views._gerar_relatorio_submissao')
     def test_fluxo_centro_usa_link_unico_e_encaminha_a_propeg(self, gerar_pdf):
