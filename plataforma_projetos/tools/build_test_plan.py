@@ -284,7 +284,7 @@ def build_document():
     metadata.rows[0].cells[0].text = 'Sistema'
     metadata.rows[0].cells[1].text = 'Plataforma de Projetos Institucionais PROPEG UFAC'
     metadata.rows[1].cells[0].text = 'Versão do roteiro'
-    metadata.rows[1].cells[1].text = '2.0'
+    metadata.rows[1].cells[1].text = '2.1'
     metadata.rows[2].cells[0].text = 'Data de referência'
     metadata.rows[2].cells[1].text = '16 de setembro de 2026'
     metadata.rows[3].cells[0].text = 'Ambiente'
@@ -394,11 +394,16 @@ def build_document():
     doc.add_heading('Dados auxiliares para os testes', level=1)
     aux_rows = [
         ('Link restrito do Centro', f'{PRODUCTION_URL}/projetos/centro/aprovacao/demo-centro-ufac-2026/'),
-        ('Validade do link do Centro', 'Uso único; expira 30 dias após o último povoamento da amostra'),
+        ('Validade do link do Centro', 'Uso único; expira em 7 dias (168 horas) após a emissão'),
         ('Edital aberto', 'Edital DEMO nº 1 do ano corrente'),
         ('PDF nativamente digital', 'Arquivo local output/pdf/projeto_teste_preenchimento_automatico.pdf'),
         ('Imagem para anexos', 'Arquivo local static/imagens/imagem-exemplo.jpeg'),
         ('E-mail de recebimento', 'Substituir o e-mail de uma conta de amostra por uma caixa postal controlada pelo testador'),
+        (
+            'Centro fictício local',
+            'TESTE LUNAR 20260916 - CENTRO DE ESTUDOS FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO); '
+            'e-mail d.moura250304@gmail.com',
+        ),
         ('CPF válido para membro manual', '529.982.247-25'),
         ('Centro sugerido', 'CCET - Centro de Ciências Exatas e Tecnológicas'),
         ('Curso sugerido', 'Bacharelado em Sistemas de Informação'),
@@ -659,7 +664,7 @@ def build_document():
     center_cases = [
         {
             'id': 'CT-CEN-001', 'title': 'Abrir o link restrito do Centro', 'profile': 'Responsável do Centro',
-            'pre': 'Usar o link de amostra do Centro antes de consumi-lo.',
+            'pre': 'Usar um projeto temporário local ou outro token criado para o teste. Não consumir o link público de demonstração em verificações comuns.',
             'steps': ['Abrir o link em janela anônima, sem autenticação.', 'Conferir o resumo do projeto.'],
             'expected': ['O acesso exibe apenas as informações necessárias.', 'Menus e funções internas da plataforma não ficam disponíveis.'],
         },
@@ -678,14 +683,36 @@ def build_document():
         {
             'id': 'CT-CEN-004', 'title': 'Registrar a ata e encaminhar à PROPEG', 'profile': 'Responsável do Centro',
             'pre': 'Link ativo e arquivo de teste disponível.',
-            'steps': ['Informar nome e cargo.', 'Confirmar a aprovação, anexar a ata e enviar.'],
-            'expected': ['A ata fica vinculada ao projeto.', 'O projeto passa ao fluxo da gestão e o token é marcado como utilizado.'],
+            'steps': [
+                'Informar nome e cargo.',
+                'Confirmar a aprovação, anexar a ata e enviar.',
+                'Abrir os detalhes do projeto com o coordenador ou gestor e consultar a ata em Anexos.',
+            ],
+            'expected': [
+                'A ata fica vinculada ao projeto e pode ser aberta em Anexos.',
+                'O projeto muda de Aguardando aprovação do Centro para Submetido, segue à gestão e o token é marcado como utilizado.',
+                'O coordenador recebe a notificação prevista.',
+            ],
         },
         {
             'id': 'CT-CEN-005', 'title': 'Impedir reutilização ou acesso expirado', 'profile': 'Responsável do Centro',
             'pre': 'Token utilizado no caso anterior ou token expirado.',
             'steps': ['Abrir novamente o mesmo link.', 'Tentar enviar outra ata.'],
             'expected': ['O projeto não é reaberto para alteração.', 'A página informa que o link foi utilizado, expirou ou foi invalidado.'],
+        },
+        {
+            'id': 'CT-CEN-006', 'title': 'Enviar ata quando o navegador informa origem opaca', 'profile': 'Responsável do Centro',
+            'pre': 'Token local válido e cliente configurado para enviar o cabeçalho HTTP Origin: null, sem Referer.',
+            'steps': [
+                'Abrir o link público sem autenticação.',
+                'Preencher nome, cargo e confirmação, anexar uma ata válida e enviar com Origin: null.',
+                'Reabrir o mesmo link e consultar o projeto no perfil autorizado.',
+            ],
+            'expected': [
+                'O envio não é recusado pela verificação CSRF.',
+                'A ata é salva, o token é consumido uma única vez e o projeto passa para Submetido.',
+                'O segundo acesso informa que o link está indisponível.',
+            ],
         },
     ]
     add_cases_section(doc, 'Casos de teste do Centro de Estudos', 'O link é temporário, restrito e de uso único.', center_cases)
@@ -1019,12 +1046,157 @@ def build_document():
         [Inches(1.0), Inches(0.9), Inches(1.0), Inches(1.6), Inches(2.3)],
     )
 
+    update_heading = doc.add_heading('Atualização da execução de 16 de setembro de 2026', level=1)
+    update_heading.paragraph_format.page_break_before = True
+    doc.add_paragraph(
+        'Esta seção consolida a validação específica do fluxo de aprovação pelo Centro de Estudos, '
+        'a correção aplicada durante a execução e os limites da confirmação em produção. Os resultados '
+        'não autorizam declarar a plataforma livre de bugs; eles descrevem a cobertura efetivamente executada.'
+    )
+
+    doc.add_heading('Resultado do fluxo do Centro de Estudos', level=2)
+    execution_rows = [
+        (
+            'Envio local com token válido',
+            'Corrigido',
+            'Ata salva; solicitação marcada como utilizada; projeto 106 passou de Aguardando aprovação do Centro para Submetido.',
+        ),
+        (
+            'Consulta posterior da ata',
+            'Passou',
+            'A ata apareceu em Anexos nos detalhes do projeto e o PDF pôde ser aberto pelo perfil autorizado.',
+        ),
+        (
+            'Reutilização do token local',
+            'Passou',
+            'O token consumido deixou de permitir novo envio.',
+        ),
+        (
+            'Produção com Origin: null e token inválido',
+            'Passou',
+            'A requisição alcançou a regra do link e retornou 410 Link indisponível, em vez de 403 CSRF.',
+        ),
+        (
+            'Produção com token válido e ata real',
+            'Bloqueado',
+            'Não executado para preservar o link de demonstração de uso único e evitar alteração de dados de produção.',
+        ),
+        (
+            'Suíte automatizada completa',
+            'Passou',
+            '49 testes concluídos com sucesso; check sem problemas; nenhuma migration pendente.',
+        ),
+    ]
+    add_table(
+        doc,
+        ['Verificação', 'Resultado', 'Evidência'],
+        execution_rows,
+        [Inches(2.0), Inches(1.05), Inches(3.75)],
+    )
+
+    doc.add_heading('BUG-001 — envio da ata bloqueado por CSRF em origem isolada', level=2)
+    bug_rows = [
+        ('Classificação', 'Alta'),
+        ('Perfil', 'Responsável do Centro de Estudos, sem autenticação'),
+        ('Página', '/projetos/centro/aprovacao/<token>/'),
+        ('Pré-condição', 'Solicitação ativa para projeto UFAC sem financiamento e ata válida disponível.'),
+        (
+            'Passos para reproduzir',
+            'Abrir o link em contexto que envie Origin: null e não envie Referer; preencher nome, cargo e confirmação; anexar a ata; enviar.',
+        ),
+        (
+            'Resultado observado',
+            'Resposta 403: “Origin checking failed - null does not match any trusted origins.” Os dados não eram processados.',
+        ),
+        (
+            'Resultado esperado',
+            'A ata deve ser validada e vinculada; o token deve ser consumido; o projeto deve seguir para Submetido.',
+        ),
+        (
+            'Causa',
+            'O middleware CSRF interrompia o POST antes da view quando o navegador usava origem opaca. Esse endpoint público não usa sessão como credencial; a autorização é feita por token aleatório, temporário e de uso único.',
+        ),
+        (
+            'Correção',
+            'Isenção de CSRF limitada à view aprovacao_centro. Permaneceram as validações de token, expiração, uso único, transação atômica, confirmação e formato do arquivo. As demais rotas continuam protegidas por CSRF.',
+        ),
+        (
+            'Teste de regressão',
+            'test_link_publico_aceita_ata_quando_navegador_envia_origin_null: falhava com 403 antes da correção e passou com ata salva, token utilizado e projeto Submetido.',
+        ),
+        (
+            'Publicação',
+            'Commit 00e815e — Corrige envio de ata em origem isolada; versão enviada à branch main e confirmada no Render.',
+        ),
+    ]
+    add_table(doc, ['Campo', 'Registro'], bug_rows, [Inches(1.55), Inches(5.25)])
+
+    doc.add_heading('Controles de segurança confirmados no link', level=2)
+    add_bullet(doc, 'O valor bruto do token aparece somente no link enviado; o banco armazena seu resumo criptográfico SHA-256.')
+    add_bullet(doc, 'O token expira em 168 horas, é de uso único e solicitações anteriores podem ser invalidadas.')
+    add_bullet(doc, 'O processamento usa transação e bloqueio do registro para impedir consumo concorrente.')
+    add_bullet(doc, 'Nome, cargo, confirmação e arquivo permitido são validados no servidor.')
+    add_bullet(doc, 'A resposta do link usa política de referência restrita para reduzir exposição do token em navegação externa.')
+
+    doc.add_heading('RISCO-001 — acesso direto aos arquivos armazenados', level=2)
+    add_label_paragraph(doc, 'Classificação proposta', 'Alta, caso atas e anexos sejam documentos restritos.')
+    add_label_paragraph(
+        doc,
+        'Constatação',
+        'A configuração atual do armazenamento de mídia no Cloudinary permite acesso anônimo ao arquivo por quem possuir a URL direta.',
+    )
+    add_label_paragraph(
+        doc,
+        'Impacto possível',
+        'O controle de perfil na página de detalhes não revoga uma URL de mídia já conhecida ou compartilhada.',
+    )
+    add_label_paragraph(
+        doc,
+        'Ação recomendada',
+        'Definir a classificação institucional das atas. Se forem restritas, usar download autenticado, URLs assinadas com validade curta ou armazenamento privado e adicionar testes de autorização.',
+    )
+    add_label_paragraph(
+        doc,
+        'Situação',
+        'Pendente de decisão funcional e de uma validação específica de autorização de documentos em produção.',
+    )
+
+    doc.add_heading('Dados temporários criados em ambiente local', level=2)
+    temporary_rows = [
+        (
+            'Centro 24',
+            'TESTE LUNAR 20260916 - CENTRO DE ESTUDOS FICTÍCIO (SOMENTE TESTE LOCAL - NÃO USAR EM PRODUÇÃO)',
+        ),
+        ('Usuário 36', 'teste-lunar-coordenador; conta sintética usada apenas no fluxo local.'),
+        ('Projeto 106', 'TESTE LUNAR 20260916 - VALIDAÇÃO DO LINK DO CENTRO - TESTE LOCAL; situação final Submetido.'),
+        ('Anexo 58', 'Ata fictícia vinculada ao projeto 106.'),
+        ('Arquivo de exemplo', 'output/pdf/TESTE_LUNAR_ATA_FICTICIA_20260916.pdf'),
+        ('Arquivo enviado', 'media/anexos/2026/09/TESTE_LUNAR_ATA_FICTICIA_20260916.pdf'),
+    ]
+    add_table(doc, ['Registro', 'Identificação'], temporary_rows, [Inches(1.35), Inches(5.45)])
+    doc.add_paragraph(
+        'Limpeza: remover somente o projeto 106 e seus anexos, notificações e solicitação de aprovação; '
+        'depois remover o usuário 36 e o centro 24, confirmando antes que nenhum vínculo externo tenha sido criado. '
+        'Não remover usuários, projetos ou o link de demonstração existentes antes desta execução.'
+    )
+
+    doc.add_heading('Conclusão desta execução', level=2)
+    doc.add_paragraph(
+        'O fluxo do Centro de Estudos foi confirmado de ponta a ponta no ambiente local após a correção. '
+        'Em produção, foi confirmado que a implantação aceita o contexto Origin: null e alcança a validação '
+        'do token. O envio com um token de produção válido permanece sem execução para preservar o link de '
+        'demonstração. Portanto, a funcionalidade está operacional dentro da cobertura descrita, mas a plataforma '
+        'não deve ser considerada livre de bugs conhecidos enquanto o RISCO-001 e os demais casos ainda não '
+        'executados estiverem pendentes.'
+    )
+
     doc.add_heading('Critério de encerramento da validação', level=1)
     doc.add_paragraph(
         'A validação pode ser encerrada quando todos os casos de prioridade alta estiverem aprovados, '
         'não houver falhas de controle de acesso ou perda de dados e as divergências restantes estiverem '
         'registradas com responsável e decisão de correção. Os três fluxos de projeto e o fluxo ético '
-        'devem ser executados integralmente ao menos uma vez.'
+        'devem ser executados integralmente ao menos uma vez. O envio em produção com token válido pode ser '
+        'executado somente com um projeto temporário autorizado, sem consumir o link de demonstração.'
     )
 
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
